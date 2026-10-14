@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Roadline VR — Hand Tracking Drive</title>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080d13;font-family:system-ui,Arial,sans-serif;color:#fff}
+  #overlay{position:fixed;inset:0;pointer-events:none;z-index:3}
+  #panel{position:absolute;left:16px;top:16px;width:min(300px,calc(100vw - 52px));padding:14px 16px;background:rgba(5,10,16,.78);border:1px solid rgba(255,255,255,.22);border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 8px 30px #0007}
+  #title{font-size:16px;letter-spacing:.12em;font-weight:800;color:#f4f7fb}
+  #sub{font-size:12px;color:#aebdca;margin:4px 0 10px}
+  .line{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:6px 0}
+  .value{font-weight:800;color:#ff6d4a}
+  #hint{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);max-width:calc(100vw - 30px);padding:10px 14px;background:#050a10c9;border:1px solid #ffffff2b;border-radius:12px;font-size:12px;text-align:center;line-height:1.45}
+  #start{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 40px));padding:24px;background:rgba(5,10,16,.94);border:1px solid #ffffff35;border-radius:18px;text-align:center;box-shadow:0 20px 80px #000b}
+  #start h1{margin:0 0 8px;font-size:26px;letter-spacing:.05em}
+  #start p{color:#c2ced8;font-size:14px;line-height:1.55}
+  button{border:0;border-radius:10px;padding:12px 18px;font-weight:800;color:#111;background:#ff7959;font-size:14px;cursor:pointer;pointer-events:auto}
+  #start button{margin-top:6px}
+  #warning{font-size:11px!important;color:#9fb0bf!important}
+  #gearButtons{display:flex;gap:6px;margin-top:10px;pointer-events:auto}
+  .gear{flex:1;padding:8px 0;border:1px solid #ffffff2b;border-radius:7px;background:#101923;color:#dbe5ed;font-size:12px}
+  .gear.active{background:#ff7959;color:#111;border-color:#ff7959}
+  #reset{margin-top:8px;width:100%;background:#263645;color:white;border:1px solid #ffffff25}
+  #reticle{position:fixed;left:50%;top:50%;width:7px;height:7px;border:1px solid #fff9;border-radius:50%;transform:translate(-50%,-50%);display:none}
+</style>
+</head>
+<body>
+<div id="overlay">
+  <div id="panel">
+    <div id="title">ROADLINE <span style="color:#ff7959">VR</span></div>
+    <div id="sub">HAND-TRACKING DRIVE SIMULATOR</div>
+    <div class="line"><span>GEAR</span><span class="value" id="gearReadout">PARK</span></div>
+    <div class="line"><span>SPEED</span><span class="value"><span id="speed">0</span> MPH</span></div>
+    <div class="line"><span>STEERING</span><span id="steerReadout">CENTER</span></div>
+    <div id="gearButtons">
+      <button class="gear active" data-gear="P">P</button><button class="gear" data-gear="R">R</button><button class="gear" data-gear="N">N</button><button class="gear" data-gear="D">D</button>
+    </div>
+    <button id="reset">RESET CAR POSITION</button>
+  </div>
+  <div id="hint">Enter VR for headset mode. Grab the wheel with a pinch to steer; pinch the shifter and move it to R / N / D.<br>Hold the left controller trigger or pinch either hand to drive in the selected gear. Desktop: use the gear buttons + hold W/S, steer with A/D.</div>
+</div>
+<div id="start">
+  <h1>ROADLINE <span style="color:#ff7959">VR</span></h1>
+  <p>A lightweight first-person driving demo for Meta Quest Browser. Built with WebXR hand tracking and a detailed, optimized cockpit.</p>
+  <p><b>Steer:</b> pinch near the wheel and turn your hand. <b>Shift:</b> pinch the gear knob and move it. <b>Drive:</b> hold the left controller trigger or keep a pinch held while in Drive or Reverse.</p>
+  <button id="begin">START DRIVING</button>
+  <p id="warning">For VR, open this page over HTTPS or localhost and press the headset's Enter VR button. WebXR support depends on browser/device permissions.</p>
+</div>
+<div id="reticle"></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/webxr/VRButton.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x9bbbd0);
+scene.fog = new THREE.Fog(0x9bbbd0, 28, 145);
+const camera = new THREE.PerspectiveCamera(70, innerWidth/innerHeight, .05, 220);
+camera.position.set(0,1.55,0);
+const renderer = new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setSize(innerWidth,innerHeight);
+renderer.xr.enabled = true;
+renderer.xr.setReferenceSpaceType('local-floor');
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+document.body.appendChild(renderer.domElement);
+document.body.appendChild(VRButton.createButton(renderer,{requiredFeatures:['hand-tracking'], optionalFeatures:['local-floor']}));
+
+scene.add(new THREE.HemisphereLight(0xdcecff,0x34313a,2.0));
+const sun = new THREE.DirectionalLight(0xffe2c0,2.3); sun.position.set(-8,14,8); scene.add(sun);
+const fill = new THREE.DirectionalLight(0x8abfff,.65); fill.position.set(8,5,-12); scene.add(fill);
+
+const mat=(color,rough=.6,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+const black=mat(0x10151b,.38,.25), leather=mat(0x20262d,.7), trim=mat(0x323a42,.28,.65), glass= new THREE.MeshStandardMaterial({color:0x6f9cae,roughness:.15,metalness:.15,transparent:true,opacity:.18}), red=mat(0xff5037,.3,.15), tire=mat(0x080a0c,.92), roadmat=mat(0x30383e,.94), white=mat(0xf4f1e7,.55), lineMat=mat(0xd8d4bc,.8), treeMat=mat(0x25483a,.95), treeLit=mat(0x37664a,.95);
+function box(parent,x,y,z,w,h,d,material){let m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);parent.add(m);return m}
+function cylinder(parent,x,y,z,r1,r2,len,material,segments=16,rotX=0){let m=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,segments),material);m.position.set(x,y,z);m.rotation.x=rotX;parent.add(m);return m}
+function sphere(parent,x,y,z,r,material){let m=new THREE.Mesh(new THREE.SphereGeometry(r,12,8),material);m.position.set(x,y,z);parent.add(m);return m}
+
+// Road and scenery: repeated low-poly roadside props keep the scene fast.
+const world = new THREE.Group(); scene.add(world);
+box(world,0,-.12,-75,13,.2,180,roadmat);
+for(let x of [-6.35,6.35]) box(world,x,.0,-75,.12,.025,180,lineMat);
+for(let z=8;z>-165;z-=8){box(world,0,.005,z, .13,.025,3.1,white); }
+for(let side of [-1,1]){
+  box(world,side*7.0,.38,-75,.18,.7,180,mat(0x9ca8ae,.55,.55));
+  for(let i=0;i<40;i++){
+    const z=6-i*4.3-(i%3)*.7, x=side*(10+(i%5)*2.6);
+    const h=2.7+(i%4)*.65;
+    cylinder(world,x,h*.45,z,.16,.35,h,treeMat,7);
+    const crown=sphere(world,x,h,z,.85+(i%3)*.15,i%2?treeMat:treeLit); crown.scale.set(.8,1.35,.8);
+  }
+}
+// Distant mountain silhouettes
+for(let i=0;i<13;i++){
+ const m=new THREE.Mesh(new THREE.ConeGeometry(8+(i%4)*2,10+(i%5)*2,5),mat(i%2?0x637f91:0x7d96a4,.95));
+ m.position.set(-45+i*7,5,-100-(i%3)*8); scene.add(m);
+ const snow=new THREE.Mesh(new THREE.ConeGeometry(3.2+(i%3),4,5),mat(0xe1e8e8,.9));
+ snow.position.set(m.position.x,m.position.y+5,-100-(i%3)*8); scene.add(snow);
+}
+// Roadside buildings in distant skyline
+for(let i=0;i<15;i++){let x=(i-7)*4.2;let h=5+(i%5)*3;let b=box(world,x,h/2,-70-(i%4)*4,2.2,h,2.4,mat(i%2?0x526675:0x788c98,.42,.25));}
+const car = new THREE.Group(); scene.add(car); // cockpit fixed around driver; car translates along road
+// Dashboard
+box(car,0,1.02,-.72,1.9,.24,.55,black);
+box(car,0,.88,-.52,1.85,.12,.38,leather);
+box(car,0,1.13,-.48,1.86,.055,.09,trim);
+box(car,-.98,1.2,-.42,.12,.48,.2,black);
+box(car,.98,1.2,-.42,.12,.48,.2,black);
+// hood outside windshield
+box(car,0,.92,-1.65,1.75,.12,1.1,mat(0x202a34,.32,.35));
+// door tops and pillars
+for(let s of [-1,1]){
+ box(car,s*.94,1.25,-.1,.1,.55,1.25,black);
+ box(car,s*.91,1.05,-.83,.15,.25,.7,leather);
+ // side mirror
+ box(car,s*1.12,1.43,-.48,.27,.13,.3,black);
+ box(car,s*1.12,1.44,-.5,.22,.085,.23,glass);
+}
+// windshield frame top and A pillars
+box(car,0,1.83,-.85,2.05,.09,.1,black);
+for(let s of [-1,1]){let p=box(car,s*.88,1.48,-.85,.09,.72,.1,black);p.rotation.z=s*.22;}
+// Seats and center console
+box(car,0,.65,.12,1.8,.22,.72,black);
+box(car,0,.82,.36,.65,.18,.62,leather);
+box(car,0,.68,.35,.52,.08,.52,trim);
+box(car,.48,.72,-.02,.28,.22,.58,black);
+// gear shifter stem/knob
+const shifter=new THREE.Group(); shifter.position.set(.48,.88,-.04); car.add(shifter);
+cylinder(shifter,0,.13,0,.045,.06,.27,trim,12);
+sphere(shifter,0,.29,0,.105,black);
+sphere(shifter,-.025,.32,-.035,.025,red);
+// steering column and wheel in front of driver
+const wheelPivot=new THREE.Group(); wheelPivot.position.set(-.42,1.16,-.66); car.add(wheelPivot);
+cylinder(wheelPivot,0,0,.13,.09,.1,.25,trim,16,Math.PI/2);
+const wheel=new THREE.Mesh(new THREE.TorusGeometry(.36,.047,10,36),black); wheel.position.z=-.02; wheelPivot.add(wheel);
+const hub=cylinder(wheelPivot,0,0,-.01,.105,.105,.08,trim,20,Math.PI/2);
+box(wheelPivot,0,0,-.005,.055,.57,.055,black);
+box(wheelPivot,0,0,-.005,.48,.055,.055,black);
+sphere(wheelPivot,0,0,-.06,.09,black);
+// dashboard instrument cluster
+box(car,-.42,1.24,-.52,.57,.24,.025,mat(0x03090d,.25));
+function labelTexture(lines,w=512,h=256){const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.fillStyle='#061018';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#314553';ctx.lineWidth=4;ctx.strokeRect(4,4,w-8,h-8);ctx.fillStyle='#ff7959';ctx.font='bold 50px Arial';ctx.fillText(lines[0],22,72);ctx.fillStyle='#dce8ef';ctx.font='28px Arial';lines.slice(1).forEach((t,i)=>ctx.fillText(t,22,124+i*42));const tex=new THREE.CanvasTexture(c);return new THREE.MeshBasicMaterial({map:tex});}
+const dashScreen=new THREE.Mesh(new THREE.PlaneGeometry(.51,.2),labelTexture(['0 MPH','ROADLINE','DRIVE SYSTEM']));dashScreen.position.set(-.42,1.24,-.503);car.add(dashScreen);
+box(car,.37,1.23,-.53,.55,.22,.025,black);
+const nav=new THREE.Mesh(new THREE.PlaneGeometry(.49,.17),labelTexture(['NAVIGATION','ROUTE 01','MOUNTAIN HIGHWAY']));nav.position.set(.37,1.23,-.512);car.add(nav);
+// floor and pedals
+box(car,0,.23,.0,1.8,.12,1.2,black);
+for(let x of [-.3,0,.3]){let p=box(car,x,.34,-.35,.11,.025,.2,trim);p.rotation.x=-.2;}
+// hands rendered from tracked joint positions
+const handSpheres=[];
+const handMat=new THREE.MeshStandardMaterial({color:0xc9a27f,roughness:.72});
+for(let h=0;h<2;h++){let arr=[];for(let i=0;i<25;i++){let m=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),handMat);scene.add(m);m.visible=false;arr.push(m);}handSpheres.push(arr);}
+const jointNames=['wrist','thumb-metacarpal','thumb-phalanx-proximal','thumb-phalanx-distal','thumb-tip','index-finger-metacarpal','index-finger-phalanx-proximal','index-finger-phalanx-intermediate','index-finger-phalanx-distal','index-finger-tip','middle-finger-metacarpal','middle-finger-phalanx-proximal','middle-finger-phalanx-intermediate','middle-finger-phalanx-distal','middle-finger-tip','ring-finger-metacarpal','ring-finger-phalanx-proximal','ring-finger-phalanx-intermediate','ring-finger-phalanx-distal','ring-finger-tip','pinky-finger-metacarpal','pinky-finger-phalanx-proximal','pinky-finger-phalanx-intermediate','pinky-finger-phalanx-distal','pinky-finger-tip'];
+let gear='P',speed=0,steer=0,carZ=0,handDrive=false,lastTime=performance.now(),pinchStates=[false,false],wheelGrab=false,shiftGrab=false,shiftStartY=0;
+const gearNames={P:'PARK',R:'REVERSE',N:'NEUTRAL',D:'DRIVE'};
+function setGear(g){gear=g;document.getElementById('gearReadout').textContent=gearNames[g];document.querySelectorAll('.gear').forEach(b=>b.classList.toggle('active',b.dataset.gear===g));}
+document.querySelectorAll('.gear').forEach(b=>b.addEventListener('click',()=>setGear(b.dataset.gear)));
+document.getElementById('reset').addEventListener('click',()=>{carZ=0;speed=0;steer=0;car.position.set(0,0,0);wheelPivot.rotation.z=0;});
+document.getElementById('begin').addEventListener('click',()=>{document.getElementById('start').style.display='none';});
+const tmp=new THREE.Vector3();
+function worldPoint(obj){return obj.getWorldPosition(new THREE.Vector3());}
+function animate(){
+ const now=performance.now(),dt=Math.min((now-lastTime)/1000,.04);lastTime=now;
+ // Desktop fallback
+ const keys=window.__keys||{};
+ if(!renderer.xr.isPresenting){if(keys.KeyA)steer=Math.max(-1,steer-dt*1.6);if(keys.KeyD)steer=Math.min(1,steer+dt*1.6);if(!keys.KeyA&&!keys.KeyD)steer*=.97;if(keys.KeyW&&gear==='D')speed=Math.min(35,speed+dt*7);else if(keys.KeyS&&gear==='R')speed=Math.min(12,speed+dt*6);else speed=Math.max(0,speed-dt*3);}
+ let xrLeftTrigger=false;
+ if(renderer.xr.isPresenting){
+   const sessionNow=renderer.xr.getSession();
+   if(sessionNow) for(const src of sessionNow.inputSources){
+     // Left controller trigger is button 0 on standard XR gamepads.
+     if(src.handedness==='left' && src.gamepad && src.gamepad.buttons[0] && src.gamepad.buttons[0].pressed) xrLeftTrigger=true;
+   }
+ }
+ let driving=renderer.xr.isPresenting?(handDrive||xrLeftTrigger):!!(keys.KeyW||keys.KeyS);
+ if(renderer.xr.isPresenting && driving && (gear==='D'||gear==='R'))speed=Math.min(35,speed+dt*5.5);
+ if(!driving)speed=Math.max(0,speed-dt*2.4);
+ let direction=gear==='R'?-1:(gear==='D'?1:0);
+ if(gear==='P'||gear==='N')speed=Math.max(0,speed-dt*10);
+ carZ-=direction*speed*dt*.22;
+ // Move scenery toward driver, recycle road and roadside objects for endless road
+ world.position.z= -((carZ%8)+8)%8;
+ car.position.z=0;
+ wheelPivot.rotation.z=-steer*.75;
+ shifter.position.y=.88+(gear==='R'?.12:gear==='D'?.02:gear==='N'?.07:0);
+ // hand tracking joints, visualize tracked hands and detect pinch
+ handDrive=false;
+ const session=renderer.xr.getSession();
+ if(session){
+  let idx=0;
+  for(const source of session.inputSources){
+   if(!source.hand)continue;
+   const wrist=source.hand.get('wrist'),thumb=source.hand.get('thumb-tip'),index=source.hand.get('index-finger-tip');
+   if(!wrist||!thumb||!index)continue;
+   const frame=renderer.xr.getFrame(); if(!frame)continue;
+   const ref=renderer.xr.getReferenceSpace();
+   let wPose,tPose,iPose;
+   try{wPose=frame.getJointPose(wrist,ref);tPose=frame.getJointPose(thumb,ref);iPose=frame.getJointPose(index,ref);}catch(e){continue;}
+   if(!wPose||!tPose||!iPose)continue;
+   const w=new THREE.Vector3().fromArray(wPose.transform.position.toArray());
+   const t=new THREE.Vector3().fromArray(tPose.transform.position.toArray());
+   const ip=new THREE.Vector3().fromArray(iPose.transform.position.toArray());
+   const pin=t.distanceTo(ip)<.035;
+   pinchStates[idx]=pin;
+   if(pin)handDrive=true;
+   // Map hand location relative to seated player to steering wheel and shifter.
+   const localW=w.clone(); // tracked in XR reference space
+   const nearWheel=localW.distanceTo(new THREE.Vector3(-.42,1.16,-.66))<.42;
+   const nearShift=localW.distanceTo(new THREE.Vector3(.48,.88,-.04))<.3;
+   if(pin&&nearWheel){wheelGrab=true;steer=THREE.MathUtils.clamp((localW.x+.42)*2.3,-1,1);}
+   if(!pin)wheelGrab=false;
+   if(pin&&nearShift){shiftGrab=true;shiftStartY=localW.y; if(localW.y>1.0)setGear('R');else if(localW.y<.78)setGear('D');else setGear('N');}
+   if(!pin)shiftGrab=false;
+   // Show hand joint positions using WebXR joint list, transformed to scene coordinates.
+   let j=0;
+   for(const name of jointNames){const joint=source.hand.get(name);if(!joint)continue;let pose;try{pose=frame.getJointPose(joint,ref);}catch(e){}if(!pose)continue;
+    const mesh=handSpheres[idx][j++];if(mesh){mesh.position.fromArray(pose.transform.position.toArray());mesh.visible=true;}
+   }
+   for(;j<25;j++)handSpheres[idx][j].visible=false;
+   idx++;
+  }
+  for(let i=idx;i<2;i++)handSpheres[i].forEach(m=>m.visible=false);
+ }
+ document.getElementById('speed').textContent=Math.round(speed*2.1);
+ document.getElementById('steerReadout').textContent=steer<-.15?'LEFT':steer>.15?'RIGHT':'CENTER';
+ renderer.render(scene,camera);
+}
+window.__keys={};
+addEventListener('keydown',e=>{window.__keys[e.code]=true;if(e.code==='Escape')document.getElementById('start').style.display='block';});
+addEventListener('keyup',e=>window.__keys[e.code]=false);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+renderer.setAnimationLoop(animate);
+</script>
+</body>
+</html>
