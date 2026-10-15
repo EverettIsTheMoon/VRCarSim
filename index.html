@@ -60,15 +60,16 @@ const rc=document.createElement('canvas');rc.width=rc.height=256;const rx=rc.get
 const rt=new T.CanvasTexture(rc);rt.wrapS=rt.wrapT=T.RepeatWrapping;rt.repeat.set(1,40);
 const road=new T.Mesh(new T.PlaneGeometry(11,400),new T.MeshStandardMaterial({map:rt,roughness:.9}));road.rotation.x=-Math.PI/2;scene.add(road);
 const ground=new T.Mesh(new T.PlaneGeometry(900,900),M(0x4b6b3a,1,0));ground.rotation.x=-Math.PI/2;ground.position.y=-.03;scene.add(ground);
-const side=[];
+const side=[],worldSolids=[];
+function addSideSolid(obj,type,hx=0,hz=0,r=0){worldSolids.push({obj,type,hx,hz,r})}
 for(let i=0;i<26;i++)for(const s of[-1,1]){const h=R(3,18),w=R(4,9),b=new T.Mesh(new T.BoxGeometry(w,h,w),M(new T.Color().setHSL(R(.5,.65),.1,R(.4,.7))));
-b.position.set(s*R(12,30),h/2,-i*20-R(0,15));scene.add(b);side.push(b);
-const l=new T.Mesh(new T.BoxGeometry(.15,5,.15),M(0x333333));l.position.set(s*6.6,2.5,-i*20-10);scene.add(l);side.push(l)}
+b.position.set(s*R(12,30),h/2,-i*20-R(0,15));scene.add(b);side.push(b);addSideSolid(b,'box',w/2,w/2);
+const l=new T.Mesh(new T.BoxGeometry(.15,5,.15),M(0x333333));l.position.set(s*6.6,2.5,-i*20-10);scene.add(l);side.push(l);addSideSolid(l,'box',.18,.18)}
 const treeM=M(0x2e6b34,.9,0),trunkM=M(0x5a3b22);
 for(let i=0;i<46;i++){const s=i%2?1:-1,g=new T.Group(),h=R(2.5,5),t=new T.Mesh(new T.CylinderGeometry(.18,.25,h*.4,6),trunkM);t.position.y=h*.2;g.add(t);
-for(let k=0;k<3;k++){const c=new T.Mesh(new T.ConeGeometry(R(1.2,1.8)*(1-k*.25),h*.5,7),treeM);c.position.y=h*.45+k*h*.22;g.add(c)}g.position.set(s*R(8,22),0,-i*11-R(0,10));scene.add(g);side.push(g)}
-for(let i=0;i<24;i++){const r=new T.Mesh(new T.DodecahedronGeometry(R(.4,1.2)),M(0x777777,1,0));r.position.set((i%2?1:-1)*R(7,18),.3,-i*21-R(0,15));scene.add(r);side.push(r)}
-for(let i=0;i<12;i++){const s=i%2?1:-1,g=new T.Group();box(.1,3,.1,M(0x444444),0,1.5,0,g);box(1.1,.8,.08,M(new T.Color().setHSL(R(0,1),.7,.5)),0,3.1,0,g);g.position.set(s*R(6.9,7.4),0,-i*43-R(0,20));scene.add(g);side.push(g)}
+for(let k=0;k<3;k++){const c=new T.Mesh(new T.ConeGeometry(R(1.2,1.8)*(1-k*.25),h*.5,7),treeM);c.position.y=h*.45+k*h*.22;g.add(c)}g.position.set(s*R(8,22),0,-i*11-R(0,10));scene.add(g);side.push(g);addSideSolid(g,'circle',0,0,.48)}
+for(let i=0;i<24;i++){const rad=R(.4,1.2),r=new T.Mesh(new T.DodecahedronGeometry(rad),M(0x777777,1,0));r.position.set((i%2?1:-1)*R(7,18),.3,-i*21-R(0,15));scene.add(r);side.push(r);addSideSolid(r,'circle',0,0,rad*.78)}
+for(let i=0;i<12;i++){const s=i%2?1:-1,g=new T.Group();box(.1,3,.1,M(0x444444),0,1.5,0,g);box(1.1,.8,.08,M(new T.Color().setHSL(R(0,1),.7,.5)),0,3.1,0,g);g.position.set(s*R(6.9,7.4),0,-i*43-R(0,20));scene.add(g);side.push(g);addSideSolid(g,'box',.22,.22)}
 for(let i=0;i<8;i++){const s=i%2?1:-1,g=new T.Group();box(.3,7,.3,M(0x555555),-3,3.5,0,g);box(.3,7,.3,M(0x555555),3,3.5,0,g);box(8,3.5,.3,M(new T.Color().setHSL(R(0,1),.6,.55)),0,7.5,0,g);g.position.set(s*R(15,20),0,-i*65-R(0,30));g.rotation.y=-s*.4;scene.add(g);side.push(g)}
 const far=new T.Group();scene.add(far);for(let i=0;i<12;i++){const h=R(40,90),m=new T.Mesh(new T.ConeGeometry(R(40,80),h,6),M(0x6a7a8a,1,0));m.position.set((i%2?1:-1)*R(160,260),h/2-2,R(-300,300));far.add(m)}
 /* ---------- solids (AABB [x0,z0,x1,z1]) ---------- */
@@ -152,7 +153,8 @@ for(let i=0;i<pa.count;i++){v.fromBufferAttribute(pa,i);const k=v.distanceTo(p);
 pa.needsUpdate=true;mesh.geometry.computeVertexNormals()}
 /* ---------- state ---------- */
 const S={hand:'left',gas:0,grab:1},carP=new T.Vector3(),vel=new T.Vector3(),QF=new T.Quaternion().setFromEuler(new T.Euler(0,0,-Math.PI/2)),QFr=new T.Quaternion().setFromEuler(new T.Euler(0,0,Math.PI/2));
-let left=null,sec=null,hand=null,hand2=null,gun=null,gear=1,speed=0,heading=0,damage=0,steer=0,wasRec=0,wasRep=0,smk=0,wallCool=0,hudT=0,yHold=0,yDone=0,hintT=0,hintS='';const keys={};
+let left=null,sec=null,hand=null,hand2=null,gun=null,gear=1,speed=0,heading=0,damage=0,steer=0,wasRec=0,wasRep=0,smk=0,wallCool=0,hudT=0,yHold=0,yDone=0,hintT=0,hintS='';
+let bodyBounce=0,bodyBounceV=0,bodyPitch=0,bodyPitchV=0,bodyRoll=0,bodyRollV=0;const keys={};
 let mode='free',onFoot=false,dead=0,sx=0,sy=0,raceT=0,raceDone=0,doneT=0,ramp=0,wheelA=0,wSm=0,hbA=0,wheelHeld=0;
 let fuel=1,rpm=900,gi=1,shiftT=0,yaw=0,slipV=0,refuel=0,bGrace=0,boostT=0,boostCD=0,vyc=0,air=false,lastVy=0,boomDeath=false;
 let night=0,nightT=0,sleepT=0,sleptDone=false,gunOut=false,gunCD=0,menuOpen=false,musicOn=true,menuPrev=0;
@@ -176,9 +178,10 @@ for(const sx2 of[-.92,.92])for(const sz of[-1.35,1.35]){const w=new T.Mesh(new T
 box(1.86,.18,.14,dkm,0,.38,-2.15,g);box(1.86,.18,.14,dkm,0,.38,2.15,g);box(.7,.15,.04,dkm,0,.7,-2.13,g);box(.5,.12,.02,M(0xeeeeee),0,.52,2.14,g);[-1,1].forEach(s=>box(.12,.08,.2,bm,s*1,1.05,-.7,g));scene.add(g);
 const n={g,body,o:body.geometry.attributes.position.array.slice(),cool:0,arr:true,life:0};npcs.push(n);place(n,1)}
 /* ---------- menu, on-foot, death ---------- */
-const carMesh=new T.Group();{const cb=box(1.8,.8,4.2,M(0xc0261f,.4,.5),0,.65,0,carMesh);box(1.5,.55,2,M(0x15191e,.2,.6),0,1.3,.4,carMesh);
-for(const x of[-.92,.92])for(const z of[-1.35,1.35]){const w=new T.Mesh(new T.CylinderGeometry(.36,.36,.26,14),M(0x0a0a0a,.9,0));w.rotation.z=Math.PI/2;w.position.set(x,.36,z);carMesh.add(w)}
-[-.6,.6].forEach(x=>{box(.36,.14,.06,new T.MeshBasicMaterial({color:0xfff3c0}),x,.75,-2.12,carMesh);box(.36,.12,.06,new T.MeshBasicMaterial({color:0xd01010}),x,.8,2.12,carMesh)});scene.add(carMesh)}
+const carMesh=new T.Group(),carWheels=[];{
+const cb=box(1.8,.8,4.2,M(0xc0261f,.4,.5),0,.65,0,carMesh);box(1.5,.55,2,M(0x15191e,.2,.6),0,1.3,.4,carMesh);
+for(const x of[-.92,.92])for(const z of[-1.35,1.35]){const wg=new T.Group();wg.position.set(x,.36,z);carMesh.add(wg);carWheels.push({g:wg,x,z,offset:0,velocity:0,spin:0});const w=new T.Mesh(new T.CylinderGeometry(.36,.36,.26,14),M(0x0a0a0a,.9,0));w.rotation.z=Math.PI/2;wg.add(w)}
+[-.6,.6].forEach(x=>{box(.36,.14,.06,new T.MeshBasicMaterial({color:0xfff3c0}),x,.75,-2.12,carMesh);box(.36,.12,.06,new T.MeshBasicMaterial({color:0xd01010}),x,.8,2.12,carMesh)});carMesh.rotation.order='YXZ';scene.add(carMesh)}
 const man=mkPerson(0x2a5db0,0x333344).g;man.visible=false;man.userData.v=new T.Vector3();scene.add(man);
 const pool=new T.Mesh(new T.CircleGeometry(1,20),new T.MeshBasicMaterial({color:0x6a0000}));pool.rotation.x=-Math.PI/2;pool.visible=false;scene.add(pool);
 const bc=document.createElement('canvas');bc.width=bc.height=256;const bx=bc.getContext('2d'),btex=new T.CanvasTexture(bc),drips=[];
@@ -193,7 +196,7 @@ if(man.position.y===0&&!pool.visible){pool.visible=true;pool.position.set(man.po
 rig.position.lerp(new T.Vector3(man.position.x,1.2,man.position.z+7),Math.min(1,dt*3));rig.rotation.y=0;
 if(dead<.1){bx.fillStyle='rgba(150,0,0,.35)';bx.fillRect(0,0,256,256)}if(Math.random()<dt*18&&drips.length<90)drips.push({x:R(0,256),y:0,s:R(30,90),w:R(5,16)});
 bx.fillStyle='rgba(120,0,10,.9)';for(const d of drips)if(d.y<256){bx.fillRect(d.x,d.y,d.w,d.s*dt+2);d.y+=d.s*dt}btex.needsUpdate=true;if(dead>4.5)restart()}
-function restart(){dead=0;boomDeath=false;air=false;vyc=0;vel.set(0,0,0);speed=0;steer=0;wheelA=0;yaw=0;gi=1;rpm=IDLE;shiftT=0;boostT=0;boostCD=0;bGrace=0;gear=1;fuel=1;hbA=0;gunOut=false;sleepT=0;fade.visible=false;
+function restart(){dead=0;boomDeath=false;air=false;vyc=0;vel.set(0,0,0);speed=0;steer=0;wheelA=0;yaw=0;bodyBounce=bodyBounceV=bodyPitch=bodyPitchV=bodyRoll=bodyRollV=0;carWheels.forEach(w=>{w.offset=0;w.velocity=0;w.spin=0;w.g.position.y=.36;w.g.rotation.x=0});gi=1;rpm=IDLE;shiftT=0;boostT=0;boostCD=0;bGrace=0;gear=1;fuel=1;hbA=0;gunOut=false;sleepT=0;fade.visible=false;
 carMesh.children[0].material.color.setHex(0xc0261f);ramps.forEach(r=>placeRamp(r,true));repair();raceT=0;raceDone=0;man.visible=pool.visible=blood.visible=false;
 if(mode==='race'){carP.set(0,0,0);heading=0;onFoot=false;rig.position.set(0,0,0);rig.rotation.y=0;cock.visible=true;carMesh.visible=false}
 else{carP.set(-15,0,-4.5);heading=-Math.PI/2;onFoot=true;rig.position.set(-15.5,0,3);rig.rotation.y=-Math.PI/2;cock.visible=false;carMesh.visible=true;carMesh.position.copy(carP);carMesh.rotation.y=heading}
@@ -201,9 +204,13 @@ npcs.forEach(n=>place(n,1));peds.forEach(e=>respawnPed(e,true));resetItems()}
 function toggleCar(){if(dead||menuOpen||sleepT>0)return;if(!onFoot){onFoot=true;gunOut=false;const c=Math.cos(heading),s=Math.sin(heading);rig.position.set(carP.x-2*c,0,carP.z+2*s);rig.rotation.y=0;cock.visible=false;carMesh.visible=true}
 else if(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6){onFoot=false;gunOut=false;cock.visible=true;carMesh.visible=false;rig.rotation.y=heading}else gunOut=!gunOut}
 function pushOut(list,ox,oz,p,r){for(const b of list){const x0=ox+b[0]-r,x1=ox+b[2]+r,z0=oz+b[1]-r,z1=oz+b[3]+r;if(p.x>x0&&p.x<x1&&p.z>z0&&p.z<z1){const d=[p.x-x0,x1-p.x,p.z-z0,z1-p.z],m=Math.min(d[0],d[1],d[2],d[3]);if(m===d[0])p.x=x0;else if(m===d[1])p.x=x1;else if(m===d[2])p.z=z0;else p.z=z1}}}
+function pushOutScenery(p,r){for(const b of worldSolids){const o=b.obj;if(!o.visible)continue;const ox=o.position.x,oz=o.position.z;if(Math.abs(p.x-ox)>b.hx+r+(b.r||0)||Math.abs(p.z-oz)>b.hz+r+(b.r||0))continue;
+ if(b.type==='circle'){let dx=p.x-ox,dz=p.z-oz,d=Math.hypot(dx,dz),min=(b.r||.5)+r;if(d<min){if(d<.0001){dx=1;dz=0;d=1}p.x=ox+dx/d*min;p.z=oz+dz/d*min}}
+ else{const x0=ox-b.hx-r,x1=ox+b.hx+r,z0=oz-b.hz-r,z1=oz+b.hz+r;if(p.x>x0&&p.x<x1&&p.z>z0&&p.z<z1){const d=[p.x-x0,x1-p.x,p.z-z0,z1-p.z],m=Math.min(d[0],d[1],d[2],d[3]);if(m===d[0])p.x=x0;else if(m===d[1])p.x=x1;else if(m===d[2])p.z=z0;else p.z=z1}}
+}}
 function walk(dt){const f=new T.Vector3();cam.getWorldDirection(f);f.y=0;if(f.lengthSq()<1e-4)f.set(0,0,-1);f.normalize();const a=Math.abs(sx)>.15?sx:0,b=Math.abs(sy)>.15?sy:0;
 rig.position.addScaledVector(f,-b*2.8*dt).addScaledVector(new T.Vector3(-f.z,0,f.x),a*2.8*dt);rig.position.y=0;
-pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);
+pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);pushOutScenery(rig.position,.3)
 const c=Math.cos(heading),s=Math.sin(heading),dx=rig.position.x-carP.x,dz=rig.position.z-carP.z,xl=dx*c-dz*s,zl=dx*s+dz*c;
 if(Math.abs(xl)<1.2&&Math.abs(zl)<2.5){const px=1.2-Math.abs(xl),pz=2.5-Math.abs(zl);let nx=xl,nz=zl;if(px<pz)nx=Math.sign(xl||1)*1.2;else nz=Math.sign(zl||1)*2.5;rig.position.x=carP.x+nx*c+nz*s;rig.position.z=carP.z-nx*s+nz*c}}
 /* ---------- decor, blood, explosions, fx ---------- */
@@ -277,12 +284,37 @@ function interact(){if(!onFoot||dead||menuOpen||sleepT>0)return;const p=rig.posi
 /* ---------- boost, collisions with buildings, ramps ---------- */
 function boost(){if(boostCD<=0&&boostT<=0&&!dead&&!onFoot&&!menuOpen){boostT=2.5;boostCD=7;vyc=3;air=true;buzz(1)}}
 const CORN=[[-.9,-2.1],[.9,-2.1],[-.9,2.1],[.9,2.1],[-.9,0],[.9,0],[0,-2.1],[0,2.1]];
+function kickSuspension(imp,nx=0,nz=0){const k=C(imp*.045,0,2.2);bodyBounceV+=k;bodyPitchV+=C(-nz*imp*.0018,-.12,.12);bodyRollV+=C(nx*imp*.0018,-.12,.12)}
 function carSolids(){const c=Math.cos(heading),s=Math.sin(heading),inv=boostT>0||bGrace>0;
 for(const [L,ox,oz] of [[sol,0,0],[tSol,town.position.x,town.position.z]])for(const b of L){
-if(carP.x<ox+b[0]-4||carP.x>ox+b[2]+4||carP.z<oz+b[1]-4||carP.z>oz+b[3]+4)continue;
-for(const k of CORN){const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
-if(wx>ox+b[0]&&wx<ox+b[2]&&wz>oz+b[1]&&wz<oz+b[3]){const d=[wx-(ox+b[0]),ox+b[2]-wx,wz-(oz+b[1]),oz+b[3]-wz],m=Math.min(d[0],d[1],d[2],d[3]);let nx=0,nz=0;if(m===d[0])nx=-1;else if(m===d[1])nx=1;else if(m===d[2])nz=-1;else nz=1;
-carP.x+=nx*m;carP.z+=nz*m;const vn=vel.x*nx+vel.z*nz;if(vn<0){vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;const imp=-vn;if(imp>1.5&&wallCool<=0){wallCool=.3;if(!inv)damage=Math.min(.95,damage+imp*.01);hurtHood(imp,0,[nx*.3,-.2,.5]);buzz(imp/20);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/15,.2,1))}}break}}}}
+ if(carP.x<ox+b[0]-4||carP.x>ox+b[2]+4||carP.z<oz+b[1]-4||carP.z>oz+b[3]+4)continue;
+ for(const k of CORN){const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
+  if(wx>ox+b[0]&&wx<ox+b[2]&&wz>oz+b[1]&&wz<oz+b[3]){const d=[wx-(ox+b[0]),ox+b[2]-wx,wz-(oz+b[1]),oz+b[3]-wz],m=Math.min(d[0],d[1],d[2],d[3]);let nx=0,nz=0;if(m===d[0])nx=-1;else if(m===d[1])nx=1;else if(m===d[2])nz=-1;else nz=1;
+   carP.x+=nx*m;carP.z+=nz*m;const vn=vel.x*nx+vel.z*nz;if(vn<0){vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;const imp=-vn;if(imp>1.5&&wallCool<=0){wallCool=.3;kickSuspension(imp,nx,nz);if(!inv)damage=Math.min(.95,damage+imp*.01);hurtHood(imp,0,[nx*.3,-.2,.5]);buzz(imp/20);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/15,.2,1))}}break}
+ }
+}
+/* Dynamic roadside solids: boxes for buildings and poles, round footprints for tree trunks and rocks. */
+for(const b of worldSolids){const o=b.obj;if(!o.visible)continue;const ox=o.position.x,oz=o.position.z;
+ if(Math.abs(carP.x-ox)>b.hx+4.5+(b.r||0)||Math.abs(carP.z-oz)>b.hz+4.5+(b.r||0))continue;
+ if(b.type==='box'){
+  const x0=ox-b.hx,x1=ox+b.hx,z0=oz-b.hz,z1=oz+b.hz;
+  for(const k of CORN){const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
+   if(wx>x0&&wx<x1&&wz>z0&&wz<z1){const d=[wx-x0,x1-wx,wz-z0,z1-wz],m=Math.min(d[0],d[1],d[2],d[3]);let nx=0,nz=0;if(m===d[0])nx=-1;else if(m===d[1])nx=1;else if(m===d[2])nz=-1;else nz=1;
+    carP.x+=nx*m;carP.z+=nz*m;const vn=vel.x*nx+vel.z*nz;if(vn<0){vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;const imp=-vn;if(imp>1.5&&wallCool<=0){wallCool=.3;kickSuspension(imp,nx,nz);if(!inv)damage=Math.min(.95,damage+imp*.009);hurtHood(imp,0,[nx*.3,-.2,.5]);buzz(imp/20);sparks(new T.Vector3(wx,.65,wz),imp);thud(C(imp/15,.2,1))}}break}
+  }
+ }else{
+  const dx=ox-carP.x,dz=oz-carP.z,lx=dx*c-dz*s,lz=dx*s+dz*c,qx=C(lx,-.95,.95),qz=C(lz,-2.1,2.1),ex=lx-qx,ez=lz-qz,dist=Math.hypot(ex,ez);
+  if(dist<(b.r||.5)){
+   let nxL,nzL,pen;
+   if(dist>.0001){nxL=-ex/dist;nzL=-ez/dist;pen=(b.r||.5)-dist}
+   else if(.95-Math.abs(lx)<2.1-Math.abs(lz)){nxL=lx>=0?-1:1;nzL=0;pen=(b.r||.5)+.95-Math.abs(lx)}
+   else{nxL=0;nzL=lz>=0?-1:1;pen=(b.r||.5)+2.1-Math.abs(lz)}
+   const nx=c*nxL+s*nzL,nz=-s*nxL+c*nzL;carP.x+=nx*pen;carP.z+=nz*pen;const vn=vel.x*nx+vel.z*nz;
+   if(vn<0){vel.x-=1.3*vn*nx;vel.z-=1.3*vn*nz;const imp=-vn;if(imp>1.25&&wallCool<=0){wallCool=.3;kickSuspension(imp,nx,nz);if(!inv)damage=Math.min(.95,damage+imp*.012);hurtHood(imp,nx,[nx*.5,-.25,.35]);buzz(imp/18);sparks(new T.Vector3(ox,.5,oz),imp);thud(C(imp/14,.2,1))}}
+  }
+ }
+}
+}
 const ramps=[],rs=new T.Shape();rs.moveTo(0,0);rs.lineTo(16,0);rs.lineTo(16,4.5);rs.lineTo(0,0);
 const rg=new T.ExtrudeGeometry(rs,{depth:5,bevelEnabled:false});rg.translate(0,0,-2.5);const rmat=M(0xe8a020,.7,.1);
 function placeRamp(r,init){r.z=rig.position.z-(init?R(250,500)+ramps.length*500:R(900,1800));r.x=R(-1.5,1.5);r.m.position.set(r.x,0,r.z)}
@@ -291,7 +323,7 @@ function splashDamage(imp){if(boostT>0||bGrace>0)return;damage=Math.min(.95,dama
 function airStep(dt){for(const r of ramps)if(r.z>rig.position.z+40||r.z<rig.position.z-2500)placeRamp(r);if(dead||onFoot)return;let gy=0;
 for(const r of ramps){const dx=Math.abs(carP.x-r.x),dz=r.z-carP.z;if(dx<r.w/2&&dz>0&&dz<r.l)gy=Math.max(gy,dz/r.l*r.h)}
 if(!air){if(gy<carP.y-.1){air=true;vyc=Math.max(0,lastVy)}else{lastVy=(gy-carP.y)/Math.max(dt,.001);carP.y=gy}}
-if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;if(imp>7){sparks(new T.Vector3(carP.x,.6,carP.z),imp);shed(carP,6);splashDamage(imp)}}}}
+if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;if(imp>7){kickSuspension(imp);sparks(new T.Vector3(carP.x,.6,carP.z),imp);shed(carP,6);splashDamage(imp)}}}}
 const hbc=document.createElement('canvas');hbc.width=256;hbc.height=40;const hbx=hbc.getContext('2d'),hbt=new T.CanvasTexture(hbc);
 const hbar=new T.Mesh(new T.PlaneGeometry(.32,.05),new T.MeshBasicMaterial({map:hbt,transparent:true,depthTest:false}));hbar.position.set(0,-.2,-.75);hbar.renderOrder=998;hbar.visible=false;cam.add(hbar);let hbLast=-1;
 function drawBar(){const fl=damage>.8&&((performance.now()/250)|0)%2,f=Math.round(damage*40)+(fl?100:0);if(f===hbLast)return;hbLast=f;const g=hbx;g.clearRect(0,0,256,40);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,0,256,40);g.fillStyle=damage>.8?'#ff3b30':damage>.5?'#ff9f0a':'#34c759';g.fillRect(4,16,248*damage,20);g.strokeStyle='#fff';g.strokeRect(4,16,248,20);g.fillStyle='#fff';g.font='bold 13px sans-serif';g.textAlign='left';g.fillText(damage>.8?'!! ABOUT TO EXPLODE !!':'EXPLOSION RISK',6,13);hbt.needsUpdate=true}
@@ -418,6 +450,25 @@ document.querySelectorAll('#menu [data-m]').forEach(b=>b.onclick=()=>{mode=b.dat
 /* ---------- day/night ---------- */
 function lighting(dt){night+=(nightT-night)*Math.min(1,dt*1.5);scene.background.copy(SKY_D).lerp(SKY_N,night);scene.fog.color.copy(scene.background);hemi.intensity=.9-.74*night;sun.intensity=.8-.76*night;stars.material.opacity=C(night*1.4-.3,0,1);stars.position.copy(rig.position);
 headL.intensity=(!onFoot&&!dead)?night*3.2:0;houseL.intensity=.45+night*.7;gasL.intensity=.4+night*.7;mcdL.intensity=.4+night*.7}
+/* ---------- suspension and tyre contact ---------- */
+function rampHeightAt(x,z){let gy=0;for(const r of ramps){const dx=Math.abs(x-r.x),dz=r.z-z;if(dx<r.w/2&&dz>0&&dz<r.l)gy=Math.max(gy,dz/r.l*r.h)}return gy}
+function roadJitter(x,z){const a=onRoadAt(x,z)?0.018:0.055;return a*(Math.sin(z*1.73+Math.sin(x*1.31))*.55+Math.sin(z*3.91+x*2.07)*.27+Math.sin(x*3.17-z*.69)*.18)}
+function surfaceAt(x,z){const rh=rampHeightAt(x,z);return rh+(rh>.02?0:roadJitter(x,z))}
+function stepSuspension(dt,driving,gasV,brakeV){
+ const centerSurface=surfaceAt(carP.x,carP.z),targetBody=air?0:centerSurface-carP.y;
+ bodyBounceV+=((targetBody-bodyBounce)*38-bodyBounceV*10.5)*dt;bodyBounce+=bodyBounceV*dt;bodyBounce=C(bodyBounce,-.2,.22);
+ const c=Math.cos(heading),s=Math.sin(heading);let front=0,rear=0,leftH=0,rightH=0,nf=0,nr=0,nl=0,nrgt=0;
+ for(const w of carWheels){const wx=carP.x+c*w.x+s*w.z,wz=carP.z-s*w.x+c*w.z;
+  const target=air?-.11:C(surfaceAt(wx,wz)-carP.y-bodyBounce,-.22,.22);
+  w.velocity+=((target-w.offset)*46-w.velocity*10.5)*dt;w.offset+=w.velocity*dt;w.offset=C(w.offset,-.23,.23);
+  if(w.z<0){front+=w.offset;nf++}else{rear+=w.offset;nr++}if(w.x<0){leftH+=w.offset;nl++}else{rightH+=w.offset;nrgt++}
+  w.g.position.y=.36+w.offset;w.spin+=speed/RW*dt;w.g.rotation.x=w.spin;
+ }
+ front/=Math.max(1,nf);rear/=Math.max(1,nr);leftH/=Math.max(1,nl);rightH/=Math.max(1,nrgt);
+ const targetPitch=C((rear-front)*.25+(brakeV-gasV*.35)*.025,-.12,.12),targetRoll=C((rightH-leftH)*.3-yaw*speed*.006,-.13,.13);
+ bodyPitchV+=((targetPitch-bodyPitch)*29-bodyPitchV*8.5)*dt;bodyPitch+=bodyPitchV*dt;bodyPitch=C(bodyPitch,-.14,.14);
+ bodyRollV+=((targetRoll-bodyRoll)*29-bodyRollV*8.5)*dt;bodyRoll+=bodyRollV*dt;bodyRoll=C(bodyRoll,-.15,.15);
+}
 /* ---------- main loop ---------- */
 let last=performance.now();
 renderer.setAnimationLoop(()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
@@ -484,8 +535,8 @@ for(const q of puffs)if(q.l>0){q.l-=dt*.45;q.s.position.addScaledVector(q.v,dt);
 if(mode==='race'&&!dead&&!raceDone){raceT+=dt;if(-carP.z>=2500){raceDone=1;doneT=6}}if(raceDone){doneT-=dt;if(doneT<0)restart()}
 /* sleeping */
 if(sleepT>0){sleepT+=dt;const a=sleepT<1?sleepT:sleepT<1.3?1:Math.max(0,1-(sleepT-1.3));fade.material.opacity=a;fade.visible=a>.01;if(!sleptDone&&sleepT>=1){sleptDone=true;nightT=nightT>.5?0:1}if(sleepT>2.3){sleepT=0;sleptDone=false;fade.visible=false}}
-if(menuOpen)menuStep();updateFX(dt);
-if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(sleepT<=0)walk(dt);carMesh.position.set(carP.x,carP.y,carP.z);carMesh.rotation.y=heading}else{rig.position.copy(carP);rig.rotation.y=heading}
+if(menuOpen)menuStep();updateFX(dt);stepSuspension(dt,driving,gas,brake);
+if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(sleepT<=0)walk(dt);carMesh.position.set(carP.x,carP.y+bodyBounce,carP.z);carMesh.rotation.y=heading;carMesh.rotation.x=bodyPitch;carMesh.rotation.z=bodyRoll;rig.rotation.x=0;rig.rotation.z=0}else{rig.position.copy(carP);rig.position.y+=bodyBounce;rig.rotation.order='YXZ';rig.rotation.set(bodyPitch*.55,heading,bodyRoll*.62,'YXZ');carMesh.position.set(carP.x,carP.y+bodyBounce,carP.z);carMesh.rotation.y=heading;carMesh.rotation.x=bodyPitch;carMesh.rotation.z=bodyRoll}
 /* town + decor follow */
 const wz=rig.position.z;
 if(town.position.z>wz+150||town.position.z<wz-1000){const k=Math.max(0,Math.ceil((-wz-50)/900));town.position.z=-150-900*k;resetItems();side.forEach(zoneCheck)}
