@@ -1863,7 +1863,7 @@ const SONGS=['Songs/song1.m4a','Songs/song2.m4a'];
 const CAND=n=>['Songs/song'+n+'.m4a','songs/song'+n+'.m4a','Songs/Song'+n+'.m4a','song'+n+'.m4a','Songs/song'+n+'.mp3','songs/song'+n+'.mp3','Songs/Song'+n+'.mp3','Songs/song'+n+'.MP3','song'+n+'.mp3'];
 let toastEl=null,toastT=0;function toast(t,ok){if(!toastEl){toastEl=document.createElement('div');toastEl.style.cssText='position:fixed;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:9998;background:rgba(101,13,13,.92);color:#fff;padding:8px 10px;border-radius:8px;font:12px system-ui,sans-serif;text-align:center;pointer-events:none';document.body.appendChild(toastEl)}toastEl.textContent=t;toastEl.style.background=ok?'rgba(14,86,40,.92)':'rgba(101,13,13,.92)';toastEl.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>{toastEl.style.display='none'},9000)}
 const au=SONGS.map((s,i)=>{const a=new Audio();a._c=CAND(i+1);a._k=0;a.loop=true;a.preload='metadata';a.src=a._c[0];return a});
-const BX=[.33,.47],BY=-.17,BZ=-.78;
+const BX=[.33,.47],BY=-.25,BZ=-.78;
 const BASE=['#7a2a2a','#2a4a7a'],ON=['#ff5a5a','#5aa0ff'];
 let cur=-1,lastStation=-1,bad=[0,0,0],prevMusic=true,resumeBgm=false,cd=0,last=performance.now(),sig='';
 const _p=new T.Vector3();
@@ -2009,7 +2009,7 @@ function tick(){const tn=performance.now(),dt=Math.min(.1,(tn-last)/1000);last=t
    let tl;if(J){cock.updateMatrixWorld(true);tl=cock.worldToLocal(tp.clone())}else tl=tp.clone().sub(cock.position);
    if(Math.abs(tl.y-(BY-.11))<.045&&Math.abs(tl.z-(BZ-.12))<.055&&tl.x>.27&&tl.x<.53){vol=C((tl.x-.29)/.22,0,1);const uiVol=document.querySelector('#radioPanel input[type=range]');if(uiVol)uiVol.value=String(vol);radioVolKnob.position.x=.29+.22*vol;cd=.08;continue}
    for(let i=0;i<2;i++){if(tl.distanceTo(_p.set(BX[i],BY,BZ))<(J ? .045 : .06)){press(i);cd=.5;try{buzz(.4,o)}catch(e){}break}}if(cd>0)break}}
- radioVolKnob.position.x=.04+.22*vol;radioMix(dt);sendT-=dt;if(sendT<=0){sendT=2.5;radioSend()}
+ radioVolKnob.position.x=.29+.22*vol;radioMix(dt);sendT-=dt;if(sendT<=0){sendT=2.5;radioSend()}
  mobSync()}
 const _h=window.__roadlineHandsUpdate;window.__roadlineHandsUpdate=function(){try{if(_h)_h()}catch(e){}try{tick()}catch(e){}};
 draw();
@@ -2077,7 +2077,7 @@ draw();
   }
  }
  setInterval(()=>{try{cdGrabStep();discLabel.position.set(disc.position.x,disc.position.y,disc.position.z+.004);discLabel.visible=drawerOpen&&disc.position.y>-.39;discOutline.visible=discHeldBy?false:discOutline.visible;discOutline.position.copy(disc.position);discOutline.position.z-=.003}catch(e){}},30);
- const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V12';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
+ const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V13';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
  paint('TRAY CLOSED · NO DISC');
 })();</script>
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
