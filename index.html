@@ -165,6 +165,13 @@ rlGetModel('player').then(asset=>{
  model.scale.setScalar(1);
  model.position.set(0,0,0);
  model.updateMatrixWorld(true);
+ // Align the imported avatar's lowest visible geometry with the ground.
+ // The GLB origin is around the torso, which made the lower body sink below the floor.
+ const avatarBounds=new T.Box3().setFromObject(model);
+ if(Number.isFinite(avatarBounds.min.y)&&Math.abs(avatarBounds.min.y)<10000){
+   model.position.y-=avatarBounds.min.y;
+   model.updateMatrixWorld(true);
+ }
  playerAvatar.add(model);playerAvatar.userData.model=model;playerAvatarLoaded=true;
  if(asset.animations&&asset.animations.length){const clip=asset.animations.find(a=>/walk|run|locomotion/i.test(a.name))||asset.animations[0];playerAvatarMixer=new T.AnimationMixer(model);playerAvatarAction=playerAvatarMixer.clipAction(clip);playerAvatarAction.reset();playerAvatarAction.setLoop(T.LoopRepeat,Infinity);playerAvatarAction.play();playerAvatarAction.paused=true;}
 }).catch(()=>{playerAvatarLoaded=false;console.warn('[Roadline Player] Models/player.glb could not load; third-person player model unavailable');});
