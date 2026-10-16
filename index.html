@@ -161,7 +161,7 @@ const renderer=new T.WebGLRenderer({antialias:false,alpha:false,powerPreference:
 /* Keep the 3D scene crisp on phones; adapt render resolution only when frame rate drops.
    HTML HUD/menu text remains at native screen resolution. */
 let roadlineRenderScale=1,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
-function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75)*Math.max(.85,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
+function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6)*Math.max(.8,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
 roadlineApplyRenderScale();renderer.setClearColor(0x9ec8e8,1);renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0';renderer.xr.enabled=true;if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(.55);document.body.appendChild(renderer.domElement);
 const SKY_D=new T.Color(0x9ec8e8),SKY_N=new T.Color(0x070b18);
 const scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(0x9ec8e8,90,520);
@@ -1133,6 +1133,8 @@ target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));steer+=(target-s
 {const h=heading,fx=-Math.sin(h),fz=-Math.cos(h),rx2=Math.cos(h),rz2=-Math.sin(h),roadS=onRoadAt(carP.x,carP.z),mu=(roadS?1:.62)*(1-(window.WX?WX.wet:0)*.4);
 let vF=vel.x*fx+vel.z*fz,vL=vel.x*rx2+vel.z*rz2;slipV=0;refuel=0;
 if(driving){if(fuel<=0)gas=0;
+/* Holding brake first slows the car; once nearly stopped it selects reverse and uses the held brake as reverse throttle. */
+if(brake>.05&&Math.abs(vF)<1.8){gear=-1;gas=Math.max(gas,brake);brake=0}else if(brake>.05&&gear<0&&vF<=.5){gas=Math.max(gas,brake);brake=0}else if(brake>.05&&vF>1.8){gear=1}
 if(gear>0){if(shiftT<=0){if(rpm>6000&&gi<6){gi++;shiftT=.3}else if(rpm<2300&&gi>1&&Math.abs(vF)>3){gi--;shiftT=.2}}if(Math.abs(vF)<1.5)gi=1}else gi=1;shiftT-=dt;
 let tr=Math.max(IDLE,Math.abs(vF)/RW*FD*GR[gi]*9.549);if(Math.abs(vF)<4)tr=Math.max(tr,IDLE+gas*3500);rpm+=(tr-rpm)*Math.min(1,dt*10);rpm=Math.min(rpm,RED+300);
 const dirn=gear>0?1:-1;let F=gas*300*Math.max(.3,1-Math.pow((rpm-4300)/4300,2))*GR[gi]*FD*.85/RW*(1-.5*damage)*(1-.82*engineDamage);if(shiftT>0||air||rpm>=RED+200)F=0;F=Math.min(F,7000*mu);if(dirn<0&&vF<-11)F=0;
@@ -1181,7 +1183,7 @@ if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(sleepT<=0&&!carE
 if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
  const vb=document.getElementById('viewToggle');if(vb){vb.style.display=(!dead&&!menuOpen&&!carEnterAnim)?'flex':'none';vb.textContent=onFoot?(playerView==='first'?'THIRD PERSON':'FIRST PERSON'):(carView==='first'?'THIRD PERSON':'FIRST PERSON');}
  if(onFoot){
-   playerAvatar.position.set(rig.position.x,rig.position.y+1.45,rig.position.z);playerAvatar.rotation.y=rig.rotation.y;
+   playerAvatar.position.set(rig.position.x,rig.position.y+1.35,rig.position.z);playerAvatar.rotation.y=rig.rotation.y+Math.PI;
    playerAvatar.visible=playerAvatarLoaded&&playerView==='third'&&!dead;
    if(playerAvatar.visible){
      const moved=Math.hypot(rig.position.x-playerAnimLastX,rig.position.z-playerAnimLastZ)>0.0015;
