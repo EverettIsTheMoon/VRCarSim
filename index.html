@@ -1858,9 +1858,9 @@ const _l3=lighting;lighting=function(dt){_l3(dt);try{if(!onFoot&&!dead&&!air&&!m
    VR: poke a button with a fingertip / controller tip (not while gripping)   Keyboard: 1 / 2 / 3   Phone: on-screen buttons
    Press the playing song's button again to turn the radio off. Plays quieter as you walk away from the car. */
 (function(){
-const SONGS=['Songs/song1.mp3','Songs/song2.mp3','Songs/song3.mp3'];
-/* Expected files: Songs/song1.mp3, Songs/song2.mp3, Songs/song3.mp3 next to index.html. Hosts like GitHub Pages are case-sensitive, so a few common spellings are tried as fallbacks. */
-const CAND=n=>['Songs/song'+n+'.mp3','songs/song'+n+'.mp3','Songs/Song'+n+'.mp3','Songs/song'+n+'.MP3','song'+n+'.mp3'];
+const SONGS=['Songs/song1.mp3','Songs/song2.mp3','Songs/song3.m4a'];
+/* MP3 and AAC-in-M4A radio files are supported. Fallback paths cover common case and extension variants. */
+const CAND=n=>['Songs/song'+n+'.mp3','Songs/song'+n+'.m4a','songs/song'+n+'.mp3','songs/song'+n+'.m4a','Songs/Song'+n+'.mp3','Songs/Song'+n+'.m4a','Songs/song'+n+'.MP3','song'+n+'.mp3','song'+n+'.m4a'];
 let toastEl=null,toastT=0;function toast(t,ok){if(!toastEl){toastEl=document.createElement('div');toastEl.style.cssText='position:fixed;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:9998;background:rgba(101,13,13,.92);color:#fff;padding:8px 10px;border-radius:8px;font:12px system-ui,sans-serif;text-align:center;pointer-events:none';document.body.appendChild(toastEl)}toastEl.textContent=t;toastEl.style.background=ok?'rgba(14,86,40,.92)':'rgba(101,13,13,.92)';toastEl.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>{toastEl.style.display='none'},9000)}
 const au=SONGS.map((s,i)=>{const a=new Audio();a._c=CAND(i+1);a._k=0;a.loop=true;a.preload='metadata';a.src=a._c[0];return a});
 const BX=[.08,.15,.22],BY=-.36,BZ=-.92;
