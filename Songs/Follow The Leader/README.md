@@ -1,1 +1,0 @@
-# Korn - Follow The Leader
