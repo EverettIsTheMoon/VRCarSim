@@ -67,7 +67,7 @@ function rlCloneModel(source){
 const RL_MODEL_COLLIDERS=[];
 // Aggressive Quest 2 model LOD: full GLBs are shown only nearby; the original
 // simple HTML-built meshes act as low-detail substitutes at a distance.
-const RL_LOD_LIMITS={npc:19,car:48,traffic_car:34,house:72,building:72,gas_station:65,restaurant:65,bank:65,tree:31,bush:22,rock:20,fallen_log:20,fence:24,street_light:30,road_sign:22,ak47:12,rocket_launcher:12,beer_can:10,monster:25,maze_wall:42,flashlight:10,cash_bundle:10,mailbox:17,bench:17,trash_can:17,fire_hydrant:17,road_barrier:22};
+const RL_LOD_LIMITS={npc:9,car:38,traffic_car:24,house:54,building:54,gas_station:48,restaurant:48,bank:48,tree:20,bush:14,rock:13,fallen_log:13,fence:16,street_light:20,road_sign:15,ak47:9,rocket_launcher:9,beer_can:8,monster:16,maze_wall:30,flashlight:8,cash_bundle:8,mailbox:12,bench:12,trash_can:12,fire_hydrant:12,road_barrier:16};
 const _rlLodWorldPos=new T.Vector3();let _rlLodTimer=0;
 function rlUpdateModelLOD(){
  if(!rig||!scene)return;
@@ -1096,7 +1096,7 @@ let last=performance.now();
 /* Keep the scene visible even if a gameplay subsystem throws; expose the real error on-screen for mobile debugging. */
 window.addEventListener('error',e=>{let el=document.getElementById('roadline-error');if(!el){el=document.createElement('div');el.id='roadline-error';el.style.cssText='position:fixed;left:8px;right:8px;top:48px;z-index:9999;background:#650d0d;color:#fff;padding:8px;font:12px monospace;white-space:pre-wrap;max-height:28vh;overflow:auto';document.body.appendChild(el)}el.textContent='ROADLINE DEBUG: '+(e.message||'script error')+'\n'+(e.filename||'')+':'+(e.lineno||'');});
 renderer.setAnimationLoop(()=>{const now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;if(window.__mainMenuOpen){renderer.domElement.style.display='none';return}renderer.domElement.style.display='block';
-_rlLodTimer-=dt;if(_rlLodTimer<=0){_rlLodTimer=.25;try{rlUpdateModelLOD()}catch(_){}}
+_rlLodTimer-=dt;if(_rlLodTimer<=0){_rlLodTimer=.4;try{rlUpdateModelLOD()}catch(_){}}
 try{if(window.__roadlineLodUpdate)window.__roadlineLodUpdate();if(window.__roadlineHandsUpdate)window.__roadlineHandsUpdate()}catch(_){}
 try{if(window.__mpUpdate)window.__mpUpdate(dt)}catch(_){}
 lighting(dt);if(window.__horrorStep)window.__horrorStep(dt);renderer.render(scene,cam);gunCD-=dt;if(trT>0){trT-=dt;if(trT<=0)tracer.visible=false}if(flT>0){flT-=dt;if(flT<=0&&gun)gun.userData.fl.visible=false}
@@ -1169,7 +1169,7 @@ if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(sleepT<=0&&!carE
 if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
  const vb=document.getElementById('viewToggle');if(vb){vb.style.display=(!dead&&!menuOpen&&!carEnterAnim)?'flex':'none';vb.textContent=onFoot?(playerView==='first'?'THIRD PERSON':'FIRST PERSON'):(carView==='first'?'THIRD PERSON':'FIRST PERSON');}
  if(onFoot){
-   playerAvatar.position.set(rig.position.x,rig.position.y,rig.position.z);playerAvatar.rotation.y=rig.rotation.y;
+   playerAvatar.position.set(rig.position.x,rig.position.y+.85,rig.position.z);playerAvatar.rotation.y=rig.rotation.y;
    playerAvatar.visible=playerAvatarLoaded&&playerView==='third'&&!dead;
    if(playerAvatar.visible){
      const moved=Math.hypot(rig.position.x-playerAnimLastX,rig.position.z-playerAnimLastZ)>0.0015;
