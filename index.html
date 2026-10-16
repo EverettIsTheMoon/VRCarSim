@@ -40,7 +40,7 @@ const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,
 /* Optional GLB model overrides. Files live beside index.html in ./Models/.
    If a file is missing, fails to load, or GLTFLoader is unavailable, the original HTML-built model stays visible. */
 const RL_MODEL_FILES={
- car:'Models/car.glb', npc:'Models/npc.glb', player:'Models/player.glb', house:'Models/house.glb',
+ car:'Models/car.glb', player:'Models/player.glb', house:'Models/house.glb',
  building:'Models/building.glb', gas_station:'Models/gas_station.glb', restaurant:'Models/restaurant.glb', bank:'Models/bank.glb',
  tree:'Models/tree.glb', bush:'Models/bush.glb', rock:'Models/rock.glb', fallen_log:'Models/fallen_log.glb', fence:'Models/fence.glb',
  street_light:'Models/street_light.glb', road_sign:'Models/road_sign.glb', traffic_car:'Models/traffic_car.glb',
@@ -584,12 +584,12 @@ function ragdollStep(e,dt,grounded){
  }
 }
 const peds=[];
-function mkPed(){const shirt=pcol[R(0,pcol.length)|0],pants=pantsCol[R(0,pantsCol.length)|0],p=mkPerson(shirt,pants);scene.add(p.g);rlAttachModel('npc',p.g,{size:[.78,1.9,.56]});return Object.assign(p,{st:'walk',dx:0,dz:1,t:0,t2:0,ht:0,v:new T.Vector3(),ox:0,cross:false,pl:null})}
+function mkPed(){const shirt=pcol[R(0,pcol.length)|0],pants=pantsCol[R(0,pantsCol.length)|0],p=mkPerson(shirt,pants);scene.add(p.g);return Object.assign(p,{st:'walk',dx:0,dz:1,t:0,t2:0,ht:0,v:new T.Vector3(),ox:0,cross:false,pl:null})}
 function respawnPed(e,init){e.st='walk';e.pl=null;e.t2=e.ht=0;e.cross=Math.random()<.35;const s=Math.random()<.5?1:-1,z=rig.position.z+(init?R(-300,300):(Math.random()<.5?R(-450,-250):R(150,350)));
 if(e.cross){e.dx=s;e.dz=0;e.g.position.set(R(-4,4),roadHeight(z),z)}else{e.dx=0;e.dz=s;e.g.position.set(R(-4.6,4.6),roadHeight(z),z)}e.g.rotation.set(0,Math.atan2(e.dx,e.dz),0);e.g.position.y=roadHeight(z);if(e.rag)e.rag.active=false;e.v.set(0,0,0);e.legs.forEach(l=>l.rotation.set(0,0,0));e.arms.forEach(a=>a.rotation.set(0,0,0))}
 for(let i=0;i<9;i++){const e=mkPed();peds.push(e);respawnPed(e,true)}
 const crowd=[];
-function mkCrowd(){const shirt=pcol[R(0,pcol.length)|0],pants=pantsCol[R(0,pantsCol.length)|0],p=mkPerson(shirt,pants);town.add(p.g);rlAttachModel('npc',p.g,{size:[.78,1.9,.56]});return Object.assign(p,{st:'walk',path:[],i:0,w:0,t:0,t2:0,v:new T.Vector3(),hits:0,stag:0,worker:false,pl:null})}
+function mkCrowd(){const shirt=pcol[R(0,pcol.length)|0],pants=pantsCol[R(0,pantsCol.length)|0],p=mkPerson(shirt,pants);town.add(p.g);return Object.assign(p,{st:'walk',path:[],i:0,w:0,t:0,t2:0,v:new T.Vector3(),hits:0,stag:0,worker:false,pl:null})}
 const WALK=6.6;
 function plan(e,mid){const side=Math.random()<.5?1:-1,z0=side>0?30:-92,z1=side>0?-92:30,gas=Math.random()<.45;let p;
 if(gas){const d=3.8;p=[[WALK,d],[15.5,d],[18.6,d],[20.4,R(-3,.8),R(3,6)],[21.2,3.6],[25.6,R(-1,4.5),R(3,6)],[21.2,3.8],[18.6,d],[15.5,d],[WALK,d]]}
@@ -1280,8 +1280,8 @@ const BATCH_SKINS=[0xffdfc4,0xf1c7a5,0xdca77c,0xc6865b,0xae704a,0x8f573a,0x70422
 function regPerson(p){
  // Keep character meshes intact. The old instanced-person batching replaced every NPC's
  // original body with generic colored torso/limb meshes, which also hid/distorted the GLB.
- // GLB NPCs now retain their authored model and appearance; if loading fails, the original
- // built-in character remains visible as a fallback.
+ // NPCs now use the lightweight custom-built character, including eyes, skin details,
+ // and an animated mouth. This avoids loading a large external NPC GLB.
  return;
 }
 function npcTalkAmount(p,nowS){
