@@ -1888,15 +1888,15 @@ function play(i){if(cur<0){prevMusic=musicOn;musicOn=false;if(bgm&&!bgm.paused){
 /* ---- real-radio model: every station "plays" all the time. Position in a song = wall-clock time mod song length,
    so it is identical on every device (multiplayer sync) and changing station lands mid-song, like a real radio. ---- */
 const retry=[0,0,0],lastRej=['','',''];let syncT=0,sendT=0;
-/* ---- low-quality AM-radio sound: band-limited (~380-3200 Hz), mid boost, soft clipping, plus static that gets louder as the signal fades ---- */
+/* ---- lightly lo-fi car radio: wider frequency range and gentler saturation, retaining a little AM character and fading static ---- */
 let rctx=null,gn=[],nzg=null;
 function radioAudio(){if(rctx!==null)return rctx||null;
  try{const AC2=window.AudioContext||window.webkitAudioContext;rctx=new AC2();
-  const cv=new Float32Array(257);for(let k=0;k<257;k++){const x=k/128-1;cv[k]=Math.tanh(x*2.6)/Math.tanh(2.6)}
-  const hp=rctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=380;hp.Q.value=.7;
-  const pk=rctx.createBiquadFilter();pk.type='peaking';pk.frequency.value=1700;pk.gain.value=7;pk.Q.value=1;
-  const lp=rctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3200;lp.Q.value=.9;
-  const ws=rctx.createWaveShaper();ws.curve=cv;const out=rctx.createGain();out.gain.value=1.1;
+  const cv=new Float32Array(257);for(let k=0;k<257;k++){const x=k/128-1;cv[k]=Math.tanh(x*1.45)/Math.tanh(1.45)}
+  const hp=rctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=150;hp.Q.value=.7;
+  const pk=rctx.createBiquadFilter();pk.type='peaking';pk.frequency.value=1800;pk.gain.value=2.5;pk.Q.value=.85;
+  const lp=rctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=6200;lp.Q.value=.75;
+  const ws=rctx.createWaveShaper();ws.curve=cv;const out=rctx.createGain();out.gain.value=.92;
   hp.connect(pk);pk.connect(lp);lp.connect(ws);ws.connect(out);out.connect(rctx.destination);
   au.forEach((a,i)=>{const sn=rctx.createMediaElementSource(a),g=rctx.createGain();g.gain.value=0;a.volume=1;sn.connect(g);g.connect(hp);gn[i]=g});
   const len=rctx.sampleRate*2,buf=rctx.createBuffer(1,len,rctx.sampleRate),dd=buf.getChannelData(0);for(let k=0;k<len;k++)dd[k]=Math.random()*2-1;
@@ -1919,7 +1919,7 @@ function radioMix(dt){
      if(pr&&pr.catch)pr.catch(e=>{lastRej[i]=(e&&e.name)||'play blocked';retry[i]=tn+1500})}}
    else if(doSync&&ok){const e=(Date.now()/1000)%d;let df=a.currentTime-e;if(df>d/2)df-=d;else if(df<-d/2)df+=d;if(Math.abs(df)>.7){try{a.currentTime=e}catch(_){}}}}
   else if(!a.paused)a.pause()}
- const mx=Math.max(v[0],v[1],v[2]);if(nzg)nzg.gain.setTargetAtTime(mx>.004?C(vol,0,1)*(.03+.07*(1-mx)):0,rctx.currentTime,.1)}
+ const mx=Math.max(v[0],v[1],v[2]);if(nzg)nzg.gain.setTargetAtTime(mx>.004?C(vol,0,1)*(.012+.028*(1-mx)):0,rctx.currentTime,.1)}
 function press(i){if(cur===i)stop();else play(i)}
 au.forEach((a,i)=>a.addEventListener('error',()=>{
  if(a._k<a._c.length-1){a._k++;a.src=a._c[a._k];a.load();retry[i]=0;return}
