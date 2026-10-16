@@ -169,8 +169,8 @@ rlUpdateModelList();
 const renderer=new T.WebGLRenderer({antialias:false,alpha:false,powerPreference:'high-performance'});
 /* Keep the 3D scene crisp on phones; adapt render resolution only when frame rate drops.
    HTML HUD/menu text remains at native screen resolution. */
-let roadlineRenderScale=1,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
-function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.45)*Math.max(.8,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
+let roadlineRenderScale=.8,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
+function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.15)*Math.max(.65,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
 roadlineApplyRenderScale();renderer.setClearColor(0x9ec8e8,1);renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0';renderer.xr.enabled=true;if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(.55);document.body.appendChild(renderer.domElement);
 const SKY_D=new T.Color(0x9ec8e8),SKY_N=new T.Color(0x070b18);
 const scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(0x9ec8e8,90,520);
@@ -902,7 +902,7 @@ function mkWeapon(kind){
   const grip=new T.Mesh(new T.BoxGeometry(.12,.2,.12),wood);grip.position.set(-.04,-.15,0);g.add(grip);
   const sight=new T.Mesh(new T.BoxGeometry(.13,.045,.07),dark);sight.position.set(.08,.1,0);g.add(sight);
  }
- const m=g;scene.add(m);m.position.set(town.position.x+22.35,.18,town.position.z-1.15+(kind==='ak'?-.52:.52));
+ const m=g;scene.add(m);m.position.set(town.position.x+22.35,town.position.y+.20,town.position.z-1.15+(kind==='ak'?-.52:.52));
  const it={m,v:new T.Vector3(),w:0,held:false,r:.16,weapon:kind,cool:0};items.push(it);return it;
 }
 const akPickup=mkWeapon('ak'),rocketPickup=mkWeapon('rocket');rlAttachModel('ak47',akPickup.m,{size:[1.15,.32,.18]});rlAttachModel('rocket_launcher',rocketPickup.m,{size:[.95,.28,.28]});
@@ -926,7 +926,7 @@ function weaponFire(it,o){if(it.cool>0)return;it.cool=it.weapon==='ak'?.095:1.1;
 }
 const rocketProjectiles=[];
 
-function resetItems(){if(mobileHeldWeapon){cam.remove(mobileHeldWeapon.m);scene.add(mobileHeldWeapon.m);mobileHeldWeapon=null}items.forEach((it,i)=>{it.held=false;it.v.set(0,0,0);it.w=0;it.m.rotation.set(0,0,0);if(it.beer){it.seat=true;it.m.position.copy(beerSeatPosition());it.m.rotation.set(0,heading,0);return}if(it.weapon){if(it.m.parent!==scene){it.m.parent.remove(it.m);scene.add(it.m)}it.cool=0;it.m.position.set(town.position.x+22.35,.18,town.position.z-1.15+(it.weapon==='ak'?-.52:.52))}else it.m.position.set(town.position.x+22.5+R(-.2,.2),1.05+it.r,town.position.z-3.3+i*.5)})}
+function resetItems(){if(mobileHeldWeapon){cam.remove(mobileHeldWeapon.m);scene.add(mobileHeldWeapon.m);mobileHeldWeapon=null}items.forEach((it,i)=>{it.held=false;it.v.set(0,0,0);it.w=0;it.m.rotation.set(0,0,0);if(it.beer){it.seat=true;it.m.position.copy(beerSeatPosition());it.m.rotation.set(0,heading,0);return}if(it.weapon){if(it.m.parent!==scene){it.m.parent.remove(it.m);scene.add(it.m)}it.cool=0;it.m.position.set(town.position.x+22.35,town.position.y+.20,town.position.z-1.15+(it.weapon==='ak'?-.52:.52))}else it.m.position.set(town.position.x+22.5+R(-.2,.2),1.05+it.r,town.position.z-3.3+i*.5)})}
 
 function mobileWeaponLabel(){if(mobileHeldWeapon)return 'DROP';if(!ROADLINE_MOBILE||renderer.xr.isPresenting||!onFoot||dead||menuOpen)return 'GRAB';let best=4.2,near=null;const p=rig.position;for(const it of [akPickup,rocketPickup]){if(it.held)continue;const q=it.m.getWorldPosition(new T.Vector3()),d=Math.hypot(q.x-p.x,q.z-p.z);if(d<best){best=d;near=it}}return near?(near.owned?(near.weapon==='ak'?'PICK AK':'PICK RPG'):(near.weapon==='ak'?'BUY AK $100':'BUY RPG $100')):'GRAB'}
 function mobileWeaponToggle(){if(!ROADLINE_MOBILE||renderer.xr.isPresenting||!onFoot||dead||menuOpen||sleepT>0)return false;if(mobileHeldWeapon){const it=mobileHeldWeapon,dir=cam.getWorldDirection(new T.Vector3()),origin=cam.getWorldPosition(new T.Vector3());cam.remove(it.m);scene.add(it.m);it.m.position.copy(origin).addScaledVector(dir,1.15);it.m.position.y=Math.max(surfaceHeightAt(it.m.position.x,it.m.position.z)+it.r,surfaceHeightAt(it.m.position.x,it.m.position.z)+.18);it.m.rotation.set(0,rig.rotation.y+Math.PI/2,0);it.v.set(dir.x*1.1,-.35,dir.z*1.1);it.held=false;mobileHeldWeapon=null;return true;}let best=4.2,near=null;const p=rig.position;for(const it of [akPickup,rocketPickup]){if(it.held)continue;const q=it.m.getWorldPosition(new T.Vector3()),d=Math.hypot(q.x-p.x,q.z-p.z);if(d<best){best=d;near=it}}if(!near)return false;if(window.__buyWeapon&&!window.__buyWeapon(near))return false;near.held=true;near.v.set(0,0,0);mobileHeldWeapon=near;near.m.parent?.remove(near.m);cam.add(near.m);near.m.position.set(.28,-.26,-.64);near.m.rotation.set(0,Math.PI/2,0);return true;}
@@ -1151,7 +1151,7 @@ renderer.setAnimationLoop(()=>{const now=performance.now(),dt=Math.min(.05,(now-
 /* Automatically lower only 3D render resolution on sustained slow frames, and recover gradually. */
 roadlinePerfElapsed+=dt;roadlinePerfFrames++;roadlinePerfSeconds+=dt;
 if(roadlinePerfElapsed>=2){const fps=roadlinePerfFrames/Math.max(.001,roadlinePerfSeconds);let next=roadlineRenderScale;
- if(fps<27)next=Math.max(.55,roadlineRenderScale-.15);else if(fps<38)next=Math.max(.65,roadlineRenderScale-.1);else if(fps>54)next=Math.min(1,roadlineRenderScale+.05);
+ if(fps<24)next=Math.max(.55,roadlineRenderScale-.12);else if(fps<35)next=Math.max(.65,roadlineRenderScale-.08);else if(fps>52)next=Math.min(.85,roadlineRenderScale+.025);
  if(next!==roadlineRenderScale){roadlineRenderScale=next;roadlineApplyRenderScale()}
  roadlinePerfElapsed=0;roadlinePerfFrames=0;roadlinePerfSeconds=0;
 }
