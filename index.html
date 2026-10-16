@@ -1858,7 +1858,7 @@ const _l3=lighting;lighting=function(dt){_l3(dt);try{if(!onFoot&&!dead&&!air&&!m
    VR: poke a button with a fingertip / controller tip (not while gripping)   Keyboard: 1 / 2 / 3   Phone: on-screen buttons
    Press the playing song's button again to turn the radio off. Plays quieter as you walk away from the car. */
 (function(){
-const SONGS=['Songs/song1.m4a','Songs/song2.m4a','Songs/song3.m4a'];
+const SONGS=['Songs/song1.m4a','Songs/song2.m4a'];
 /* MP3 and AAC-in-M4A radio files are supported. Fallback paths cover common case and extension variants. */
 const CAND=n=>['Songs/song'+n+'.m4a','songs/song'+n+'.m4a','Songs/Song'+n+'.m4a','song'+n+'.m4a','Songs/song'+n+'.mp3','songs/song'+n+'.mp3','Songs/Song'+n+'.mp3','Songs/song'+n+'.MP3','song'+n+'.mp3'];
 let toastEl=null,toastT=0;function toast(t,ok){if(!toastEl){toastEl=document.createElement('div');toastEl.style.cssText='position:fixed;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:9998;background:rgba(101,13,13,.92);color:#fff;padding:8px 10px;border-radius:8px;font:12px system-ui,sans-serif;text-align:center;pointer-events:none';document.body.appendChild(toastEl)}toastEl.textContent=t;toastEl.style.background=ok?'rgba(14,86,40,.92)':'rgba(101,13,13,.92)';toastEl.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>{toastEl.style.display='none'},9000)}
@@ -1876,7 +1876,7 @@ const radioVolTrack=new T.Mesh(new T.BoxGeometry(.22,.012,.012),new T.MeshBasicM
 const radioVolKnob=new T.Mesh(new T.BoxGeometry(.024,.035,.022),new T.MeshBasicMaterial({color:0x55d7ff}));radioVolKnob.position.set(.04+.22*vol,BY-.065,BZ-.12);cock.add(radioVolKnob);
 function draw(){const s=cur+'|'+bad.join();if(s===sig)return;sig=s;
  lx.fillStyle='#07090c';lx.fillRect(0,0,512,64);lx.font='bold 24px sans-serif';lx.textAlign='center';lx.textBaseline='middle';
- const titles=['120.0','130.0','WICKED GARDEN — STONE TEMPLE PILOTS'];
+ const titles=['120.0','130.0'];
  const miss=cur<0&&bad.some(x=>x);lx.fillStyle=cur>=0?'#7dff9a':miss?'#ff8a6a':'#aab4c2';lx.fillText(cur>=0?titles[cur]:miss?'SONG '+(bad.indexOf(1)+1)+' MISSING':'RADIO OFF',256,32);lt.needsUpdate=true;
  btns.forEach((b,i)=>{const on=i===cur;if(on!==b.on){b.on=on;b.side.color.set(on?ON[i]:BASE[i]);b.top.map.dispose();b.top.map=numTex(i,on);b.top.needsUpdate=true}})}
 function restore(){musicOn=prevMusic;if(resumeBgm&&bgm){bgm.play().catch(()=>{});resumeBgm=false}}
@@ -1926,7 +1926,7 @@ au.forEach((a,i)=>a.addEventListener('error',()=>{
 addEventListener('keydown',e=>{if(menuOpen||e.repeat)return;if(e.code==='Digit1')press(0);else if(e.code==='Digit2')press(1);else if(e.code==='Digit3')press(2)});
 /* phone buttons */
 const tc=document.getElementById('tc'),mob=[];
-if(tc){[0,1,2].forEach(i=>{const b=document.createElement('button');b.className='sm song';b.textContent=['♪ 120.0','♪ 130.0','♪ WICKED'][i];b.dataset.i=i;
+if(tc){[0,1].forEach(i=>{const b=document.createElement('button');b.className='sm song';b.textContent=['♪ 120.0','♪ 130.0'][i];b.dataset.i=i;
  Object.assign(b.style,{display:'none',width:'74px',height:'50px',fontSize:'12px',zIndex:'9'});tc.appendChild(b);
  b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();press(i)});b.addEventListener('touchstart',e=>{e.stopPropagation()},{passive:true});mob.push(b)});
  const lay=()=>{const wide=innerWidth>=560;mob.forEach((b,i)=>{b.style.right='';b.style.left='';b.style.bottom='';b.style.top='';
