@@ -1872,7 +1872,27 @@ const btns=[0,1,2].map(i=>{const side=new T.MeshBasicMaterial({color:new T.Color
  const m=new T.Mesh(new T.CylinderGeometry(.03,.03,.025,16),[side,top,side]);m.position.set(BX[i],BY,BZ);cock.add(m);return{m,side,top,on:false}});
 const lc=document.createElement('canvas');lc.width=512;lc.height=64;const lx=lc.getContext('2d'),lt=new T.CanvasTexture(lc);
 const lbl=new T.Mesh(new T.PlaneGeometry(.46,.0575),new T.MeshBasicMaterial({map:lt}));lbl.position.set(.15,BY+.005,BZ-.075);lbl.rotation.x=-Math.PI/2+.25;cock.add(lbl);
-const radioVolTrack=new T.Mesh(new T.BoxGeometry(.22,.012,.012),new T.MeshBasicMaterial({color:0x626c78}));radioVolTrack.position.set(.15,BY-.065,BZ-.12);cock.add(radioVolTrack);
+/* Passenger-side infotainment display: slow scrolling station names and an in-game clock. */
+ const dashScreenCanvas=document.createElement('canvas');dashScreenCanvas.width=512;dashScreenCanvas.height=192;
+ const dashScreenCtx=dashScreenCanvas.getContext('2d');const dashScreenTex=new T.CanvasTexture(dashScreenCanvas);
+ dashScreenTex.minFilter=T.LinearFilter;dashScreenTex.magFilter=T.LinearFilter;
+ const dashScreenMat=new T.MeshBasicMaterial({map:dashScreenTex,toneMapped:false});
+ const dashScreen=new T.Mesh(new T.PlaneGeometry(.34,.128),dashScreenMat);
+ dashScreen.position.set(.405,BY+.006,BZ-.078);dashScreen.rotation.x=-Math.PI/2+.25;cock.add(dashScreen);
+ let dashScroll=0,dashClockSeconds=0,dashClockMinutes=38,dashClockHours=10,dashFrame=0;
+ function drawDashScreen(dt){
+  dashScroll=(dashScroll+dt*19)%850;dashClockSeconds+=dt;
+  if(dashClockSeconds>=45){dashClockSeconds-=45;dashClockMinutes++;if(dashClockMinutes>=60){dashClockMinutes=0;dashClockHours++;if(dashClockHours>12)dashClockHours=1}}
+  dashFrame+=dt;if(dashFrame<.07)return;dashFrame=0;
+  const g=dashScreenCtx;g.fillStyle='#11191d';g.fillRect(0,0,512,192);g.fillStyle='#27343a';g.fillRect(8,8,496,176);
+  g.fillStyle='#8b9da3';g.font='bold 20px monospace';g.textAlign='left';g.textBaseline='middle';g.fillText(dashClockHours+':'+String(dashClockMinutes).padStart(2,'0')+(dashClockHours>=12?' PM':' AM'),20,29);
+  g.textAlign='right';g.fillStyle='#69d7c8';g.font='bold 17px monospace';g.fillText('FM RADIO',492,29);g.fillStyle='#d6e7df';g.fillRect(18,48,476,1);
+  g.save();g.beginPath();g.rect(18,52,476,119);g.clip();g.font='bold 30px monospace';g.textBaseline='middle';g.textAlign='left';
+  const textLine='120 ROCK     •     130 NU METAL     •     ';const width=g.measureText(textLine).width;
+  for(let x=18-(dashScroll%width);x<512;x+=width){g.fillStyle='#67e1b7';g.fillText(textLine,x,83);g.fillStyle='#a9bac0';g.fillText(textLine,x-width/2,133)}
+  g.restore();g.fillStyle='#71838a';g.font='12px monospace';g.textAlign='left';g.fillText(cur===0?'▶ 120 ROCK':cur===1?'▶ 130 NU METAL':'● SELECT STATION',20,174);dashScreenTex.needsUpdate=true;
+ }
+ const radioVolTrack=new T.Mesh(new T.BoxGeometry(.22,.012,.012),new T.MeshBasicMaterial({color:0x626c78}));radioVolTrack.position.set(.15,BY-.065,BZ-.12);cock.add(radioVolTrack);
 const radioVolKnob=new T.Mesh(new T.BoxGeometry(.024,.035,.022),new T.MeshBasicMaterial({color:0x55d7ff}));radioVolKnob.position.set(.04+.22*vol,BY-.065,BZ-.12);cock.add(radioVolKnob);
 function draw(){const s=cur+'|'+bad.join();if(s===sig)return;sig=s;
  lx.fillStyle='#07090c';lx.fillRect(0,0,512,64);lx.font='bold 24px sans-serif';lx.textAlign='center';lx.textBaseline='middle';
@@ -1908,6 +1928,7 @@ function radioAudio(){if(rctx!==null)return rctx||null;
 function fall(d){const t=C((d-4)/28,0,1);return(1-t)*(1-t)} /* full volume within 4 m, silent beyond 32 m */
 function radioSend(){const m=window.__rlMP;if(m)m.send('rd',{r:cur})}
 function radioMix(dt){
+ drawDashScreen(dt);
  const v=[0,0,0];
  if(cur>=0){radioAudio();let f=1;if(onFoot)f=fall(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z));v[cur]=f}
  const m=window.__rlMP;
