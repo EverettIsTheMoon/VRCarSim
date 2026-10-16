@@ -2018,11 +2018,14 @@ draw();
  const api='https://api.github.com/repos/EverettIsTheMoon/VRCarSim/contents/Songs/Chocolate%20Starfish%20and%20the%20Hot%20Dog%20Flavored%20Water?ref=main',album='Chocolate Starfish and the Hot Dog Flavored Water';
  const cleanName=s=>String(s||'').replace(/\s*\[[^\[\]]{4,}\]\s*/g,' ').replace(/\s{2,}/g,' ').trim();
  const audio=new Audio();audio.preload='metadata';let tracks=[],idx=0,inserted=false,paused=false;
- const disc=new T.Mesh(new T.CylinderGeometry(.105,.105,.006,40),new T.MeshStandardMaterial({color:0xbfc7cf,metalness:.8,roughness:.24}));disc.rotation.x=Math.PI/2;disc.position.set(.4,-.345,-.73);cock.add(disc);
+ const disc=new T.Mesh(new T.CylinderGeometry(.105,.105,.006,48),new T.MeshStandardMaterial({color:0xbfc7cf,metalness:.65,roughness:.3}));disc.rotation.x=Math.PI/2;disc.position.set(.4,-.345,-.73);cock.add(disc);
+ const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=512;const lcx=labelCanvas.getContext('2d');
+ lcx.fillStyle='#f0f0e9';lcx.fillRect(0,0,512,512);lcx.fillStyle='#16191e';lcx.beginPath();lcx.arc(256,256,244,0,Math.PI*2);lcx.fill();lcx.fillStyle='#f7f2dc';lcx.beginPath();lcx.arc(256,256,218,0,Math.PI*2);lcx.fill();lcx.fillStyle='#c92c34';lcx.beginPath();lcx.arc(256,256,176,0,Math.PI*2);lcx.fill();lcx.fillStyle='#fff';lcx.textAlign='center';lcx.font='bold 37px sans-serif';lcx.fillText('LIMP BIZKIT',256,205);lcx.font='bold 25px sans-serif';lcx.fillText('CHOCOLATE STARFISH',256,246);lcx.fillText('AND THE HOT DOG',256,279);lcx.fillText('FLAVORED WATER',256,312);lcx.fillStyle='#16191e';lcx.beginPath();lcx.arc(256,256,43,0,Math.PI*2);lcx.fill();lcx.fillStyle='#ddd';lcx.beginPath();lcx.arc(256,256,14,0,Math.PI*2);lcx.fill();
+ const labelTex=new T.CanvasTexture(labelCanvas);labelTex.colorSpace=T.SRGBColorSpace;const discLabel=new T.Mesh(new T.CircleGeometry(.098,48),new T.MeshBasicMaterial({map:labelTex,side:T.DoubleSide,toneMapped:false}));discLabel.position.set(.4,-.345,-.725);cock.add(discLabel);
  const tray=new T.Mesh(new T.BoxGeometry(.29,.018,.21),new T.MeshStandardMaterial({color:0x333a42,roughness:.75}));tray.position.set(.4,-.385,-.73);cock.add(tray);
  const deck=new T.Mesh(new T.BoxGeometry(.34,.075,.18),new T.MeshStandardMaterial({color:0x171c21,metalness:.35,roughness:.5}));deck.position.set(.4,-.29,-.91);cock.add(deck);
  const cv=document.createElement('canvas');cv.width=512;cv.height=128;const cx=cv.getContext('2d'),tex=new T.CanvasTexture(cv);
- const screen=new T.Mesh(new T.PlaneGeometry(.27,.06),new T.MeshBasicMaterial({map:tex,toneMapped:false}));screen.position.set(.4,-.285,-1.004);cock.add(screen);
+ const screen=new T.Mesh(new T.PlaneGeometry(.34,.095),new T.MeshBasicMaterial({map:tex,toneMapped:false,side:T.DoubleSide}));screen.position.set(.4,-.155,-.88);cock.add(screen);
  function paint(msg){cx.fillStyle='#06110d';cx.fillRect(0,0,512,128);cx.fillStyle='#6fffc0';cx.font='bold 27px monospace';cx.fillText('CD · '+album,12,30);cx.font='21px monospace';cx.fillText(msg.slice(0,32),12,68);const t=tracks[idx];cx.font='17px monospace';cx.fillText(t?(String(t.track||idx+1).padStart(2,'0')+' '+t.artist+' — '+t.title):'NO DISC',12,104);tex.needsUpdate=true}
  function tags(buf){const o={};try{const b=new Uint8Array(buf),v=new DataView(buf),txt=(a,z)=>new TextDecoder().decode(b.slice(a,z)).replace(/\0/g,'').trim();function scan(a,z,d){if(d>7)return;for(let p=a;p+8<z;){let n=v.getUint32(p),tag=txt(p+4,p+8);if(!n)n=z-p;if(n<8||p+n>z)break;let q=p+8,e=p+n;if(['moov','udta','ilst','meta','trak','mdia','minf','stbl'].includes(tag))scan(q+(tag==='meta'?4:0),e,d+1);else if(['©nam','©ART','aART','©alb','trkn'].includes(tag)){for(let k=q;k+16<e;){let m=v.getUint32(k),t=txt(k+4,k+8);if(m<8||k+m>e)break;if(t==='data'){if(tag==='trkn'&&m>=24)o.track=v.getUint16(k+18);else{let x=txt(k+16,k+m);if(tag==='©nam')o.title=x;if(tag==='©ART'||tag==='aART')o.artist=x;if(tag==='©alb')o.album=x}}k+=m}}p+=n}}scan(0,b.length,0)}catch(e){}return o}
  async function load(){paint('READING CD');try{const res=await fetch(api);if(!res.ok)throw Error();const fs=(await res.json()).filter(x=>x.type==='file'&&/\.(mp3|m4a)$/i.test(x.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));tracks=[];for(const f of fs){let t={file:f.name,url:f.download_url,title:cleanName(f.name.replace(/\.(mp3|m4a)$/i,'')),artist:'Unknown artist',album,track:0};try{const rr=await fetch(f.download_url,{headers:{Range:'bytes=0-2097151'}});if(rr.ok)Object.assign(t,tags(await rr.arrayBuffer()));if(!t.artist||t.artist==='Unknown artist'||!t.title||t.title===cleanName(f.name.replace(/\.(mp3|m4a)$/i,''))){const full=await fetch(f.download_url);if(full.ok)Object.assign(t,tags(await full.arrayBuffer()))}}catch(e){}const m=f.name.match(/^(\d+)[ ._-]/);if(!t.track&&m)t.track=+m[1];tracks.push(t)}tracks.sort((a,b)=>(a.track||999)-(b.track||999));idx=0;inserted=tracks.length>0;paint(inserted?'CD READY':'NO TRACKS');info.textContent=tracks.length?album+' · '+tracks.length+' tracks':'Add .mp3 tracks to Songs/Chocolate Starfish and the Hot Dog Flavored Water/'}catch(e){inserted=false;paint('FOLDER NOT FOUND');info.textContent='Create Songs/Chocolate Starfish and the Hot Dog Flavored Water/ and add album .mp3 files.'}}
@@ -2047,19 +2050,19 @@ draw();
    const pressed=!!(h.gp.buttons&&h.gp.buttons.some((b,i)=>i<3&&b&&b.pressed));
    const handPos=h.c.getWorldPosition(new T.Vector3());
    const discPos=disc.getWorldPosition(new T.Vector3());
-   if(pressed&&!discHeldBy&&inserted&&handPos.distanceTo(discPos)<.24)discHeldBy=h;
+   if(pressed&&!discHeldBy&&handPos.distanceTo(discPos)<.32)discHeldBy=h;
    if(discHeldBy===h){
-    if(pressed){cock.updateMatrixWorld(true);disc.position.copy(cock.worldToLocal(handPos));disc.position.z-=.02;disc.rotation.set(Math.PI/2,0,0)}
+    if(pressed){cock.updateMatrixWorld(true);disc.position.copy(cock.worldToLocal(handPos));disc.position.z-=.02;disc.rotation.set(Math.PI/2,0,0);}
     else{
      const trayWorld=tray.getWorldPosition(new T.Vector3());
-     if(handPos.distanceTo(trayWorld)<.34){disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);inserted=true;paint('CD INSERTED')}
+     if(handPos.distanceTo(trayWorld)<.38){disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);inserted=tracks.length>0;paint(tracks.length?'CD INSERTED':'EMPTY CD SLOT')}
      else{disc.position.set(.4,-.30,-.73);inserted=false;paint('DISC REMOVED')}
      discHeldBy=null;
     }
    }
   }
  }
- setInterval(()=>{try{cdGrabStep()}catch(e){}},50);
+ setInterval(()=>{try{cdGrabStep();discLabel.position.set(disc.position.x,disc.position.y,disc.position.z+.004);discLabel.visible=disc.position.y>-.39}catch(e){}},30);
  paint('INSERT CD');
 })();</script>
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
