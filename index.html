@@ -491,7 +491,7 @@ box(12,.04,12,gl,23,.015,0,town);
 wall(town,tSol,17,-6,29,-5.7,3,wm);wall(town,tSol,17,5.7,29,6,3,wm);wall(town,tSol,28.7,-6,29,6,3,wm);wall(town,tSol,16.7,-6,17,3,3,wm);wall(town,tSol,16.7,4.6,17,6,3,wm);box(.3,.6,1.6,wm,16.85,2.7,3.8,town);box(12.6,.3,12.6,rfm,23,3.15,0,town);
 box(1,1.05,6,M(0x6a4a2a),22.5,.525,-1,town);tSol.push([22,-4,23,2]);box(.4,.1,.4,M(0x222222),22.5,1.1,-3.5,town);
 box(1,2,10,M(0x8a8a90),28.1,1,0,town);tSol.push([27.4,-5.5,28.7,5.5]);
-for(let i=0;i<30;i++)box(.2,.28,.3,M(new T.Color().setHSL(Math.random(),.7,.55)),27.45,.45+((i%3)*.5),-4.6+Math.floor(i/3)*.9,town);
+for(let i=0;i<8;i++)box(.2,.22,.24,M([0xd84c42,0x3b9b68,0xd9b85a,0x4c78bc][i%4]),27.45,.42+((i%2)*.32),-3.2+Math.floor(i/2)*1.5,town);
 box(6,2,.8,M(0x4a7aa8,.2,.5),22,1,-5.3,town);tSol.push([19,-5.7,25,-4.9]);
 sign('MART',6,1,16.6,3.85,0,-Math.PI/2,'#1e6bd6','#fff',town);
 const gasL=new T.PointLight(0xfff0d0,.5,16);gasL.position.set(23,2.8,0);town.add(gasL);
@@ -509,28 +509,7 @@ sign('BURGER BARN',7,1.1,13.55,3.5,-50,-Math.PI/2,'#c82020','#ffd23a',town);
 box(.3,8,.3,M(0x888888),11.5,4,-45,town);tSol.push([11.2,-45.3,11.8,-44.7]);
 {const bn=M(0xd9964a,.7,0);const b1=new T.Mesh(new T.CylinderGeometry(1.4,1.2,.5,16),bn);b1.position.set(11.5,8.2,-45);town.add(b1);const pt=new T.Mesh(new T.CylinderGeometry(1.35,1.35,.3,16),M(0x4a2a1a));pt.position.set(11.5,8.6,-45);town.add(pt);const lt=new T.Mesh(new T.CylinderGeometry(1.5,1.5,.12,16),M(0x3a9a3a));lt.position.set(11.5,8.82,-45);town.add(lt);const tp=new T.Mesh(new T.SphereGeometry(1.35,16,8,0,Math.PI*2,0,Math.PI/2),bn);tp.position.set(11.5,8.88,-45);town.add(tp)}
 const mcdL=new T.PointLight(0xfff0d0,.5,16);mcdL.position.set(21,2.8,-50);town.add(mcdL);
-/* ---------- richer walk-in interiors: store + diner ---------- */
-{
- const tile=M(0xaaa7a0,.92,0),tileAlt=M(0x777c80,.9,0),darkTrim=M(0x34383c,.72,.05),
-       shelf=M(0x6c4c32,.82,0),shelfEdge=M(0x9a754b,.7,0),neon=M(0x8dd9e8,.35,.1),
-       canMats=[M(0xd84c42,.45,.1),M(0x3b9b68,.45,.1),M(0xd9b85a,.45,.1),M(0x4c78bc,.45,.1)];
- // Gas shop: checker tile floor, ceiling strips, bright service lighting.
- for(let ix=0;ix<6;ix++)for(let iz=0;iz<6;iz++)box(1.9,.035,1.9,(ix+iz)%2?tile:tileAlt,17.9+ix*1.92,.055,-5.0+iz*1.68,town);
- for(const x of [18.2,21.7,25.2,28.1]){box(.09,.08,4.8,neon,x,2.82,-.1,town);const l=new T.PointLight(0xffedc5,.32,7);l.position.set(x,2.55,0);town.add(l)}
- // Back-wall product shelving, bright shelf lips, colourful stock.
- for(const x of [18.2,20.7,23.2,25.7]){
-  box(.12,2.0,4.0,darkTrim,x,1.15,-4.95,town);
-  for(const y of [.52,1.08,1.64,2.18]){box(.18,.07,4.05,shelfEdge,x+.11,y,-4.95,town);
-   for(let n=0;n<7;n++)box(.18,.28,.28,canMats[(n+Math.round(x))%canMats.length],x+.23,y+.17,-6.55+n*.53,town)}
- }
- // Checkout counter and a cash register facing the front door.
- box(3.4,1.0,.85,shelf,22.5,.58,-1.65,town);box(3.25,.08,.78,darkTrim,22.5,1.12,-1.65,town);
- box(.65,.34,.42,darkTrim,21.7,1.32,-1.65,town);box(.52,.04,.29,neon,21.7,1.51,-1.65,town);
- box(.48,.09,.24,M(0x222222),23.0,1.22,-1.65,town);
- // Wall poster / price panels and a hanging ceiling sign.
- box(.035,1.0,1.4,M(0x276c83),17.12,1.8,-1.2,town);box(.04,.12,1.12,M(0xe7e5d7),17.1,2.08,-1.2,town);
- box(2.4,.12,.6,darkTrim,23.1,2.67,-3.1,town);box(2.25,.04,.44,neon,23.1,2.74,-3.1,town);
- // Diner: checker tiles, booths, tables, pendant lights and kitchen pass.
+/* ---------- lightweight walk-in interiors: simple shop + diner ---------- */ { const tile=M(0x8d8d89,.95,0),darkTrim=M(0x34383c,.9,0),shelf=M(0x6c4c32,.9,0),neon=M(0x8dd9e8,.5,0),canMats=[M(0xd84c42,.7,0),M(0x3b9b68,.7,0),M(0xd9b85a,.7,0),M(0x4c78bc,.7,0)]; box(11.5,.035,11.5,tile,23,.055,0,town);box(.08,.06,4.8,neon,23,2.82,-.1,town); for(const x of [19.2,25.0]){box(.12,1.7,3.8,darkTrim,x,1.0,-4.95,town);box(.16,.07,3.85,shelf,x+.11,.58,-4.95,town);box(.16,.07,3.85,shelf,x+.11,1.22,-4.95,town);for(let n=0;n<4;n++)box(.18,.22,.25,canMats[n],x+.23,.76,-6.1+n*1.0,town);for(let n=0;n<3;n++)box(.18,.22,.25,canMats[(n+1)%4],x+.23,1.4,-5.6+n*1.0,town)} box(3.4,.9,.85,shelf,22.5,.53,-1.65,town);box(3.25,.08,.78,darkTrim,22.5,1.02,-1.65,town); // Diner: checker tiles, booths, tables, pendant lights and kitchen pass.
  for(let ix=0;ix<7;ix++)for(let iz=0;iz<7;iz++)box(1.8,.035,1.8,(ix+iz)%2?tile:tileAlt,14.7+ix*1.8,.055,-56.6+iz*2.05,town);
  const boothRed=M(0x8f2e2b,.78,0),tableTop=M(0xc8b99e,.48,.12),chrome=M(0x9ca3a7,.32,.65);
  for(const z of [-55.4,-50.1,-44.8]){
