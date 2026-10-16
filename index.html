@@ -2057,7 +2057,7 @@ draw();
     if(pressed){cock.updateMatrixWorld(true);disc.position.copy(cock.worldToLocal(handPos));disc.position.z-=.02;disc.rotation.set(Math.PI/2,0,0);}
     else{
      const trayWorld=tray.getWorldPosition(new T.Vector3());
-     if(handPos.distanceTo(trayWorld)<.62){disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);inserted=tracks.length>0;paint(tracks.length?'CD INSERTED':'EMPTY CD SLOT')}
+     if(trayOut&&handPos.distanceTo(trayWorld)<.24){disc.position.set(.4,-.355,tray.userData.openZ);disc.rotation.set(Math.PI/2,0,0);inserted=false;paint('CD ON TRAY');info.textContent='CD seated on tray — click EJECT to close and read'}
      else{disc.position.set(.4,-.30,-.73);inserted=false;paint('DISC REMOVED')}
      discHeldBy=null;
     }
@@ -2065,7 +2065,7 @@ draw();
   }
  }
  setInterval(()=>{try{cdGrabStep();discLabel.position.set(disc.position.x,disc.position.y,disc.position.z+.004);discLabel.visible=disc.position.y>-.39;discOutline.visible=discHeldBy?false:discOutline.visible;discOutline.position.copy(disc.position);discOutline.position.z-=.003}catch(e){}},30);
- const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V8';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
+ const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V9';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
  paint('TRAY CLOSED · NO DISC');
 })();</script>
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
