@@ -1863,12 +1863,12 @@ const SONGS=['Songs/song1.m4a','Songs/song2.m4a'];
 const CAND=n=>['Songs/song'+n+'.m4a','songs/song'+n+'.m4a','Songs/Song'+n+'.m4a','song'+n+'.m4a','Songs/song'+n+'.mp3','songs/song'+n+'.mp3','Songs/Song'+n+'.mp3','Songs/song'+n+'.MP3','song'+n+'.mp3'];
 let toastEl=null,toastT=0;function toast(t,ok){if(!toastEl){toastEl=document.createElement('div');toastEl.style.cssText='position:fixed;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top,0px));z-index:9998;background:rgba(101,13,13,.92);color:#fff;padding:8px 10px;border-radius:8px;font:12px system-ui,sans-serif;text-align:center;pointer-events:none';document.body.appendChild(toastEl)}toastEl.textContent=t;toastEl.style.background=ok?'rgba(14,86,40,.92)':'rgba(101,13,13,.92)';toastEl.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>{toastEl.style.display='none'},9000)}
 const au=SONGS.map((s,i)=>{const a=new Audio();a._c=CAND(i+1);a._k=0;a.loop=true;a.preload='metadata';a.src=a._c[0];return a});
-const BX=[.08,.15,.22],BY=-.36,BZ=-.92;
-const BASE=['#7a2a2a','#2a4a7a','#2a7a3a'],ON=['#ff5a5a','#5aa0ff','#5aff7a'];
+const BX=[.08,.15],BY=-.36,BZ=-.92;
+const BASE=['#7a2a2a','#2a4a7a'],ON=['#ff5a5a','#5aa0ff'];
 let cur=-1,bad=[0,0,0],prevMusic=true,resumeBgm=false,cd=0,last=performance.now(),sig='';
 const _p=new T.Vector3();
 function numTex(i,on){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle=on?ON[i]:BASE[i];g.fillRect(0,0,64,64);g.fillStyle='#fff';g.font='bold 44px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(String(i+1),32,36);return new T.CanvasTexture(c)}
-const btns=[0,1,2].map(i=>{const side=new T.MeshBasicMaterial({color:new T.Color(BASE[i])}),top=new T.MeshBasicMaterial({map:numTex(i,false)});
+const btns=[0,1].map(i=>{const side=new T.MeshBasicMaterial({color:new T.Color(BASE[i])}),top=new T.MeshBasicMaterial({map:numTex(i,false)});
  const m=new T.Mesh(new T.CylinderGeometry(.03,.03,.025,16),[side,top,side]);m.position.set(BX[i],BY,BZ);cock.add(m);return{m,side,top,on:false}});
 const lc=document.createElement('canvas');lc.width=512;lc.height=64;const lx=lc.getContext('2d'),lt=new T.CanvasTexture(lc);
 const lbl=new T.Mesh(new T.PlaneGeometry(.46,.0575),new T.MeshBasicMaterial({map:lt}));lbl.position.set(.15,BY+.005,BZ-.075);lbl.rotation.x=-Math.PI/2+.25;cock.add(lbl);
@@ -1877,8 +1877,8 @@ const lbl=new T.Mesh(new T.PlaneGeometry(.46,.0575),new T.MeshBasicMaterial({map
  const dashScreenCtx=dashScreenCanvas.getContext('2d');const dashScreenTex=new T.CanvasTexture(dashScreenCanvas);
  dashScreenTex.minFilter=T.LinearFilter;dashScreenTex.magFilter=T.LinearFilter;
  const dashScreenMat=new T.MeshBasicMaterial({map:dashScreenTex,toneMapped:false});
- const dashScreen=new T.Mesh(new T.PlaneGeometry(.34,.128),dashScreenMat);
- dashScreen.position.set(.405,BY+.006,BZ-.078);dashScreen.rotation.x=-Math.PI/2+.25;cock.add(dashScreen);
+ const dashScreen=new T.Mesh(new T.PlaneGeometry(.40,.15),dashScreenMat);
+ dashScreen.position.set(.405,BY+.035,BZ-.078);dashScreen.rotation.x=-Math.PI/2+.25;cock.add(dashScreen);
  let dashScroll=0,dashClockSeconds=0,dashClockMinutes=38,dashClockHours=10,dashFrame=0;
  function drawDashScreen(dt){
   dashScroll=(dashScroll+dt*19)%850;dashClockSeconds+=dt;
@@ -1932,23 +1932,23 @@ function radioMix(dt){
  const v=[0,0,0];
  if(cur>=0){radioAudio();let f=1;if(onFoot)f=fall(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z));v[cur]=f}
  const m=window.__rlMP;
- if(m&&m.joined()){cam.getWorldPosition(_p);for(const p of m.peers.values()){const r=m.radioOf.get(p.id);if(r===undefined||r<0||r>2||!p.cc||!p.cc.c)continue;const q=p.cc.c.position;v[r]=Math.max(v[r],fall(Math.hypot(_p.x-q.x,_p.z-q.z)));radioAudio()}}
+ if(m&&m.joined()){cam.getWorldPosition(_p);for(const p of m.peers.values()){const r=m.radioOf.get(p.id);if(r===undefined||r<0||r>1||!p.cc||!p.cc.c)continue;const q=p.cc.c.position;v[r]=Math.max(v[r],fall(Math.hypot(_p.x-q.x,_p.z-q.z)));radioAudio()}}
  syncT-=dt;const doSync=syncT<=0;if(doSync)syncT=1;const tn=performance.now();
- for(let i=0;i<3;i++){const a=au[i];
+ for(let i=0;i<au.length;i++){const a=au[i];
   if(v[i]>.004&&!bad[i]){const vv=C(vol*v[i],0,1);if(gn[i])gn[i].gain.setTargetAtTime(vv,rctx.currentTime,.05);else a.volume=vv;const d=a.duration,ok=d>0&&isFinite(d);
    if(a.paused){if(tn>retry[i]){if(ok&&a._startFromBeginning){try{a.currentTime=0}catch(e){}a._startFromBeginning=false}retry[i]=tn+700;const pr=a.play();
      if(pr&&pr.catch)pr.catch(e=>{lastRej[i]=(e&&e.name)||'play blocked';retry[i]=tn+1500})}}}
   else if(!a.paused)a.pause()}
- const mx=Math.max(v[0],v[1],v[2]);if(rctx&&radioLP&&radioHP&&radioOut){const outside=onFoot?1:0;radioLP.frequency.setTargetAtTime(outside?1250:6200,rctx.currentTime,.18);radioHP.frequency.setTargetAtTime(outside?230:150,rctx.currentTime,.18);radioOut.gain.setTargetAtTime(outside?.58:.92,rctx.currentTime,.18)}if(nzg)nzg.gain.setTargetAtTime(mx>.004?C(vol,0,1)*(.012+.028*(1-mx))*(onFoot?.35:1),rctx.currentTime,.1)}
+ const mx=Math.max(v[0],v[1],v[2]);if(rctx&&radioLP&&radioHP&&radioOut){const outside=onFoot?1:0;radioLP.frequency.setTargetAtTime(outside?1250:6200,rctx.currentTime,.18);radioHP.frequency.setTargetAtTime(outside?230:150,rctx.currentTime,.18);radioOut.gain.setTargetAtTime(outside ? .58 : .92,rctx.currentTime,.18)}if(nzg)nzg.gain.setTargetAtTime(mx>.004?C(vol,0,1)*(.012+.028*(1-mx))*(onFoot ? .35 : 1),rctx.currentTime,.1)}
 function press(i){if(cur===i)stop();else play(i)}
 au.forEach((a,i)=>a.addEventListener('error',()=>{
  if(a._k<a._c.length-1){a._k++;a.src=a._c[a._k];a.load();retry[i]=0;return}
  bad[i]=1;if(cur===i){cur=-1;restore()}draw();toast('Radio: could not load '+a._c[0]+' (error '+(a.error?a.error.code:'?')+') - check the Songs folder and file names')}));
 addEventListener('keydown',e=>{if(menuOpen||e.repeat)return;if(e.code==='Digit1')press(0);else if(e.code==='Digit2')press(1);else if(e.code==='Digit3')press(2)});
 /* phone buttons */
-const tc=document.getElementById('tc'),mob=[];
+const tc=document.createElement('div'),mob=[];tc.id='tc';tc.style.cssText='position:fixed;inset:0;z-index:9999;pointer-events:none';document.body.appendChild(tc);
 if(tc){[0,1].forEach(i=>{const b=document.createElement('button');b.className='sm song';b.textContent=['♪ 120.0','♪ 130.0'][i];b.dataset.i=i;
- Object.assign(b.style,{display:'none',width:'74px',height:'50px',fontSize:'12px',zIndex:'9'});tc.appendChild(b);
+ Object.assign(b.style,{display:'none',position:'fixed',pointerEvents:'auto',justifyContent:'center',alignItems:'center',padding:'8px',border:'1px solid rgba(255,255,255,.65)',borderRadius:'12px',background:'rgba(12,18,25,.88)',color:'#fff',fontWeight:'800',width:'78px',height:'48px',fontSize:'12px',zIndex:'9999',touchAction:'manipulation'});tc.appendChild(b);
  b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();press(i)});b.addEventListener('touchstart',e=>{e.stopPropagation()},{passive:true});mob.push(b)});
  const lay=()=>{const wide=innerWidth>=560;mob.forEach((b,i)=>{b.style.right='';b.style.left='';b.style.bottom='';b.style.top='';
   if(wide){b.style.left='calc(50% + '+((i-1)*80-37)+'px)';b.style.bottom='calc(18px + env(safe-area-inset-bottom,0px))'}
@@ -1956,7 +1956,7 @@ if(tc){[0,1].forEach(i=>{const b=document.createElement('button');b.className='s
  lay();addEventListener('resize',lay)}
 /* Accessible radio panel: track names plus a live volume slider (the in-game dash buttons still work in VR). */
 const rp=document.createElement('div');rp.id='radioPanel';rp.style.cssText='position:fixed;left:10px;top:calc(12px + env(safe-area-inset-top,0px));z-index:8;display:none;gap:7px;align-items:center;flex-wrap:wrap;max-width:min(94vw,440px);padding:8px 10px;border-radius:12px;background:rgba(7,10,15,.82);color:#fff;font:12px system-ui,sans-serif;pointer-events:auto';
-const rtitle=document.createElement('div');rtitle.textContent="RADIO • 1 I'm Broke — Limp Bizkit • 2 Reclaim My Place — Korn • 3 Wicked Garden — Stone Temple Pilots";rtitle.style.cssText='width:100%;font-weight:700;line-height:1.35';
+const rtitle=document.createElement('div');rtitle.textContent='RADIO • 1: 120 ROCK • 2: 130 NU METAL';rtitle.style.cssText='width:100%;font-weight:700;line-height:1.35';
 const rvlabel=document.createElement('label');rvlabel.textContent='Volume ';rvlabel.style.cssText='display:flex;gap:7px;align-items:center';
 const rvol=document.createElement('input');rvol.type='range';rvol.min='0';rvol.max='1';rvol.step='.05';rvol.value=String(vol);rvol.setAttribute('aria-label','Radio volume');rvol.style.width='150px';rvol.addEventListener('input',()=>{vol=Number(rvol.value);if(bgm)bgm.volume=vol});rvlabel.appendChild(rvol);rp.append(rtitle,rvlabel);document.body.appendChild(rp);
 function mobSync(){const show=!onFoot&&!dead&&!menuOpen&&!renderer.xr.isPresenting;mob.forEach((b,i)=>{b.style.display=show?'flex':'none';b.classList.toggle('on',i===cur)});rp.style.display=show?'flex':'none';if(document.activeElement!==rvol)rvol.value=String(vol)}
@@ -1968,7 +1968,7 @@ function tick(){const tn=performance.now(),dt=Math.min(.1,(tn-last)/1000);last=t
    /* Convert the tip into dashboard-local coordinates so the slider works at any car heading. */
    let tl;if(J){cock.updateMatrixWorld(true);tl=cock.worldToLocal(tp.clone())}else tl=tp.clone().sub(cock.position);
    if(Math.abs(tl.y-(BY-.065))<.08&&Math.abs(tl.z-(BZ-.12))<.08&&tl.x>.025&&tl.x<.295){vol=C((tl.x-.04)/.22,0,1);const uiVol=document.querySelector('#radioPanel input[type=range]');if(uiVol)uiVol.value=String(vol);radioVolKnob.position.x=.04+.22*vol;cd=.08;continue}
-   for(let i=0;i<3;i++){if(tl.distanceTo(_p.set(BX[i],BY,BZ))<(J?.045:.06)){press(i);cd=.5;try{buzz(.4,o)}catch(e){}break}}if(cd>0)break}}
+   for(let i=0;i<2;i++){if(tl.distanceTo(_p.set(BX[i],BY,BZ))<(J?.045:.06)){press(i);cd=.5;try{buzz(.4,o)}catch(e){}break}}if(cd>0)break}}
  radioVolKnob.position.x=.04+.22*vol;radioMix(dt);sendT-=dt;if(sendT<=0){sendT=2.5;radioSend()}
  mobSync()}
 const _h=window.__roadlineHandsUpdate;window.__roadlineHandsUpdate=function(){try{if(_h)_h()}catch(e){}try{tick()}catch(e){}};
