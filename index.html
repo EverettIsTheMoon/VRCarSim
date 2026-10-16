@@ -153,37 +153,20 @@ const scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(0x9
 const cam=new T.PerspectiveCamera(70,innerWidth/innerHeight,.05,500),rig=new T.Group();scene.add(rig);rig.add(cam);cam.position.set(0,1.2,0);
 /* Mobile third-person player preview: load the dedicated Models/player.glb avatar. */
 const playerAvatar=new T.Group();playerAvatar.name='RoadlinePlayerAvatar';playerAvatar.visible=false;scene.add(playerAvatar);
-let playerAvatarMixer=null,playerAvatarAction=null,playerWalkAction=null,playerSprintAction=null,playerIdleAction=null,playerAvatarLoaded=false,playerView='first',playerAnimMoving=false,playerAnimState='idle';
+let playerAvatarMixer=null,playerAvatarAction=null,playerAvatarLoaded=false,playerView='first',playerAnimMoving=false;
 let playerAnimLastX=0,playerAnimLastZ=0;
-function rlSetPlayerAnimation(state){
-  if(state===playerAnimState)return;
-  const next=state==='sprint'?playerSprintAction:(state==='walk'?playerWalkAction:playerIdleAction);
-  const fallback=state==='idle'?(playerIdleAction||playerWalkAction||playerSprintAction):(playerWalkAction||playerSprintAction||playerIdleAction);
-  const chosen=next||fallback;if(!chosen)return;
-  if(playerAvatarAction&&playerAvatarAction!==chosen)playerAvatarAction.fadeOut(.12);
-  playerAvatarAction=chosen;playerAvatarAction.reset().fadeIn(.12).play();playerAvatarAction.setLoop(T.LoopRepeat,Infinity);
-  playerAnimState=state;
-}
 rlGetModel('player').then(asset=>{
  const model=rlCloneModel(asset.scene);model.name='RoadlinePlayerGLB';model.visible=true;
  model.traverse(o=>{o.visible=true;if(o.isMesh){o.frustumCulled=true;o.castShadow=false;o.receiveShadow=false;if(Array.isArray(o.material))o.material.forEach(m=>{if(m)m.side=T.DoubleSide});else if(o.material)o.material.side=T.DoubleSide;}});
- /* Keep the GLB's authored node scales. This rig contains nested scene/armature scale transforms, so normalizing its world-space bounding box again can multiply its scale dramatically and make the avatar enormous. */
- model.scale.setScalar(1);model.updateMatrixWorld(true);
- const fitted=new T.Box3().setFromObject(model);
- if(Number.isFinite(fitted.min.y)&&Number.isFinite(fitted.max.y)&&fitted.max.y>fitted.min.y){model.position.y-=fitted.min.y;model.position.x-=(fitted.min.x+fitted.max.x)*.5;model.position.z-=(fitted.min.z+fitted.max.z)*.5;}
+ // IMPORTANT: this skinned GLB has unusual nested scale transforms. A Box3 made
+ // from its undeformed bind-pose mesh reports a tiny height, so normalizing by that
+ // value multiplies the whole rig hundreds of times and breaks third-person view.
+ // Keep the authored GLB scale and origin; do not resize from its misleading bounds.
+ model.scale.setScalar(1);
+ model.position.set(0,0,0);
+ model.updateMatrixWorld(true);
  playerAvatar.add(model);playerAvatar.userData.model=model;playerAvatarLoaded=true;
- if(asset.animations&&asset.animations.length){
-    playerAvatarMixer=new T.AnimationMixer(model);
-    const findClip=pattern=>asset.animations.find(a=>pattern.test(a.name));
-    const idleClip=findClip(/idle|stand/i),walkClip=findClip(/^walk$|walk/i),sprintClip=findClip(/sprint|run/i);
-    playerIdleAction=idleClip?playerAvatarMixer.clipAction(idleClip):null;
-    playerWalkAction=walkClip?playerAvatarMixer.clipAction(walkClip):null;
-    playerSprintAction=sprintClip?playerAvatarMixer.clipAction(sprintClip):null;
-    playerAvatarAction=playerIdleAction||playerWalkAction||playerSprintAction||playerAvatarMixer.clipAction(asset.animations[0]);
-    playerAnimState=playerIdleAction?'idle':(playerWalkAction?'walk':'sprint');
-    playerAvatarAction.setLoop(T.LoopRepeat,Infinity);playerAvatarAction.play();
-    [playerIdleAction,playerWalkAction,playerSprintAction].filter(Boolean).forEach(a=>{a.enabled=true;a.setEffectiveWeight(a===playerAvatarAction?1:0);});
-  }
+ if(asset.animations&&asset.animations.length){const clip=asset.animations.find(a=>/walk|run|locomotion/i.test(a.name))||asset.animations[0];playerAvatarMixer=new T.AnimationMixer(model);playerAvatarAction=playerAvatarMixer.clipAction(clip);playerAvatarAction.reset();playerAvatarAction.setLoop(T.LoopRepeat,Infinity);playerAvatarAction.play();playerAvatarAction.paused=true;}
 }).catch(()=>{playerAvatarLoaded=false;console.warn('[Roadline Player] Models/player.glb could not load; third-person player model unavailable');});
 const hemi=new T.HemisphereLight(0xffffff,0x556655,.9);scene.add(hemi);const sun=new T.DirectionalLight(0xffffff,.8);sun.position.set(30,60,20);scene.add(sun);
 const M=(c,r=.7,m=.1)=>new T.MeshStandardMaterial({color:c,roughness:r,metalness:m});
@@ -1014,8 +997,7 @@ if(onFoot&&!dead&&!menuOpen&&sleepT<=0){
 if(gd&&!o.p&&!o.item&&!useGun){let best=null,bd=.35;for(const it of items){if(it.held)continue;const d=it.m.position.distanceTo(wp);if(d<bd){bd=d;best=it}}if(best&&best.weapon&&window.__buyWeapon&&!window.__buyWeapon(best))best=null;if(best){o.item=best;best.held=true;buzz(.3,o)}}
 if(o.item&&o.item.weapon){if(tv>.6&&!o.tp)weaponFire(o.item,o);o.tp=tv>.6}else if(useGun){if(tv>.6&&!o.tp)shoot();o.tp=tv>.6}}
 if(!gd&&o.item){const it=o.item;it.held=false;it.v.copy(o.vel).multiplyScalar(1.15);it.w=R(-8,8);o.item=null}
-if(o.item){o.item.m.position.copy(wp).add(new T.Vector3(0,-.04,-.18).applyQuaternion(o.c.quaternion));o.item.m.quaternion.copy(o.c.quaternion);if(o.item.weapon==='ak')o.item.m.rotateY(Math.PI/2);else if(o.item.weapon==='rocket')o.item.m.rotateZ(-Math.PI/2)}
-if(!onFoot&&o.item){o.item.held=false;o.item=null}
+if(o.item){o.item.m.position.copy(wp).add(new T.Vector3(0,-.04,-.18).applyQuaternion(o.c.quaternion));o.item.m.quaternion.copy(o.c.quaternion);if(o.item.weapon==='ak')o.item.m.rotateY(Math.PI/2);else if(o.item.weapon==='rocket')o.item.m.rotateZ(-Math.PI/2)}if(!onFoot&&o.item){o.item.held=false;o.item=null}
 o.p=gd?1:0;
 if(o.grab==='H')hbA=C(o.a0+(hp.z-o.z0)*3,0,.8);
 if(o.grab==='L'){const a=C(o.a0+(hp.z-o.z0)*3,-.5,.5);stick.rotation.x=a;if(a<-.2)gear=1;else if(a>.2)gear=-1}
@@ -1175,8 +1157,7 @@ if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
    if(playerAvatar.visible){
      const moved=Math.hypot(rig.position.x-playerAnimLastX,rig.position.z-playerAnimLastZ)>0.0015;
      playerAnimMoving=moved&&sleepT<=0;
-     rlSetPlayerAnimation(!playerAnimMoving?'idle':(window.__sprint?'sprint':'walk'));
-     if(playerAvatarAction){playerAvatarAction.enabled=true;playerAvatarAction.paused=false;playerAvatarAction.timeScale=1;}
+     if(playerAvatarAction){playerAvatarAction.paused=!playerAnimMoving;playerAvatarAction.timeScale=window.__sprint?1.75:1;if(!playerAnimMoving)playerAvatarAction.time=0;}
      if(playerAvatarMixer)playerAvatarMixer.update(dt);
      cam.position.set(0,2.25,4.6);cam.lookAt(rig.position.x,rig.position.y+0.95,rig.position.z);
    }else if(playerView==='first'){cam.position.set(0,1.2,0);}
@@ -2015,8 +1996,7 @@ draw();
    Players that wander more than ~450 m away from the host simulate their own surroundings until they get close again. */
 (function(){
 const SB_URL='https://mxprclimofjiwwbgjkux.supabase.co';
-const SB_KEY='sb_publishable_tkyzj0ENsHqjcpjX-vr9nw_IDucY7sX';
-const el=id=>document.getElementById(id),stEl=el('mpSt'),ROOM='room1';
+const SB_KEY='sb_publishable_tkyzj0ENsHqjcpjX-vr9nw_IDucY7sX';const el=id=>document.getElementById(id),stEl=el('mpSt'),ROOM='room1';
 const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const setSt=t=>{stEl.textContent=t};
 if(!window.supabase){setSt('Online unavailable (library blocked)');return}
