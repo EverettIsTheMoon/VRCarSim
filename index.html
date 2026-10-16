@@ -110,7 +110,7 @@ function rlAttachModel(key,target,opts={}){
   model.updateMatrixWorld(true);
   // Keep the Cybertruck GLB in its authored forward orientation; the previous 180-degree
   // correction made the exterior appear backwards in-game.
-  if(key==='car')model.rotation.y=0;
+  if(key==='car')model.rotation.y=Math.PI;
   model.updateMatrixWorld(true);b=new T.Box3().setFromObject(model);const center=b.getCenter(new T.Vector3());
   model.position.set(-center.x+(opts.offset?.[0]||0),-b.min.y+(opts.offset?.[1]||0),-center.z+(opts.offset?.[2]||0));
   model.updateMatrixWorld(true);b=new T.Box3().setFromObject(model);model.userData.rlExternalModel=true;
@@ -161,7 +161,7 @@ const renderer=new T.WebGLRenderer({antialias:false,alpha:false,powerPreference:
 /* Keep the 3D scene crisp on phones; adapt render resolution only when frame rate drops.
    HTML HUD/menu text remains at native screen resolution. */
 let roadlineRenderScale=1,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
-function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25)*roadlineRenderScale);renderer.setSize(innerWidth,innerHeight,false)}
+function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.75)*Math.max(.85,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
 roadlineApplyRenderScale();renderer.setClearColor(0x9ec8e8,1);renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0';renderer.xr.enabled=true;if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(.55);document.body.appendChild(renderer.domElement);
 const SKY_D=new T.Color(0x9ec8e8),SKY_N=new T.Color(0x070b18);
 const scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(0x9ec8e8,90,520);
@@ -1181,7 +1181,7 @@ if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(sleepT<=0&&!carE
 if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
  const vb=document.getElementById('viewToggle');if(vb){vb.style.display=(!dead&&!menuOpen&&!carEnterAnim)?'flex':'none';vb.textContent=onFoot?(playerView==='first'?'THIRD PERSON':'FIRST PERSON'):(carView==='first'?'THIRD PERSON':'FIRST PERSON');}
  if(onFoot){
-   playerAvatar.position.set(rig.position.x,rig.position.y+.85,rig.position.z);playerAvatar.rotation.y=rig.rotation.y;
+   playerAvatar.position.set(rig.position.x,rig.position.y+1.45,rig.position.z);playerAvatar.rotation.y=rig.rotation.y;
    playerAvatar.visible=playerAvatarLoaded&&playerView==='third'&&!dead;
    if(playerAvatar.visible){
      const moved=Math.hypot(rig.position.x-playerAnimLastX,rig.position.z-playerAnimLastZ)>0.0015;
