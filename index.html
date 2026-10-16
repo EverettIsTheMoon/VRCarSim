@@ -1700,7 +1700,7 @@ recenter=function(){_rc();if(renderer.xr.isPresenting)cock.position.y+=window.SE
  let tick=0;
  function update(){
    if(renderer.xr.isPresenting===false && !cam.parent) return;
-   if(++tick%3!==0)return;
+   if(++tick%6!==0)return; // Run the distance/LOD sweep less often to reduce CPU spikes.
    cam.getWorldPosition(_v);
    for(const x of tracked){
      const o=x.o;if(!o||!o.parent)continue;
@@ -1964,7 +1964,9 @@ function radioMix(dt){
     if(pr&&pr.catch)pr.catch(e=>{lastRej[i]=(e&&e.name)||'play blocked';retry[i]=tn+1500});
    }
   }else if(!a.paused){
-   a.pause();
+   /* Do not freeze the selected station when the player walks away. Keep its clock running silently. */
+   if(cur===i){if(gn[i]&&rctx)gn[i].gain.setTargetAtTime(0,rctx.currentTime,.08);else a.volume=0;}
+   else a.pause();
   }
  }
  const mx=Math.max(v[0],v[1],v[2]);
