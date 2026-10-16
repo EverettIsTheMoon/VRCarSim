@@ -1930,16 +1930,52 @@ function radioSend(){const m=window.__rlMP;if(m)m.send('rd',{r:cur})}
 function radioMix(dt){
  drawDashScreen(dt);
  const v=[0,0,0];
- if(cur>=0){radioAudio();let f=1;if(onFoot)f=fall(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z));v[cur]=f}
+ if(cur>=0){
+  radioAudio();
+  let f=1;
+  if(onFoot)f=fall(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z));
+  v[cur]=f;
+ }
  const m=window.__rlMP;
- if(m&&m.joined()){cam.getWorldPosition(_p);for(const p of m.peers.values()){const r=m.radioOf.get(p.id);if(r===undefined||r<0||r>1||!p.cc||!p.cc.c)continue;const q=p.cc.c.position;v[r]=Math.max(v[r],fall(Math.hypot(_p.x-q.x,_p.z-q.z)));radioAudio()}}
- syncT-=dt;const doSync=syncT<=0;if(doSync)syncT=1;const tn=performance.now();
- for(let i=0;i<au.length;i++){const a=au[i];
-  if(v[i]>.004&&!bad[i]){const vv=C(vol*v[i],0,1);if(gn[i])gn[i].gain.setTargetAtTime(vv,rctx.currentTime,.05);else a.volume=vv;const d=a.duration,ok=d>0&&isFinite(d);
-   if(a.paused){if(tn>retry[i]){if(ok&&a._startFromBeginning){try{a.currentTime=0}catch(e){}a._startFromBeginning=false}retry[i]=tn+700;const pr=a.play();
-     if(pr&&pr.catch)pr.catch(e=>{lastRej[i]=(e&&e.name)||'play blocked';retry[i]=tn+1500})}}}
-  else if(!a.paused)a.pause()}
- const mx=Math.max(v[0],v[1],v[2]);if(rctx&&radioLP&&radioHP&&radioOut){const outside=onFoot?1:0;radioLP.frequency.setTargetAtTime(outside?1250:6200,rctx.currentTime,.18);radioHP.frequency.setTargetAtTime(outside?230:150,rctx.currentTime,.18);radioOut.gain.setTargetAtTime(outside ? .58 : .92,rctx.currentTime,.18)}if(nzg)nzg.gain.setTargetAtTime(mx>.004?C(vol,0,1)*(.012+.028*(1-mx))*(onFoot ? .35 : 1),rctx.currentTime,.1)}
+ if(m&&m.joined()){
+  cam.getWorldPosition(_p);
+  for(const p of m.peers.values()){
+   const r=m.radioOf.get(p.id);
+   if(r===undefined||r<0||r>1||!p.cc||!p.cc.c)continue;
+   const q=p.cc.c.position;
+   v[r]=Math.max(v[r],fall(Math.hypot(_p.x-q.x,_p.z-q.z)));
+   radioAudio();
+  }
+ }
+ const tn=performance.now();
+ for(let i=0;i<au.length;i++){
+  const a=au[i];
+  if(v[i]>.004&&!bad[i]){
+   const vv=C(vol*v[i],0,1);
+   if(gn[i]&&rctx)gn[i].gain.setTargetAtTime(vv,rctx.currentTime,.05);
+   else a.volume=vv;
+   if(a.paused&&tn>retry[i]){
+    if(a._startFromBeginning){
+     try{a.currentTime=0}catch(e){}
+     a._startFromBeginning=false;
+    }
+    retry[i]=tn+700;
+    const pr=a.play();
+    if(pr&&pr.catch)pr.catch(e=>{lastRej[i]=(e&&e.name)||'play blocked';retry[i]=tn+1500});
+   }
+  }else if(!a.paused){
+   a.pause();
+  }
+ }
+ const mx=Math.max(v[0],v[1],v[2]);
+ if(rctx&&radioLP&&radioHP&&radioOut){
+  const outside=Boolean(onFoot);
+  radioLP.frequency.setTargetAtTime(outside ? 1250 : 6200,rctx.currentTime,.18);
+  radioHP.frequency.setTargetAtTime(outside ? 230 : 150,rctx.currentTime,.18);
+  radioOut.gain.setTargetAtTime(outside ? .58 : .92,rctx.currentTime,.18);
+ }
+ if(nzg&&rctx)nzg.gain.setTargetAtTime(mx>.004 ? C(vol,0,1)*(.012+.028*(1-mx))*(onFoot ? .35 : 1) : 0,rctx.currentTime,.1);
+}
 function press(i){if(cur===i)stop();else play(i)}
 au.forEach((a,i)=>a.addEventListener('error',()=>{
  if(a._k<a._c.length-1){a._k++;a.src=a._c[a._k];a.load();retry[i]=0;return}
