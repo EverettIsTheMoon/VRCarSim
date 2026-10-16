@@ -1865,7 +1865,7 @@ let toastEl=null,toastT=0;function toast(t,ok){if(!toastEl){toastEl=document.cre
 const au=SONGS.map((s,i)=>{const a=new Audio();a._c=CAND(i+1);a._k=0;a.loop=true;a.preload='metadata';a.src=a._c[0];return a});
 const BX=[.08,.15],BY=-.36,BZ=-.92;
 const BASE=['#7a2a2a','#2a4a7a'],ON=['#ff5a5a','#5aa0ff'];
-let cur=-1,bad=[0,0,0],prevMusic=true,resumeBgm=false,cd=0,last=performance.now(),sig='';
+let cur=-1,lastStation=-1,bad=[0,0,0],prevMusic=true,resumeBgm=false,cd=0,last=performance.now(),sig='';
 const _p=new T.Vector3();
 function numTex(i,on){const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle=on?ON[i]:BASE[i];g.fillRect(0,0,64,64);g.fillStyle='#fff';g.font='bold 44px sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(String(i+1),32,36);return new T.CanvasTexture(c)}
 const btns=[0,1].map(i=>{const side=new T.MeshBasicMaterial({color:new T.Color(BASE[i])}),top=new T.MeshBasicMaterial({map:numTex(i,false)});
@@ -1901,8 +1901,8 @@ function draw(){const s=cur+'|'+bad.join();if(s===sig)return;sig=s;
  btns.forEach((b,i)=>{const on=i===cur;if(on!==b.on){b.on=on;b.side.color.set(on?ON[i]:BASE[i]);b.top.map.dispose();b.top.map=numTex(i,on);b.top.needsUpdate=true}})}
 function restore(){musicOn=prevMusic;if(resumeBgm&&bgm){bgm.play().catch(()=>{});resumeBgm=false}}
 function stop(){if(cur>=0){cur=-1;restore();radioMix(0);radioSend()}draw()}
-function play(i){if(cur<0){prevMusic=musicOn;musicOn=false;if(bgm&&!bgm.paused){bgm.pause();resumeBgm=true}}
- au.forEach((a,j)=>{if(j===i){a._startFromBeginning=true;try{a.currentTime=0}catch(e){}}else{a.pause();try{a.currentTime=0}catch(e){}}});cur=i;bad[i]=0;radioMix(0);radioSend();draw();
+function play(i){const sameStation=lastStation===i;if(cur<0){prevMusic=musicOn;musicOn=false;if(bgm&&!bgm.paused){bgm.pause();resumeBgm=true}}
+ au.forEach((a,j)=>{if(j===i){if(!sameStation){a._startFromBeginning=true;try{a.currentTime=0}catch(e){}}}else{a.pause();try{a.currentTime=0}catch(e){}}});lastStation=i;cur=i;bad[i]=0;radioMix(0);radioSend();draw();
  /* on-screen diagnostic so a silent radio can be explained */
  setTimeout(()=>{const a=au[i],d=isFinite(a.duration)?a.duration.toFixed(0):'?';toast('Song '+(i+1)+': '+(a.paused?'NOT playing':'playing')+' | '+a.currentTime.toFixed(0)+'s of '+d+'s | vol '+a.volume.toFixed(2)+' | ready '+a.readyState+' | net '+a.networkState+(a.error?' | file error '+a.error.code:'')+(lastRej[i]?' | '+lastRej[i]:''),!a.paused&&!a.error)},1500)}
 /* ---- real-radio model: every station "plays" all the time. Position in a song = wall-clock time mod song length,
@@ -1929,7 +1929,7 @@ function fall(d){const t=C((d-4)/28,0,1);return(1-t)*(1-t)} /* full volume withi
 function radioSend(){const m=window.__rlMP;if(m)m.send('rd',{r:cur})}
 function radioMix(dt){
  drawDashScreen(dt);
- const v=[0,0,0],radioActive=[cur===0,cur===1,false];
+ const v=[0,0,0],radioActive=[cur===0||lastStation===0,cur===1||lastStation===1,false];
  if(cur>=0){
   radioAudio();
   let f=1;
