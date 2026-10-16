@@ -2025,6 +2025,7 @@ draw();
  const labelTex=new T.CanvasTexture(labelCanvas);labelTex.colorSpace=T.SRGBColorSpace;const discLabel=new T.Mesh(new T.CircleGeometry(.098,48),new T.MeshBasicMaterial({map:labelTex,side:T.DoubleSide,toneMapped:false}));discLabel.position.set(.4,-.345,-.725);cock.add(discLabel);
  const tray=new T.Mesh(new T.BoxGeometry(.29,.018,.21),new T.MeshStandardMaterial({color:0x333a42,roughness:.75}));tray.position.set(.4,-.385,-.73);tray.userData.closedZ=-.73;tray.userData.openZ=-.52;cock.add(tray);let trayOut=false;
  const deck=new T.Mesh(new T.BoxGeometry(.34,.075,.18),new T.MeshStandardMaterial({color:0x171c21,metalness:.35,roughness:.5}));deck.position.set(.4,-.29,-.91);cock.add(deck);
+ const ejectButton=new T.Mesh(new T.CylinderGeometry(.018,.018,.012,20),new T.MeshStandardMaterial({color:0x4b9a9a,metalness:.25,roughness:.4,emissive:0x123333}));ejectButton.position.set(.58,-.335,-.72);cock.add(ejectButton);
  const cv=document.createElement('canvas');cv.width=512;cv.height=128;const cx=cv.getContext('2d'),tex=new T.CanvasTexture(cv);
  const screen=new T.Mesh(new T.PlaneGeometry(.38,.12),new T.MeshBasicMaterial({map:tex,toneMapped:false,side:T.DoubleSide,depthTest:false}));screen.position.set(.4,-.055,-.82);screen.rotation.x=-.16;screen.renderOrder=30;cock.add(screen);
  function paint(msg){cx.fillStyle='#06110d';cx.fillRect(0,0,512,128);cx.fillStyle='#6fffc0';cx.font='bold 27px monospace';cx.fillText('CD · '+album,12,30);cx.font='21px monospace';cx.fillText(msg.slice(0,32),12,68);const t=tracks[idx];cx.font='17px monospace';cx.fillText(t?(String(t.track||idx+1).padStart(2,'0')+' '+t.artist+' — '+t.title):'NO DISC',12,104);tex.needsUpdate=true}
@@ -2036,19 +2037,21 @@ draw();
  const panel=document.createElement('div');panel.style.cssText='position:fixed;right:10px;top:calc(12px + env(safe-area-inset-top,0px));z-index:9997;display:none;flex-direction:column;gap:7px;max-width:290px;padding:10px;border:1px solid #607078;border-radius:12px;background:rgba(6,12,16,.95);color:#fff;font:12px system-ui,sans-serif;pointer-events:auto';
  const head=document.createElement('b');head.textContent='CD PLAYER · CHOCOLATE STARFISH';const info=document.createElement('div');info.textContent='Reading disc…';panel.append(head,info);const row=document.createElement('div');row.style.cssText='display:flex;flex-wrap:wrap;gap:5px';panel.append(row);
  function btn(label,fn){const b=document.createElement('button');b.textContent=label;b.style.cssText='padding:8px;border-radius:7px;border:1px solid #697984;background:#202b32;color:white;font-weight:700';b.onclick=fn;row.append(b)}
+ function toggleTray(){if(!trayOut){audio.pause();audio.removeAttribute('src');audio.load();inserted=false;paused=false;trayOut=true;tray.position.z=tray.userData.openZ;disc.position.set(.4,-.355,tray.userData.openZ);disc.rotation.set(Math.PI/2,0,0);ejectButton.material.emissive.setHex(0x225555);paint('TRAY OPEN · PLACE CD');info.textContent='Tray open — place the CD on the tray, then click EJECT again';return}const dx=disc.position.x-.4,dz=disc.position.z-tray.userData.openZ,dy=disc.position.y-(-.355);if(Math.hypot(dx,dz)<.16&&Math.abs(dy)<.10){trayOut=false;tray.position.z=tray.userData.closedZ;disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);ejectButton.material.emissive.setHex(0x123333);paint('READING CD');info.textContent='Tray closed — reading disc';load()}else{paint('PLACE CD ON TRAY');info.textContent='Move the CD onto the extended tray, then click EJECT again'}}
  btn('PREV',()=>skip(-1));btn('PLAY / PAUSE',()=>{if(!inserted){paint('PRESS EJECT TO INSERT CD');return}if(audio.paused){play()}else{audio.pause();paused=true;paint('PAUSED')}});
  btn('RESTART',()=>{if(inserted){audio.currentTime=0;play()}});
- btn('NEXT',()=>skip(1));btn('EJECT',()=>{if(!trayOut){audio.pause();audio.removeAttribute('src');audio.load();inserted=false;paused=false;trayOut=true;tray.position.z=tray.userData.openZ;disc.position.set(.4,-.355,tray.userData.openZ);disc.rotation.set(Math.PI/2,0,0);paint('TRAY OPEN · PLACE CD');info.textContent='Tray open — place the CD on the tray, then click EJECT again';return}const dx=disc.position.x-.4,dz=disc.position.z-tray.userData.openZ,dy=disc.position.y-(-.355);if(Math.hypot(dx,dz)<.16&&Math.abs(dy)<.10){trayOut=false;tray.position.z=tray.userData.closedZ;disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);paint('READING CD');info.textContent='Tray closed — reading disc';load()}else{paint('PLACE CD ON TRAY');info.textContent='Move the CD onto the extended tray, then click EJECT again'}});
+ btn('NEXT',()=>skip(1));btn('EJECT',toggleTray);
  document.body.append(panel);const toggle=document.createElement('button');toggle.textContent='💿 CD';toggle.style.cssText='position:fixed;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:9996;display:none;padding:10px 14px;border-radius:10px;border:1px solid #a8b5bd;background:rgba(8,15,20,.9);color:white;font-weight:800;pointer-events:auto';toggle.onclick=()=>{panel.style.display=panel.style.display==='flex'?'none':'flex';if(panel.style.display==='flex'&&!tracks.length)load()};document.body.append(toggle);
  setInterval(()=>{toggle.style.display=(!onFoot&&!dead&&!menuOpen&&!renderer.xr.isPresenting)?'block':'none'},250);
  /* XR grab interaction: grip near the disc to lift it; release near the tray to seat it. */
- let discHeldBy=null;
+ let discHeldBy=null,ejectHeldBy=null;
  function cdGrabStep(){
   if(!renderer.xr.isPresenting)return;
   for(const h of [left,sec]){
    if(!h||!h.c||!h.gp)continue;
    const pressed=!!(h.gp.buttons&&h.gp.buttons.some((b,i)=>i<3&&b&&b.pressed));
-   const handPos=h.c.getWorldPosition(new T.Vector3());
+   const handPos=h.c.getWorldPosition(new T.Vector3());const ejectPos=ejectButton.getWorldPosition(new T.Vector3());
+   if(pressed&&!ejectHeldBy&&handPos.distanceTo(ejectPos)<.14){ejectHeldBy=h;toggleTray();continue}if(!pressed&&ejectHeldBy===h)ejectHeldBy=null;
    const discPos=disc.getWorldPosition(new T.Vector3());
    discOutline.visible=handPos.distanceTo(discPos)<.42&&!discHeldBy&&disc.position.y>-.39;
    discOutline.position.copy(disc.position);discOutline.position.z-=.003;
@@ -2065,7 +2068,7 @@ draw();
   }
  }
  setInterval(()=>{try{cdGrabStep();discLabel.position.set(disc.position.x,disc.position.y,disc.position.z+.004);discLabel.visible=disc.position.y>-.39;discOutline.visible=discHeldBy?false:discOutline.visible;discOutline.position.copy(disc.position);discOutline.position.z-=.003}catch(e){}},30);
- const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V9';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
+ const versionTag=document.createElement('div');versionTag.textContent='VRCarSim · V10';versionTag.style.cssText='position:fixed;left:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:9995;padding:4px 7px;border-radius:6px;background:rgba(7,12,18,.7);color:#c8d4dc;font:10px monospace;pointer-events:none';document.body.append(versionTag);
  paint('TRAY CLOSED · NO DISC');
 })();</script>
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
