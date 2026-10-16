@@ -1,0 +1,1 @@
+Place this album's .m4a tracks in this folder. The CD player reads track metadata from the files.
