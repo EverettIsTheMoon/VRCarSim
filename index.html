@@ -1058,9 +1058,9 @@ const mb=[
 [262,246,230,46,()=>'Music: '+(bgm?(bgm.paused?'off':'custom'):(musicOn?'on':'off')),()=>{if(bgm){bgm.paused?bgm.play():bgm.pause()}else musicOn=!musicOn}],
 [20,302,472,44,()=>'Driving: '+(selectedDriveMode==='race'?'RACE 2.5 km':'FREE RIDE'),()=>{selectedDriveMode=selectedDriveMode==='free'?'race':'free';$('sDriveMode').value=selectedDriveMode;menuSig=''}],
 [20,356,230,38,()=>'Vol -',()=>setVol(vol-.1)],[262,356,230,38,()=>'Vol +',()=>setVol(vol+.1)]];
-function drawMenu(h){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='#000';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#ff5a36';g.font='bold 34px sans-serif';g.fillText('ROADLINE VR',256,48);
-mb.forEach((b,i)=>{g.fillStyle=i===h?'#ff8a66':'#3a4452';g.fillRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
-g.font='15px sans-serif';g.fillStyle='#aab';g.fillText('Volume '+Math.round(vol*100)+'%  |  Horror uses left trigger to fire',256,398);ptex.needsUpdate=true}
+function drawMenu(h){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.70)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText('ROADLINE VR',256,48);
+mb.forEach((b,i)=>{g.fillStyle=i===h?'rgba(150,154,160,.70)':'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
+g.font='15px sans-serif';g.fillStyle='#c4c7cb';g.fillText('Volume '+Math.round(vol*100)+'%  |  Point at a button and press trigger',256,398);ptex.needsUpdate=true}
 function openMenu(){menuOpen=true;menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,1.5);panel.lookAt(p);panel.visible=true;panel.updateMatrixWorld(true)}
 let menuSig='';
 function menuStep(){if(!left)return;const o=new T.Vector3(),d=new T.Vector3();let pr=false;const gp=left.gp;
