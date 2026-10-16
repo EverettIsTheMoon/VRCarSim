@@ -1902,7 +1902,7 @@ function draw(){const s=cur+'|'+bad.join();if(s===sig)return;sig=s;
 function restore(){musicOn=prevMusic;if(resumeBgm&&bgm){bgm.play().catch(()=>{});resumeBgm=false}}
 function stop(){if(cur>=0){cur=-1;restore();radioMix(0);radioSend()}draw()}
 function play(i){const sameStation=lastStation===i;if(cur<0){prevMusic=musicOn;musicOn=false;if(bgm&&!bgm.paused){bgm.pause();resumeBgm=true}}
- au.forEach((a,j)=>{if(j===i){if(!sameStation){a._startFromBeginning=true;try{a.currentTime=0}catch(e){}}}else{a.pause();try{a.currentTime=0}catch(e){}}});lastStation=i;cur=i;bad[i]=0;radioMix(0);radioSend();draw();
+ au.forEach((a,j)=>{if(j===i){if(!sameStation){a._startFromBeginning=true;try{a.currentTime=0}catch(e){}}}else{a.pause();/* Preserve station position when switching away. */}});lastStation=i;cur=i;bad[i]=0;radioMix(0);radioSend();draw();
  /* on-screen diagnostic so a silent radio can be explained */
  setTimeout(()=>{const a=au[i],d=isFinite(a.duration)?a.duration.toFixed(0):'?';toast('Song '+(i+1)+': '+(a.paused?'NOT playing':'playing')+' | '+a.currentTime.toFixed(0)+'s of '+d+'s | vol '+a.volume.toFixed(2)+' | ready '+a.readyState+' | net '+a.networkState+(a.error?' | file error '+a.error.code:'')+(lastRej[i]?' | '+lastRej[i]:''),!a.paused&&!a.error)},1500)}
 /* ---- real-radio model: every station "plays" all the time. Position in a song = wall-clock time mod song length,
