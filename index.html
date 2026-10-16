@@ -2036,7 +2036,30 @@ draw();
  btn('NEXT',()=>skip(1));btn('EJECT',()=>{audio.pause();audio.removeAttribute('src');audio.load();inserted=false;disc.position.y=-.30;paint('EJECTED');info.textContent='CD ejected'});
  btn('INSERT CD',()=>{disc.position.y=-.345;if(!inserted)load();else paint('CD INSERTED')});
  document.body.append(panel);const toggle=document.createElement('button');toggle.textContent='💿 CD';toggle.style.cssText='position:fixed;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:9996;display:none;padding:10px 14px;border-radius:10px;border:1px solid #a8b5bd;background:rgba(8,15,20,.9);color:white;font-weight:800;pointer-events:auto';toggle.onclick=()=>{panel.style.display=panel.style.display==='flex'?'none':'flex';if(panel.style.display==='flex'&&!tracks.length)load()};document.body.append(toggle);
- setInterval(()=>{toggle.style.display=(!onFoot&&!dead&&!menuOpen&&!renderer.xr.isPresenting)?'block':'none'},250);paint('INSERT CD');
+ setInterval(()=>{toggle.style.display=(!onFoot&&!dead&&!menuOpen&&!renderer.xr.isPresenting)?'block':'none'},250);
+ /* XR grab interaction: grip near the disc to lift it; release near the tray to seat it. */
+ let discHeldBy=null;
+ function cdGrabStep(){
+  if(!renderer.xr.isPresenting)return;
+  for(const h of [left,sec]){
+   if(!h||!h.c||!h.gp)continue;
+   const pressed=!!(h.gp.buttons&&h.gp.buttons.some((b,i)=>i<3&&b&&b.pressed));
+   const handPos=h.c.getWorldPosition(new T.Vector3());
+   const discPos=disc.getWorldPosition(new T.Vector3());
+   if(pressed&&!discHeldBy&&inserted&&handPos.distanceTo(discPos)<.24)discHeldBy=h;
+   if(discHeldBy===h){
+    if(pressed){cock.updateMatrixWorld(true);disc.position.copy(cock.worldToLocal(handPos));disc.position.z-=.02;disc.rotation.set(Math.PI/2,0,0)}
+    else{
+     const trayWorld=tray.getWorldPosition(new T.Vector3());
+     if(handPos.distanceTo(trayWorld)<.34){disc.position.set(.4,-.345,-.73);disc.rotation.set(Math.PI/2,0,0);inserted=true;paint('CD INSERTED')}
+     else{disc.position.set(.4,-.30,-.73);inserted=false;paint('DISC REMOVED')}
+     discHeldBy=null;
+    }
+   }
+  }
+ }
+ setInterval(()=>{try{cdGrabStep()}catch(e){}},50);
+ paint('INSERT CD');
 })();</script>
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
