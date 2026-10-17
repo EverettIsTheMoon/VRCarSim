@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Lava Monke Chase</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; overflow: hidden; font-family: monospace; }
+  #c { display: block; width: 100vw; height: 100vh; }
+  #ui {
+    position: fixed; top: 0; left: 0; width: 100%; pointer-events: none;
+    padding: 12px 16px; color: #fff; text-shadow: 0 1px 4px #000;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  #status { font-size: 13px; line-height: 1.6; }
+  #tagged { font-size: 22px; color: #ff4400; font-weight: bold; display: none; }
+  #vrbtn {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: rgba(255,80,0,0.85); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 28px; font-size: 15px; font-family: monospace; cursor: pointer;
+    pointer-events: all; letter-spacing: 1px;
+  }
+  #vrbtn:hover { background: rgba(255,120,0,0.95); }
+  #vrbtn.hidden { display: none; }
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 14px; height: 14px; pointer-events: none;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ''; position: absolute; background: rgba(255,255,255,0.6);
+  }
+  #crosshair::before { width: 2px; height: 14px; left: 6px; top: 0; }
+  #crosshair::after { width: 14px; height: 2px; top: 6px; left: 0; }
+  #instructions {
+    position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); color: #ccc; font-size: 11px; font-family: monospace;
+    padding: 8px 14px; border-radius: 6px; text-align: center; line-height: 1.8;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="status">
+    🐒 <span id="monkecount">5</span> lava monkeys<br>
+    <span id="controlmode">Desktop mode</span>
+  </div>
+  <div id="tagged">YOU GOT TAGGED!</div>
+</div>
+<div id="crosshair"></div>
+<div id="instructions">
+  WASD / arrows — move &nbsp;|&nbsp; Mouse — look &nbsp;|&nbsp; Space — jump<br>
+  Shift — boost push &nbsp;|&nbsp; Click canvas to lock mouse
+</div>
+<button id="vrbtn">Enter VR</button>
+
+<script type="module">
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+
+// ─── SCENE SETUP ───────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.xr.enabled = true;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a0800);
+scene.fog = new THREE.Fog(0x1a0800, 30, 120);
+
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.05, 200);
+camera.position.set(0, 1.6, 0);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ─── LIGHTING ──────────────────────────────────────────────────────────────
+const ambient = new THREE.AmbientLight(0xff3300, 0.4);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xff6600, 1.2);
+sun.position.set(20, 40, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 120;
+sun.shadow.camera.left = -60;
+sun.shadow.camera.right = 60;
+sun.shadow.camera.top = 60;
+sun.shadow.camera.bottom = -60;
+scene.add(sun);
+const lavaGlow = new THREE.PointLight(0xff2200, 0.8, 50);
+lavaGlow.position.set(0, 2, 0);
+scene.add(lavaGlow);
+
+// ─── MATERIALS ─────────────────────────────────────────────────────────────
+const mats = {
+  ground:   new THREE.MeshLambertMaterial({ color: 0x3d1a00 }),
+  lavarock: new THREE.MeshLambertMaterial({ color: 0x8b1a00, emissive: 0x330500 }),
+  bark:     new THREE.MeshLambertMaterial({ color: 0x4a2800 }),
+  leaf:     new THREE.MeshLambertMaterial({ color: 0x1a4a00, transparent: true, opacity: 0.85 }),
+  branch:   new THREE.MeshLambertMaterial({ color: 0x3d2000 }),
+  building: new THREE.MeshLambertMaterial({ color: 0x2a2a2a }),
+  monkey:   new THREE.MeshLambertMaterial({ color: 0xff3300, emissive: 0x660000 }),
+  player:   new THREE.MeshLambertMaterial({ color: 0x88ccff }),
+};
+
+// ─── COLLISION WORLD ───────────────────────────────────────────────────────
+const collidables = []; // { mesh, box } for AABB, { mesh, type:'cylinder', pos, r, h } for cylinders
+
+function addCollidable(mesh, type = 'box') {
+  if (type === 'box') {
+    const box = new THREE.Box3().setFromObject(mesh);
+    collidables.push({ mesh, box, type: 'box' });
+  } else if (type === 'cylinder') {
+    collidables.push({ mesh, type: 'cylinder', pos: mesh.position.clone(), r: mesh.geometry.parameters.radiusTop || mesh.geometry.parameters.radius || 1, h: mesh.geometry.parameters.height || 2 });
+  }
+}
+
+// ─── WORLD GEOMETRY ────────────────────────────────────────────────────────
+// Ground
+const groundGeo = new THREE.PlaneGeometry(160, 160, 20, 20);
+const groundMesh = new THREE.Mesh(groundGeo, mats.ground);
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+{ const box = new THREE.Box3().setFromObject(groundMesh); collidables.push({ mesh: groundMesh, box, type: 'box', isGround: true }); }
+
+// Lava rock platform patches
+const rockPositions = [
+  [0,0,0], [8,0,-5], [-10,0,3], [15,0,10], [-8,0,-12],
+  [20,0,-8], [-20,0,15], [5,0,20], [-5,0,-20], [25,0,5]
+];
+rockPositions.forEach(([x,y,z]) => {
+  const g = new THREE.BoxGeometry(4 + Math.random()*3, 0.4, 4 + Math.random()*3);
+  const m = new THREE.Mesh(g, mats.lavarock);
+  m.position.set(x, y + 0.2, z);
+  m.receiveShadow = true; m.castShadow = true;
+  scene.add(m);
+  addCollidable(m);
+});
+
+// ─── TREES ─────────────────────────────────────────────────────────────────
+const treeData = [];
+const treePlacements = [
+  [3,0,8],[12,0,-3],[-7,0,6],[18,0,12],[-15,0,-5],[6,0,-15],[22,0,-12],
+  [-18,0,8],[-3,0,15],[9,0,18],[-12,0,-18],[16,0,6]
+];
+
+treePlacements.forEach(([x,y,z]) => {
+  const height = 6 + Math.random() * 6;
+  const r = 0.3 + Math.random() * 0.2;
+  // trunk
+  const trunkGeo = new THREE.CylinderGeometry(r, r * 1.3, height, 7);
+  const trunk = new THREE.Mesh(trunkGeo, mats.bark);
+  trunk.position.set(x, y + height / 2, z);
+  trunk.castShadow = true;
+  scene.add(trunk);
+  addCollidable(trunk, 'box');
+
+  // branches
+  const branchCount = 3 + Math.floor(Math.random() * 3);
+  const treeBranches = [];
+  for (let i = 0; i < branchCount; i++) {
+    const bh = height * (0.45 + i * 0.15);
+    const bLen = 2.5 + Math.random() * 2;
+    const angle = (i / branchCount) * Math.PI * 2 + Math.random();
+    const bGeo = new THREE.CylinderGeometry(0.07, 0.12, bLen, 5);
+    const branch = new THREE.Mesh(bGeo, mats.branch);
+    branch.position.set(
+      x + Math.cos(angle) * bLen * 0.45,
+      y + bh,
+      z + Math.sin(angle) * bLen * 0.45
+    );
+    branch.rotation.z = (Math.PI / 2 - 0.4) * (Math.cos(angle) > 0 ? 1 : -1);
+    branch.rotation.x = (Math.PI / 2 - 0.4) * (Math.sin(angle) > 0 ? 0.5 : -0.5);
+    branch.castShadow = true;
+    scene.add(branch);
+    addCollidable(branch, 'box');
+    treeBranches.push(branch);
+  }
+
+  // leaf canopy
+  const leafGeo = new THREE.SphereGeometry(2 + Math.random(), 6, 5);
+  const leaves = new THREE.Mesh(leafGeo, mats.leaf);
+  leaves.position.set(x, y + height + 1, z);
+  leaves.castShadow = true;
+  scene.add(leaves);
+  addCollidable(leaves, 'box');
+
+  treeData.push({ x, z, height, branches: treeBranches });
+});
+
+// ─── BUILDINGS ─────────────────────────────────────────────────────────────
+const buildingDefs = [
+  [30,0,5, 6,10,6], [-28,0,-8, 8,14,8], [10,0,30, 5,8,5],
+  [-10,0,-30, 7,12,7], [35,0,-20, 6,9,6], [-35,0,20, 9,16,9]
+];
+buildingDefs.forEach(([x,y,z, w,h,d]) => {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mesh = new THREE.Mesh(geo, mats.building);
+  mesh.position.set(x, y + h / 2, z);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+  addCollidable(mesh);
+
+  // ledge
+  const ledgeGeo = new THREE.BoxGeometry(w + 0.8, 0.3, d + 0.8);
+  const ledge = new THREE.Mesh(ledgeGeo, mats.building);
+  ledge.position.set(x, y + h + 0.15, z);
+  scene.add(ledge);
+  addCollidable(ledge);
+
+  // mid platform
+  const platGeo = new THREE.BoxGeometry(w + 1, 0.25, 1.5);
+  const plat = new THREE.Mesh(platGeo, mats.building);
+  plat.position.set(x, y + h * 0.55, z + d / 2 + 0.75);
+  scene.add(plat);
+  addCollidable(plat);
+});
+
+// ─── PHYSICS STATE ─────────────────────────────────────────────────────────
+const playerBody = {
+  pos: new THREE.Vector3(0, 1.6, 5),
+  vel: new THREE.Vector3(),
+  onGround: false,
+  tagged: false,
+  radius: 0.3,
+  height: 1.7,
+};
+
+const GRAVITY = -18;
+const GROUND_DRAG = 0.78;
+const AIR_DRAG = 0.96;
+const PUSH_MULTIPLIER = 14;   // how hard one hand push moves you
+const CLIMB_MULT = 8;
+const JUMP_BOOST = 7;
+const MAX_SPEED = 16;
+
+// ─── VR HAND TRACKING ──────────────────────────────────────────────────────
+const handState = {
+  left:  { prevPos: new THREE.Vector3(), pos: new THREE.Vector3(), gripping: false, touching: false },
+  right: { prevPos: new THREE.Vector3(), pos: new THREE.Vector3(), gripping: false, touching: false },
+};
+let leftController = null, rightController = null;
+let leftControllerGrip = null, rightControllerGrip = null;
+let hasLeftController = false, hasRightController = false;
+
+// Visualize hands
+const handMeshL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), new THREE.MeshLambertMaterial({ color: 0x88ccff }));
+const handMeshR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), new THREE.MeshLambertMaterial({ color: 0x88ccff }));
+handMeshL.visible = false; handMeshR.visible = false;
+scene.add(handMeshL); scene.add(handMeshR);
+
+function setupControllers(xrSession) {
+  leftController = renderer.xr.getController(0);
+  rightController = renderer.xr.getController(1);
+  leftControllerGrip = renderer.xr.getControllerGrip(0);
+  rightControllerGrip = renderer.xr.getControllerGrip(1);
+
+  leftController.addEventListener('connected', e => {
+    if (e.data.handedness === 'left' || !hasRightController) {
+      hasLeftController = true;
+      handMeshL.visible = true;
+      document.getElementById('controlmode').textContent = 'VR — left hand';
+      document.getElementById('instructions').style.display = 'none';
+    }
+  });
+  rightController.addEventListener('connected', e => {
+    if (e.data.handedness === 'right') {
+      hasRightController = true;
+      handMeshR.visible = true;
+      document.getElementById('controlmode').textContent = 'VR — both hands';
+    }
+  });
+  leftController.addEventListener('disconnected', () => { hasLeftController = false; handMeshL.visible = false; });
+  rightController.addEventListener('disconnected', () => { hasRightController = false; handMeshR.visible = false; });
+
+  scene.add(leftController); scene.add(rightController);
+  scene.add(leftControllerGrip); scene.add(rightControllerGrip);
+}
+
+// ─── DESKTOP FALLBACK ──────────────────────────────────────────────────────
+const keys = {};
+let yaw = 0, pitch = 0;
+let pointerLocked = false;
+
+document.addEventListener('keydown', e => { keys[e.code] = true; });
+document.addEventListener('keyup',   e => { keys[e.code] = false; });
+
+document.getElementById('c').addEventListener('click', () => {
+  if (!renderer.xr.isPresenting) document.getElementById('c').requestPointerLock();
+});
+document.addEventListener('pointerlockchange', () => {
+  pointerLocked = document.pointerLockElement === document.getElementById('c');
+  document.getElementById('crosshair').style.display = pointerLocked ? 'block' : 'none';
+});
+document.addEventListener('mousemove', e => {
+  if (!pointerLocked) return;
+  yaw   -= e.movementX * 0.002;
+  pitch -= e.movementY * 0.002;
+  pitch = Math.max(-1.2, Math.min(1.2, pitch));
+});
+
+// ─── VR BUTTON ─────────────────────────────────────────────────────────────
+const vrBtn = document.getElementById('vrbtn');
+if (navigator.xr) {
+  navigator.xr.isSessionSupported('immersive-vr').then(sup => {
+    if (!sup) { vrBtn.textContent = 'VR not available'; vrBtn.disabled = true; return; }
+    vrBtn.addEventListener('click', () => {
+      navigator.xr.requestSession('immersive-vr', {
+        requiredFeatures: ['local-floor'],
+        optionalFeatures: ['hand-tracking']
+      }).then(session => {
+        renderer.xr.setSession(session);
+        setupControllers(session);
+        vrBtn.classList.add('hidden');
+        document.getElementById('instructions').style.display = 'none';
+        session.addEventListener('end', () => {
+          vrBtn.classList.remove('hidden');
+          document.getElementById('instructions').style.display = 'block';
+          xrBaseY = null; // reset so next session re-snapshots
+        });
+      });
+    });
+  });
+} else {
+  vrBtn.textContent = 'No WebXR'; vrBtn.disabled = true;
+}
+
+// ─── LAVA MONKEYS ──────────────────────────────────────────────────────────
+const monkeys = [];
+const MONKEY_COUNT = 5;
+
+function createMonkey(x, z) {
+  const group = new THREE.Group();
+  // body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 7, 6), mats.monkey.clone());
+  body.castShadow = true;
+  group.add(body);
+  // head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 7, 6), mats.monkey.clone());
+  head.position.set(0, 0.42, 0.1);
+  group.add(head);
+  // eyes (glow)
+  [[-0.07, 0.46, 0.26],[0.07, 0.46, 0.26]].forEach(([ex,ey,ez]) => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 5), new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+    eye.position.set(ex,ey,ez); group.add(eye);
+  });
+  // arms
+  [[-0.35, 0.05, 0],[0.35, 0.05, 0]].forEach(([ax,ay,az]) => {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.5, 5), mats.monkey.clone());
+    arm.position.set(ax,ay,az); arm.rotation.z = Math.PI / 2;
+    group.add(arm);
+  });
+  // lava glow light
+  const glow = new THREE.PointLight(0xff2200, 0.6, 3);
+  group.add(glow);
+
+  group.position.set(x, 0.4, z);
+  scene.add(group);
+
+  return {
+    group,
+    vel: new THREE.Vector3(),
+    onGround: false,
+    speed: 2.5 + Math.random() * 1.5,
+    armTimer: 0,
+  };
+}
+
+// spawn monkeys away from player start
+const spawnSpots = [[-12,12],[14,-8],[-18,-14],[20,18],[-6,-22]];
+spawnSpots.forEach(([x,z]) => monkeys.push(createMonkey(x, z)));
+
+// ─── COLLISION HELPERS ─────────────────────────────────────────────────────
+const _box = new THREE.Box3();
+const _v = new THREE.Vector3();
+
+function resolvePlayerCollision(pos, vel, radius, height) {
+  let onGround = false;
+  const feet = pos.y - height * 0.5;
+  const head = pos.y + height * 0.5;
+
+  for (const col of collidables) {
+    if (col.type === 'box') {
+      const b = col.box;
+      // refresh box for static objects (already set)
+      const cx = Math.max(b.min.x, Math.min(pos.x, b.max.x));
+      const cy = Math.max(b.min.y, Math.min(pos.y, b.max.y));
+      const cz = Math.max(b.min.z, Math.min(pos.z, b.max.z));
+      const dx = pos.x - cx, dy = pos.y - cy, dz = pos.z - cz;
+      const dist2 = dx*dx + dy*dy + dz*dz;
+      if (dist2 < radius * radius) {
+        const dist = Math.sqrt(dist2) || 0.001;
+        const nx = dx/dist, ny = dy/dist, nz = dz/dist;
+        const pen = radius - dist;
+        pos.x += nx * pen; pos.y += ny * pen; pos.z += nz * pen;
+        // remove velocity component into surface
+        const vDotN = vel.x*nx + vel.y*ny + vel.z*nz;
+        if (vDotN < 0) { vel.x -= nx*vDotN; vel.y -= ny*vDotN; vel.z -= nz*vDotN; }
+        if (ny > 0.6) onGround = true;
+      }
+    }
+  }
+
+  // hard ground floor
+  if (pos.y - height*0.5 < 0) {
+    pos.y = height*0.5;
+    if (vel.y < 0) vel.y = 0;
+    onGround = true;
+  }
+  return onGround;
+}
+
+function handTouchesSurface(handPos) {
+  for (const col of collidables) {
+    if (col.type === 'box') {
+      const b = col.box;
+      const expanded = b.clone().expandByScalar(0.18);
+      if (expanded.containsPoint(handPos)) return true;
+    }
+  }
+  if (handPos.y <= 0.18) return true;
+  return false;
+}
+
+// ─── DESKTOP MOVEMENT ──────────────────────────────────────────────────────
+function desktopMove(dt) {
+  const dir = new THREE.Vector3();
+  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const right   = new THREE.Vector3( Math.cos(yaw), 0, -Math.sin(yaw));
+
+  if (keys['KeyW'] || keys['ArrowUp'])   dir.add(forward);
+  if (keys['KeyS'] || keys['ArrowDown']) dir.sub(forward);
+  if (keys['KeyA'] || keys['ArrowLeft']) dir.sub(right);
+  if (keys['KeyD'] || keys['ArrowRight'])dir.add(right);
+
+  const speed = keys['ShiftLeft'] ? 10 : 5;
+  if (dir.lengthSq() > 0) {
+    dir.normalize().multiplyScalar(speed);
+    playerBody.vel.x += (dir.x - playerBody.vel.x) * 0.18;
+    playerBody.vel.z += (dir.z - playerBody.vel.z) * 0.18;
+  }
+
+  if ((keys['Space']) && playerBody.onGround) {
+    playerBody.vel.y = JUMP_BOOST;
+  }
+}
+
+// ─── VR HAND PUSH PHYSICS ──────────────────────────────────────────────────
+// Per-hand: track last N positions to get velocity
+const HAND_HISTORY = 4;
+const lHandHistory = Array.from({length: HAND_HISTORY}, () => new THREE.Vector3());
+const rHandHistory = Array.from({length: HAND_HISTORY}, () => new THREE.Vector3());
+let handHistIdx = 0;
+
+function vrHandPhysics(dt) {
+  if (!renderer.xr.isPresenting) return;
+
+  const session = renderer.xr.getSession();
+  const frame = renderer.xr.getFrame ? renderer.xr.getFrame() : null;
+  const refSpace = renderer.xr.getReferenceSpace();
+
+  // We read controller world positions from the controller objects
+  const lPos = new THREE.Vector3();
+  const rPos = new THREE.Vector3();
+
+  if (hasLeftController && leftController) {
+    leftController.getWorldPosition(lPos);
+    handMeshL.position.copy(lPos);
+  }
+  if (hasRightController && rightController) {
+    rightController.getWorldPosition(rPos);
+    handMeshR.position.copy(rPos);
+  }
+
+  // Compute velocity from position delta
+  const prevLPos = lHandHistory[handHistIdx];
+  const prevRPos = rHandHistory[handHistIdx];
+  const lVel = new THREE.Vector3().subVectors(lPos, prevLPos).divideScalar(dt * HAND_HISTORY);
+  const rVel = new THREE.Vector3().subVectors(rPos, prevRPos).divideScalar(dt * HAND_HISTORY);
+
+  lHandHistory[handHistIdx].copy(lPos);
+  rHandHistory[handHistIdx].copy(rPos);
+  handHistIdx = (handHistIdx + 1) % HAND_HISTORY;
+
+  // Read grip buttons
+  let lGrip = false, rGrip = false;
+  if (session) {
+    for (const src of session.inputSources) {
+      if (!src.gamepad) continue;
+      const grip = src.gamepad.buttons[1]?.pressed || src.gamepad.buttons[1]?.value > 0.5;
+      if (src.handedness === 'left')  lGrip = grip;
+      if (src.handedness === 'right') rGrip = grip;
+    }
+  }
+
+  // Turning with left thumbstick (important for left-only mode)
+  if (session) {
+    for (const src of session.inputSources) {
+      if (!src.gamepad) continue;
+      if (src.handedness === 'left') {
+        const ax = src.gamepad.axes[2] || 0; // thumbstick X
+        yaw -= ax * dt * 1.8;
+      }
+    }
+  }
+
+  // ── PUSH PHYSICS (core GTag law) ──────────────────────────────────────
+  // When hand touches a surface, your body moves in the OPPOSITE direction
+  // Velocity of hand → negate → apply to body
+  function applyHandPush(handPos, handVel, isGripping) {
+    const touching = handTouchesSurface(handPos);
+    if (!touching) return;
+
+    if (isGripping) {
+      // CLIMBING: pull body by dragging hand down = move up
+      // negate full velocity (including Y) for climbing
+      const pushStrength = handVel.length();
+      if (pushStrength > 0.3) {
+        playerBody.vel.x -= handVel.x * CLIMB_MULT;
+        playerBody.vel.y -= handVel.y * CLIMB_MULT;
+        playerBody.vel.z -= handVel.z * CLIMB_MULT;
+      }
+    } else {
+      // RUNNING/JUMPING: negate horizontal + boost vertical on hard downward push
+      const pushStrength = handVel.length();
+      if (pushStrength > 0.5) {
+        playerBody.vel.x -= handVel.x * PUSH_MULTIPLIER;
+        playerBody.vel.z -= handVel.z * PUSH_MULTIPLIER;
+        if (handVel.y < -1.5) {
+          // slamming down = jump boost
+          playerBody.vel.y += Math.abs(handVel.y) * JUMP_BOOST * 0.4;
+        }
+      }
+    }
+
+    // clamp speed
+    const hspd = Math.sqrt(playerBody.vel.x*playerBody.vel.x + playerBody.vel.z*playerBody.vel.z);
+    if (hspd > MAX_SPEED) {
+      const fac = MAX_SPEED / hspd;
+      playerBody.vel.x *= fac; playerBody.vel.z *= fac;
+    }
+  }
+
+  if (hasLeftController)  applyHandPush(lPos, lVel, lGrip);
+  if (hasRightController) applyHandPush(rPos, rVel, rGrip);
+}
+
+// ─── MONKEY AI ─────────────────────────────────────────────────────────────
+function updateMonkeys(dt) {
+  // Speed scales inversely with survival count (GTag canon)
+  const survivorCount = monkeys.length; // all chasing, no infection in single-player
+  const speedScale = 1 + (MONKEY_COUNT - survivorCount) * 0.1;
+
+  monkeys.forEach((mk, i) => {
+    const mPos = mk.group.position;
+    const toPlayer = new THREE.Vector3().subVectors(playerBody.pos, mPos);
+    const dist = toPlayer.length();
+
+    // Chase
+    if (dist > 0.5) {
+      toPlayer.y = 0; toPlayer.normalize();
+      const spd = mk.speed * speedScale;
+      mk.vel.x += toPlayer.x * spd * dt * 4;
+      mk.vel.z += toPlayer.z * spd * dt * 4;
+    }
+
+    // Gravity
+    mk.vel.y += GRAVITY * dt;
+
+    // Drag
+    mk.vel.x *= 0.82;
+    mk.vel.z *= 0.82;
+
+    // Move
+    mPos.x += mk.vel.x * dt;
+    mPos.y += mk.vel.y * dt;
+    mPos.z += mk.vel.z * dt;
+
+    // Ground clamp
+    if (mPos.y < 0.4) { mPos.y = 0.4; mk.vel.y = 0; mk.onGround = true; }
+    else { mk.onGround = false; }
+
+    // Animate: bob arms
+    mk.armTimer += dt * 4;
+    mk.group.children.forEach((c, ci) => {
+      if (ci >= 4 && ci <= 5) { // arms
+        c.rotation.z = Math.sin(mk.armTimer + ci) * 0.5 + (Math.PI/2);
+      }
+    });
+
+    // Slight bounce body
+    mk.group.children[0].position.y = Math.abs(Math.sin(mk.armTimer)) * 0.06;
+
+    // Tag check
+    if (!playerBody.tagged && dist < 0.8) {
+      playerBody.tagged = true;
+      document.getElementById('tagged').style.display = 'block';
+      setTimeout(() => { 
+        playerBody.tagged = false; 
+        document.getElementById('tagged').style.display = 'none'; 
+      }, 2000);
+    }
+  });
+}
+
+// ─── CAMERA SYNC ───────────────────────────────────────────────────────────
+function syncCamera() {
+  if (renderer.xr.isPresenting) {
+    // In VR: camera rig follows player body
+    const rig = renderer.xr.getCamera();
+    // We position the XR camera's parent (scene reference space origin) at player body
+    scene.position.set(0,0,0); // world stays fixed; player body tracks head
+    // Actually in WebXR local-floor, the headset IS the camera — we move the scene reference
+    // Instead: teleport the XR origin
+    const xrCam = renderer.xr.getCamera(camera);
+    // player body position drives scene offset
+    scene.position.x = 0; scene.position.y = 0; scene.position.z = 0;
+  } else {
+    // Desktop: camera at player head
+    camera.position.copy(playerBody.pos);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+}
+
+// VR: we use an XR camera rig
+const xrRig = new THREE.Group();
+xrRig.add(camera);
+scene.add(xrRig);
+
+// Seated/standing compensation:
+// We record the headset's real-world Y at session start and subtract it every frame,
+// so standing up in real life doesn't move the in-game camera up.
+let xrBaseY = null;        // real-world Y of headset at session start (metres)
+const xrHeadOffset = new THREE.Vector3();
+
+let lastTime = performance.now();
+const clock = new THREE.Clock();
+
+// ─── MAIN LOOP ─────────────────────────────────────────────────────────────
+renderer.setAnimationLoop((timestamp, xrFrame) => {
+  const now = performance.now();
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+
+  // ── Input ──
+  if (renderer.xr.isPresenting) {
+    vrHandPhysics(dt);
+    // In VR: player body = XR camera rig position
+    // XR origin offset: we move the rig to follow physics
+    // XR rig Y handled below with height compensation
+  } else {
+    desktopMove(dt);
+    // desktop turning
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+
+  // ── Physics step ──
+  playerBody.vel.y += GRAVITY * dt;
+
+  // Drag
+  const drag = playerBody.onGround ? GROUND_DRAG : AIR_DRAG;
+  if (!renderer.xr.isPresenting || true) {
+    playerBody.vel.x *= Math.pow(drag, dt * 60);
+    playerBody.vel.z *= Math.pow(drag, dt * 60);
+  }
+  if (Math.abs(playerBody.vel.x) < 0.01) playerBody.vel.x = 0;
+  if (Math.abs(playerBody.vel.z) < 0.01) playerBody.vel.z = 0;
+
+  // Integrate
+  playerBody.pos.x += playerBody.vel.x * dt;
+  playerBody.pos.y += playerBody.vel.y * dt;
+  playerBody.pos.z += playerBody.vel.z * dt;
+
+  // Collision
+  playerBody.onGround = resolvePlayerCollision(playerBody.pos, playerBody.vel, playerBody.radius, playerBody.height);
+
+  // Bounds
+  playerBody.pos.x = Math.max(-78, Math.min(78, playerBody.pos.x));
+  playerBody.pos.z = Math.max(-78, Math.min(78, playerBody.pos.z));
+
+  // Desktop camera
+  if (!renderer.xr.isPresenting) {
+    camera.position.copy(playerBody.pos);
+  }
+
+  // XR rig follows player body — height-compensated
+  if (renderer.xr.isPresenting) {
+    // Get current real-world head Y from the XR camera
+    const xrCam = renderer.xr.getCamera(camera);
+    const headWorldY = xrCam.position.y; // this is relative to the rig, i.e. real-world height
+
+    // On first frame of a session, snapshot the baseline Y
+    if (xrBaseY === null) xrBaseY = headWorldY;
+
+    // How much has the player physically moved up/down since session start?
+    // We IGNORE this delta — only physics controls in-game Y.
+    // So we set the rig Y so that:
+    //   rig.y + headWorldY = playerBody.pos.y
+    //   rig.y = playerBody.pos.y - headWorldY
+    // This cancels out any real-world standing/crouching.
+    xrRig.position.x = playerBody.pos.x;
+    xrRig.position.z = playerBody.pos.z;
+    xrRig.position.y = playerBody.pos.y - headWorldY;
+  }
+
+  // ── Monkey AI ──
+  updateMonkeys(dt);
+
+  // ── Lava glow pulse ──
+  lavaGlow.intensity = 0.6 + Math.sin(now * 0.003) * 0.3;
+
+  // ── Render ──
+  renderer.render(scene, camera);
+});
+
+document.getElementById('controlmode').textContent = 'Desktop — click canvas';
+</script>
+</body>
+</html>
