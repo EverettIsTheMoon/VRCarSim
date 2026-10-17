@@ -510,7 +510,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());
     mesh.castShadow=true;return mesh;
   }
-  function createAnimatronic(name, kind, colors, route, speed) {
+  function createAnimatronic(name, kind, colors, route, speed, doorSide) {
     const root=new THREE.Group();
     root.position.set(route[0][0], 0, route[0][1]);
     scene.add(root);
