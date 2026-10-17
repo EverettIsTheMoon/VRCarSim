@@ -52,7 +52,7 @@ for(let i=0;i<12;i++){let a=i*Math.PI*2/12;addToy(i%4,new THREE.Vector3(Math.sin
 for(let i=0;i<5;i++)addToy(i%4,new THREE.Vector3((i-2)*.28,1.0+(i%2)*.22,-1.05),materials[(i+2)%materials.length]);
 
 // WebXR hand joint positions drive pinch detection; no controller buttons are required.
-const people=[], bloodBits=[];
+const hands=[], people=[], bloodBits=[];
 const fingerChains=[
  ['wrist','thumb-metacarpal','thumb-phalanx-proximal','thumb-phalanx-distal','thumb-tip'],
  ['wrist','index-finger-metacarpal','index-finger-phalanx-proximal','index-finger-phalanx-intermediate','index-finger-phalanx-distal','index-finger-tip'],
