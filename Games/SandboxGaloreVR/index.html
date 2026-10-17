@@ -3093,7 +3093,7 @@ async function join(){
  const ch=sb.channel('roadline-'+rm,{config:{broadcast:{self:false},presence:{key:me}}});MP.ch=ch;
  const Hd={rd:d=>{if(typeof d.r==='number'&&d.r>=-1&&d.r<3)radioOf.set(d.i,d.r|0)},vo:onVO,s:onS,w:applyW,k:onK,wf:onWF,ig:onIG,ir:onIR,nh:onNH,nd:onND,cd:onCD,ce:onCE,cp:onCP,ws:onWS,
   cr:d=>{const p=peers.get(d.i);if(p)resetCar(p)},wc:applyWorld,rq:()=>{if(MP.host)setTimeout(sendWS,300)},
-  rob:d=>{try{V5.remRob(d.v)}catch(e){}},bag:d=>{try{V5.remBag(d.b)}catch(e){}},ad:d=>{try{window.__rlAdminReceive&&window.__rlAdminReceive(d)}catch(e){}}};
+  rob:d=>{try{V5.remRob(d.v)}catch(e){}},bag:d=>{try{V5.remBag(d.b)}catch(e){}},ad:d=>{try{if(d.to===me&&window.__rlAdminReceive)window.__rlAdminReceive(d)}catch(e){}}};
  Object.keys(Hd).forEach(ev=>ch.on('broadcast',{event:ev},m=>{try{const d=m&&m.payload;if(d&&typeof d.i==='string'&&d.i!==me)Hd[ev](d)}catch(e){console.error('mp',ev,e)}}));
  ch.on('presence',{event:'sync'},calcHost);
  ch.on('presence',{event:'join'},()=>{if(MP.host)setTimeout(sendWS,700)});
