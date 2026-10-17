@@ -2,92 +2,75 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Room Mapper — VR Test</title>
+<title>Room Mapper — Floor Layout</title>
 <style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#10141b;color:#f3f6fb;font:16px system-ui, sans-serif;overflow:hidden}canvas{display:block}#panel{position:fixed;z-index:5;left:12px;top:12px;width:min(360px,calc(100vw - 24px));padding:16px;border:1px solid #ffffff25;border-radius:18px;background:#111923eF;backdrop-filter:blur(14px)}h1{font-size:20px;margin:0 0 7px}p{font-size:13px;line-height:1.45;color:#c2ccd9;margin:6px 0 12px}.row{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:12px;padding:11px 13px;font-weight:700;background:#8bd7ff;color:#07131d;cursor:pointer;min-height:44px}button.secondary{background:#2a3544;color:#eef5ff}button:disabled{opacity:.45;cursor:default}#status{font-size:13px;color:#9be4c4;margin-top:10px;min-height:18px}#counter{font-size:12px;color:#aebdce;margin-top:6px}#hint{position:fixed;z-index:4;bottom:16px;left:50%;transform:translateX(-50%);max-width:90vw;padding:10px 14px;border-radius:12px;background:#111923d9;color:#edf6ff;font-size:13px;text-align:center}#panel.hidden{display:none}@media(max-width:500px){#panel{padding:12px}h1{font-size:18px}}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#10141b;color:#f3f6fb;font:16px system-ui,sans-serif;overflow:hidden}canvas{display:block}#panel{position:fixed;z-index:5;left:12px;top:12px;width:min(370px,calc(100vw - 24px));padding:16px;border:1px solid #ffffff25;border-radius:18px;background:#111923ef;backdrop-filter:blur(14px)}h1{font-size:20px;margin:0 0 7px}p{font-size:13px;line-height:1.45;color:#c2ccd9;margin:6px 0 12px}.row{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:12px;padding:11px 13px;font-weight:700;background:#8bd7ff;color:#07131d;cursor:pointer;min-height:44px}button.secondary{background:#2a3544;color:#eef5ff}button:disabled{opacity:.45;cursor:default}#status{font-size:13px;color:#9be4c4;margin-top:10px;min-height:18px}#counter{font-size:12px;color:#aebdce;margin-top:6px}#hint{position:fixed;z-index:4;bottom:16px;left:50%;transform:translateX(-50%);max-width:92vw;padding:10px 14px;border-radius:12px;background:#111923e8;color:#edf6ff;font-size:13px;text-align:center}#panel.hidden{display:none}.small{font-size:12px!important;color:#9fb0c3!important}
 </style>
 </head>
 <body>
 <section id="panel">
-<h1>Room Mapper · VR Test</h1>
-<p>Enter passthrough to detect room planes. Aim at a detected surface and press the trigger to add a simple block there. Press <b>Done</b> to explore the assembled test map.</p>
-<div class="row"><button id="start">Enter passthrough scan</button><button id="done" class="secondary" disabled>Done → map</button><button id="reset" class="secondary">Reset</button></div>
-<div id="status" role="status" aria-live="polite">Waiting for Quest Browser…</div><div id="counter">Detected surfaces: 0 · Added objects: 0</div>
-<p><b>Important:</b> This browser prototype detects planes, not full 3D furniture or raw camera images. For automatic furniture recognition and a complete room mesh, this needs a native Quest APK with Meta's Scene API / camera permissions.</p>
+<h1>Room Mapper · Floor Layout</h1>
+<p id="instructions">First, set the floor height: hold your controller still at the exact height you want the virtual floor. After it stays still for <b>5 seconds</b>, the height locks automatically. Then trace your room's floor outline by moving the controller to each corner and squeezing the trigger.</p>
+<div class="row">
+<button id="start">Enter VR scan</button>
+<button id="undo" class="secondary" disabled>Undo point</button>
+<button id="finish" class="secondary" disabled>Finish outline</button>
+<button id="reset" class="secondary">Reset</button>
+</div>
+<div id="status" role="status" aria-live="polite">Open this page in Quest Browser.</div>
+<div id="counter">Floor: not set · Outline points: 0</div>
+<p class="small">Quest Browser only provides the XR features supported by the headset and browser. This tool draws a user-traced floor outline; it does not automatically scan furniture or walls.</p>
 </section>
-<div id="hint">Quest: use the controller trigger to place a block. Left stick moves in map mode.</div>
+<div id="hint">Step 1: set the floor height with your controller and hold still for 5 seconds.</div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-const statusEl=document.querySelector('#status'),counter=document.querySelector('#counter'),startBtn=document.querySelector('#start'),doneBtn=document.querySelector('#done'),resetBtn=document.querySelector('#reset'),panel=document.querySelector('#panel'),hint=document.querySelector('#hint');
-const scene=new THREE.Scene();scene.background=null;scene.fog=new THREE.Fog(0x17202b,18,55);
+const statusEl=document.querySelector('#status'),counter=document.querySelector('#counter'),startBtn=document.querySelector('#start'),undoBtn=document.querySelector('#undo'),finishBtn=document.querySelector('#finish'),resetBtn=document.querySelector('#reset'),panel=document.querySelector('#panel'),hint=document.querySelector('#hint'),instructions=document.querySelector('#instructions');
+const scene=new THREE.Scene();scene.background=null;
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.05,1000);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');document.body.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xd9edff,0x303744,2));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(4,8,3);scene.add(sun);
-const grid=new THREE.GridHelper(50,50,0x57738b,0x344453);grid.position.y=0;scene.add(grid);
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:0x202a36,roughness:1,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;scene.add(floor);
-const world=new THREE.Group();scene.add(world);
-const controller=renderer.xr.getController(0);scene.add(controller);const rayLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-8)]),new THREE.LineBasicMaterial({color:0x8bd7ff}));controller.add(rayLine);
-const raycaster=new THREE.Raycaster();raycaster.far=12;
-const planeMeshes=new Map(),objects=[];let session=null,scanMode=true,moveX=0,moveZ=0,objectCount=0;
-const colors=[0x78c5e8,0xe8b878,0x9ad6a6,0xc3a5f5,0xe98e9e];
+scene.add(new THREE.HemisphereLight(0xd9edff,0x303744,1.7));const sun=new THREE.DirectionalLight(0xffffff,1.5);sun.position.set(4,8,3);scene.add(sun);
+const mapWorld=new THREE.Group();scene.add(mapWorld);
+const controller=renderer.xr.getController(0);scene.add(controller);
+const rayLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-2)]),new THREE.LineBasicMaterial({color:0x8bd7ff}));controller.add(rayLine);
+const marker=new THREE.Mesh(new THREE.SphereGeometry(.035,16,12),new THREE.MeshBasicMaterial({color:0x8bd7ff}));scene.add(marker);
+const floorMarker=new THREE.Mesh(new THREE.RingGeometry(.07,.105,32),new THREE.MeshBasicMaterial({color:0x8bd7ff,side:THREE.DoubleSide}));floorMarker.rotation.x=-Math.PI/2;scene.add(floorMarker);
+let session=null,stage='floor',floorY=null,stillSince=null,lastPosition=null,stableSeconds=0,moveX=0,moveZ=0,outline=[],lineObjects=[],outlineFill=null,floorGuide=null,finished=false;
+const tempV=new THREE.Vector3(),tempV2=new THREE.Vector3();
 function say(s){statusEl.textContent=s}
-function updateCounter(){counter.textContent='Detected surfaces: '+planeMeshes.size+' · Added objects: '+objects.length}
-function clearWorld(){for(const m of planeMeshes.values()){scene.remove(m);m.geometry.dispose();m.material.dispose()}planeMeshes.clear();for(const o of objects){world.remove(o);o.geometry.dispose();o.material.dispose()}objects.length=0;updateCounter()}
-function makePlaneMesh(plane,pose){
- let points=[];try{points=Array.from(plane.polygon||[])}catch(e){}
- let xs=points.map(p=>p.x),zs=points.map(p=>p.z);
- let minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);
- let w=Math.max(.15,Math.min(8,maxX-minX||.5)),h=Math.max(.15,Math.min(8,maxZ-minZ||.5));
- const geom=new THREE.PlaneGeometry(w,h);const mat=new THREE.MeshBasicMaterial({color:0x63d7c0,wireframe:true,transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false});
- const mesh=new THREE.Mesh(geom,mat);mesh.matrixAutoUpdate=false;mesh.matrix.fromArray(pose.transform.matrix);mesh.matrix.decompose(mesh.position,mesh.quaternion,mesh.scale);mesh.matrixAutoUpdate=true;
- // Plane-local visual is a flat sheet; detected plane pose provides its orientation.
- mesh.position.add(new THREE.Vector3((minX+maxX)/2,0,(minZ+maxZ)/2).applyQuaternion(mesh.quaternion));
- mesh.userData.plane=plane;mesh.userData.center=true;return mesh;
-}
-function updateDetectedPlanes(){
- const frame=renderer.xr.getFrame();if(!frame||!session||!frame.detectedPlanes)return;
- const ref=renderer.xr.getReferenceSpace();const current=new Set();
- for(const plane of frame.detectedPlanes){current.add(plane);const pose=frame.getPose(plane.planeSpace,ref);if(!pose)continue;
-  let mesh=planeMeshes.get(plane);if(!mesh){mesh=makePlaneMesh(plane,pose);planeMeshes.set(plane,mesh);scene.add(mesh)}else{mesh.position.setFromMatrixPosition(new THREE.Matrix4().fromArray(pose.transform.matrix));mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(pose.transform.matrix));}
- }
- for(const [plane,mesh] of planeMeshes){if(!current.has(plane)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();planeMeshes.delete(plane)}}
- updateCounter();
-}
-function addBlockAt(point){
- const size=.22+Math.random()*.22;const geo=new THREE.BoxGeometry(size,size,size);const mat=new THREE.MeshStandardMaterial({color:colors[objects.length%colors.length],roughness:.7});const box=new THREE.Mesh(geo,mat);box.position.copy(point);box.position.y+=size/2;box.userData.kind='placed-object';world.add(box);objects.push(box);updateCounter();say('Added test object. Aim and trigger to add another.');
-}
-function placeFromController(){
- raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);const direction=new THREE.Vector3(0,0,-1).applyQuaternion(controller.quaternion);raycaster.ray.direction.copy(direction);
- const targets=[...planeMeshes.values()];const hits=raycaster.intersectObjects(targets,false);
- if(hits.length){addBlockAt(hits[0].point);return}
- const origin=raycaster.ray.origin,dir=raycaster.ray.direction;const t=(0-origin.y)/(dir.y||.0001);if(t>0&&t<8){addBlockAt(origin.clone().addScaledVector(dir,t));return}
- say('No surface in reach. Point at the floor or a detected plane.');
-}
-controller.addEventListener('select',()=>{if(scanMode)placeFromController()});
-function onInputSources(){
- const s=renderer.xr.getSession();if(!s)return;
- for(const source of s.inputSources){if(source.handedness==='left'&&source.gamepad){const a=source.gamepad.axes;moveX=a.length>=4?a[2]:a[0]||0;moveZ=a.length>=4?a[3]:a[1]||0}}
-}
-async function begin(){
- if(!navigator.xr){say('WebXR is unavailable in this browser. Open this page in Quest Browser.');return}
- try{
-  const supported=await navigator.xr.isSessionSupported('immersive-ar');if(!supported){say('Passthrough WebXR is not supported here. This page needs Quest Browser on a supported headset.');return}
-  session=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['local-floor'],optionalFeatures:['plane-detection','anchors','hit-test']});
-  await renderer.xr.setSession(session);scanMode=true;startBtn.disabled=true;doneBtn.disabled=false;say('Passthrough started. Slowly look around the room so supported surfaces can be detected.');hint.textContent='Scan: look around, aim at a surface, squeeze the trigger to place a block.';
-  session.addEventListener('end',()=>{session=null;startBtn.disabled=false;doneBtn.disabled=true;say('VR session ended.')});
- }catch(e){say('Could not start passthrough: '+(e.message||e)+' · Check Quest Browser permissions and try again.')}
-}
+function updateCounter(){counter.textContent='Floor: '+(floorY===null?'not set':'locked')+' · Outline points: '+outline.length;undoBtn.disabled=outline.length===0||stage==='floor';finishBtn.disabled=outline.length<3||stage==='floor'||finished}
+function disposeObject(obj){if(!obj)return;mapWorld.remove(obj);obj.geometry?.dispose();if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());else obj.material?.dispose()}
+function clearOutline(){for(const o of lineObjects)disposeObject(o);lineObjects=[];if(outlineFill){disposeObject(outlineFill);outlineFill=null}outline=[];finished=false;updateCounter()}
+function createFloorGuide(){if(floorGuide)disposeObject(floorGuide);const geom=new THREE.PlaneGeometry(30,30);const mat=new THREE.MeshBasicMaterial({color:0x54cdb5,transparent:true,opacity:.08,side:THREE.DoubleSide,depthWrite:false});floorGuide=new THREE.Mesh(geom,mat);floorGuide.rotation.x=-Math.PI/2;floorGuide.position.y=floorY;mapWorld.add(floorGuide)}
+function makeEdge(a,b,color=0x58e0c2){const geo=new THREE.BufferGeometry().setFromPoints([a,b]);const mat=new THREE.LineBasicMaterial({color,linewidth:2});const line=new THREE.Line(geo,mat);mapWorld.add(line);lineObjects.push(line);return line}
+function addPoint(){if(stage!=='draw'||finished||!session)return;const p=controller.getWorldPosition(new THREE.Vector3());p.y=floorY+.012;if(outline.length>0&&outline[outline.length-1].distanceTo(p)<.18){say('That point is too close to the previous one. Move at least 18 cm before adding another.');return}if(outline.length>=3&&outline[0].distanceTo(p)<.22){closeOutline();return}if(outline.length>0)makeEdge(outline[outline.length-1],p);outline.push(p.clone());const dot=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),new THREE.MeshBasicMaterial({color:0x8bd7ff}));dot.position.copy(p);mapWorld.add(dot);lineObjects.push(dot);updateCounter();say('Corner '+outline.length+' added. Move to the next corner and squeeze trigger.');if(outline.length>=3)finishBtn.disabled=false}
+function closeOutline(){if(outline.length<3){say('Add at least 3 corners before finishing.');return}makeEdge(outline[outline.length-1],outline[0]);const shape=new THREE.Shape();shape.moveTo(outline[0].x,outline[0].z);for(let i=1;i<outline.length;i++)shape.lineTo(outline[i].x,outline[i].z);shape.closePath();const geometry=new THREE.ShapeGeometry(shape);const material=new THREE.MeshBasicMaterial({color:0x48cdb1,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false});outlineFill=new THREE.Mesh(geometry,material);outlineFill.rotation.x=-Math.PI/2;outlineFill.position.y=floorY+.004;mapWorld.add(outlineFill);finished=true;stage='map';instructions.textContent='Your floor outline is complete. You can keep tracing with trigger points after pressing Reset, or hide this panel and explore the outline.';hint.textContent='Map mode: the traced floor outline is visible. Use the left joystick to move the outline around.';say('Floor outline completed! You can explore the traced layout.');finishBtn.disabled=true;updateCounter()}
+function resetAll(){clearOutline();if(floorGuide){disposeObject(floorGuide);floorGuide=null}floorY=null;stage='floor';stillSince=null;lastPosition=null;stableSeconds=0;finished=false;panel.classList.remove('hidden');instructions.innerHTML='First, set the floor height: hold your controller still at the exact height you want the virtual floor. After it stays still for <b>5 seconds</b>, the height locks automatically. Then trace your room\'s floor outline by moving the controller to each corner and squeezing the trigger.';hint.textContent='Step 1: set the floor height with your controller and hold still for 5 seconds.';say('Reset. Set the floor height again.');updateCounter()}
+controller.addEventListener('select',()=>{if(stage==='draw')addPoint();else if(stage==='map'&&!finished)addPoint()});
+function onInputSources(){const s=renderer.xr.getSession();if(!s)return;for(const source of s.inputSources){if(source.handedness==='left'&&source.gamepad){const a=source.gamepad.axes;moveX=a.length>=4?a[2]:(a[0]||0);moveZ=a.length>=4?a[3]:(a[1]||0)}}}
+async function begin(){if(!navigator.xr){say('WebXR is unavailable. Open this page in Quest Browser.');return}try{const supported=await navigator.xr.isSessionSupported('immersive-ar');if(!supported){say('This browser/headset does not support the required passthrough XR session.');return}session=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['local-floor'],optionalFeatures:['plane-detection']});await renderer.xr.setSession(session);stage='floor';startBtn.disabled=true;say('VR started. Place the controller at your chosen floor height and keep it steady.');session.addEventListener('end',()=>{session=null;startBtn.disabled=false;say('VR session ended.')})}catch(e){say('Could not start VR: '+(e.message||e)+'. Check Quest Browser support and permissions.')}}
 startBtn.addEventListener('click',begin);
-doneBtn.addEventListener('click',()=>{scanMode=false;panel.classList.add('hidden');hint.textContent='Map mode: use the left joystick to walk around; press the menu button or refresh to return to setup.';say('Map assembled from detected surfaces and placed blocks. Passthrough stays on in this browser test.');grid.visible=true;});
-resetBtn.addEventListener('click',()=>{clearWorld();scanMode=true;panel.classList.remove('hidden');hint.textContent='Quest: use the controller trigger to place a block. Left stick moves in map mode.';say('Reset. Start scanning again.');});
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){panel.classList.remove('hidden');scanMode=true}});
+undoBtn.addEventListener('click',()=>{if(!outline.length||finished)return;const last=outline.pop();for(let i=lineObjects.length-1;i>=0;i--){const o=lineObjects[i];if(o.position.distanceTo(last)<.001){disposeObject(o);lineObjects.splice(i,1);break}}if(lineObjects.length){const edge=lineObjects.pop();disposeObject(edge)}updateCounter();say('Removed the last corner. Add it again or continue tracing.')});
+finishBtn.addEventListener('click',closeOutline);
+resetBtn.addEventListener('click',resetAll);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){panel.classList.remove('hidden')}});
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-function animate(){
- renderer.setAnimationLoop(()=>{
-  if(renderer.xr.isPresenting){if(scanMode)updateDetectedPlanes();else{onInputSources();const rig=renderer.xr.getCamera();const forward=new THREE.Vector3(0,0,-1).applyQuaternion(rig.quaternion);forward.y=0;forward.normalize();const right=new THREE.Vector3(1,0,0).applyQuaternion(rig.quaternion);right.y=0;right.normalize();const speed=.045;world.position.addScaledVector(forward,-moveZ*speed);world.position.addScaledVector(right,moveX*speed)}}
-  renderer.render(scene,camera);
- });
-}
-animate();
+renderer.setAnimationLoop((time)=>{
+ if(renderer.xr.isPresenting&&session){
+  const pos=controller.getWorldPosition(tempV);marker.position.copy(pos);
+  if(floorY===null){
+   floorMarker.position.set(pos.x,.0,pos.z);
+   if(lastPosition&&pos.distanceTo(lastPosition)<.015){stableSeconds=(time-stillSince)/1000}else{stillSince=time;stableSeconds=0}
+   if(!lastPosition)stillSince=time;
+   lastPosition=pos.clone();
+   const remain=Math.max(0,5-stableSeconds);say('Hold still… '+remain.toFixed(1)+' seconds until floor height locks.');
+   hint.textContent='Keep your controller completely still. Floor height locks in '+remain.toFixed(1)+' seconds.';
+   if(stableSeconds>=5){floorY=pos.y;stage='draw';createFloorGuide();floorMarker.position.set(pos.x,floorY+.015,pos.z);stillSince=null;lastPosition=null;instructions.innerHTML='<b>Floor locked!</b> Now walk around the room. At every corner of the floor outline, move your controller to that spot and squeeze the trigger to add a point. Add at least 3 points, then press Finish outline.';hint.textContent='Step 2: move to a room corner and squeeze the controller trigger. Repeat at each corner.';say('Floor height locked. Start tracing the floor boundary.');updateCounter()}
+  }else if(stage==='draw'||stage==='map'){
+   floorMarker.position.set(pos.x,floorY+.015,pos.z);
+   if(stage==='map'){onInputSources();const rig=renderer.xr.getCamera();const forward=new THREE.Vector3(0,0,-1).applyQuaternion(rig.quaternion);forward.y=0;forward.normalize();const right=new THREE.Vector3(1,0,0).applyQuaternion(rig.quaternion);right.y=0;right.normalize();mapWorld.position.addScaledVector(forward,-moveZ*.025);mapWorld.position.addScaledVector(right,moveX*.025)}
+  }
+ }
+ renderer.render(scene,camera);
+});
 </script>
 </body></html>
