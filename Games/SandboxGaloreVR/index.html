@@ -17,8 +17,7 @@
 #menu .set{display:none;gap:8px;font-size:13px;max-width:360px;width:min(360px,94vw);box-sizing:border-box;padding:12px;background:rgba(9,12,17,.92);border:1px solid #343434;border-radius:4px}#menu .set.open{display:grid}#menu label{display:flex;justify-content:space-between;gap:10px;align-items:center}#menu select,#menu input{max-width:190px}
 #menu #modelFiles{max-width:360px;width:min(360px,94vw);box-sizing:border-box;background:rgba(9,12,17,.8);border:1px solid #343434;padding:9px 12px}
 #menu #menuStatus{color:#d5c7bf!important;font:11px monospace;min-height:16px;text-align:left}
-@media(max-width:600px){#menu{justify-content:flex-start;padding-top:calc(42px + env(safe-area-inset-top,0px));gap:9px}#menu h1{font-size:clamp(31px,9vw,46px)}#menu .choiceRow{width:min(330px,92vw)}#menu #playGame,#menu #settingsToggle,#menu .set,#menu #modelFiles{width:min(330px,92vw)}#menu .sceneCity,#menu .sceneCar,#menu .sceneStreet{background-position:58% center}}#ui{z-index:30}#help{display:none}#horrorHud{position:fixed;left:12px;top:12px;z-index:12;color:#c5e6ff;font:13px monospace;background:rgba(0,0,0,.55);padding:8px 10px;border:1px solid #394b5a;border-radius:6px;display:none;pointer-events:none}#horrorJumpscare{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#390000 0%,#100000 45%,#000 100%);animation:hsJolt .07s infinite;color:white;font-family:system-ui,sans-serif}#horrorJumpscare .face{width:min(70vw,480px);height:min(75vh,560px);position:relative;filter:drop-shadow(0 0 35px #ff0000);background:radial-gradient(ellipse at 50% 40%,#272326,#050505 70%);clip-path:polygon(18% 0,82% 0,100% 34%,86% 100%,14% 100%,0 34%)}#horrorJumpscare .eyes{position:absolute;top:28%;left:12%;right:12%;display:flex;justify-content:space-between}#horrorJumpscare .eyes i{width:28%;height:52px;background:#fff;border-radius:50%;box-shadow:0 0 26px 12px #f00;transform:rotate(-8deg)}#horrorJumpscare .mouth{position:absolute;left:19%;right:19%;bottom:13%;height:27%;background:#020202;border:6px solid #6b1414;border-radius:48% 48% 30% 30%;display:flex;justify-content:space-evenly;align-items:flex-start;overflow:hidden}#horrorJumpscare .mouth i{width:12%;height:34%;background:#eee;clip-path:polygon(0 0,100% 0,50% 100%)}#horrorJumpscare b{position:absolute;bottom:3%;font-size:clamp(24px,7vw,54px);letter-spacing:6px;color:#ff2222;text-shadow:0 0 18px #f00}@keyframes hsJolt{0%{transform:translate(0,0) scale(1)}25%{transform:translate(7px,-5px) scale(1.04)}50%{transform:translate(-6px,4px) scale(.99)}75%{transform:translate(4px,6px) scale(1.03)}}#menu #modelFiles{width:min(420px,94vw);font-size:12px;color:#aeb4bc;background:#080808;border:1px solid #292929;border-radius:8px;padding:9px 12px}#menu #modelFiles summary{cursor:pointer;color:#ddd;font-weight:700}#modelFileList{display:grid;gap:5px;max-height:190px;overflow:auto;margin-top:10px;text-align:left;font:11px ui-monospace,monospace}#modelFileList .mf{display:flex;justify-content:space-between;gap:10px}#modelFileList .path{color:#aeb4bc;overflow-wrap:anywhere}#modelFileList .status{color:#7fba88;white-space:nowrap}
-/* ROADLINE menu refresh: monochrome grey controls at 70% opacity. */
+@media(max-width:600px){#menu{justify-content:flex-start;padding-top:calc(42px + env(safe-area-inset-top,0px));gap:9px}#menu h1{font-size:clamp(31px,9vw,46px)}#menu .choiceRow{width:min(330px,92vw)}#menu #playGame,#menu #settingsToggle,#menu .set,#menu #modelFiles{width:min(330px,92vw)}#menu .sceneCity,#menu .sceneCar,#menu .sceneStreet{background-position:58% center}}#ui{z-index:30}#help{display:none}/* ROADLINE menu refresh: monochrome grey controls at 70% opacity. */
 #menu h1{color:#e0e2e5!important;text-shadow:0 3px 0 #17191c,0 0 22px #000!important}
 #menu .subtitle{color:#c5c8cc!important}
 #menu button,#menu #settingsToggle{background:rgba(78,82,88,.70)!important;border-color:rgba(220,223,228,.45)!important;border-left-color:rgba(220,223,228,.45)!important;color:#f4f5f6!important;opacity:.70}
@@ -28,13 +27,13 @@
 #menu select,#menu input{accent-color:#aeb2b8}
 </style></head><body>
 <div id="menu"><div class="menuScene sceneCity"></div><div class="menuScene sceneCar"></div><div class="menuScene sceneStreet"></div><h1>ROADLINE</h1><p class="subtitle">Choose your experience</p>
-<div class="choiceRow"><button id="normalChoice" class="selected" data-game="normal" style="flex:1">Normal Mode</button><button id="horrorChoice" data-game="horror" style="flex:1">Horror Mode</button></div>
+
 <div class="choiceRow"><button id="singleChoice" class="selected" data-play="single" style="flex:1">Singleplayer</button><button id="multiChoice" data-play="multi" style="flex:1">Multiplayer</button></div>
 <div class="choiceRow" style="align-items:center"><label for="sDriveMode" style="color:#999;flex:1">Driving mode</label><select id="sDriveMode" style="flex:1;padding:10px;background:#111;color:#eee;border:1px solid #333;border-radius:8px"><option value="free">Free Ride</option><option value="race">Race (2.5 km)</option></select></div>
 <button id="playGame">PLAY</button><button id="settingsToggle">SETTINGS ▾</button>
 <div class="set" id="settingsPanel"><label>Controller hand <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label><label>Quest 1 low graphics <input type="checkbox" id="questLowGraphics"></label></div>
-<details id="modelFiles"><summary>MODELS FOLDER · EXPECTED GLB FILES</summary><div id="modelFileList"></div></details><div id="menuStatus" style="color:#77808a;font:12px monospace;min-height:16px;text-align:center">Normal Mode · Singleplayer</div></div>
-<div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · X = get out / in<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X repair · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div><div id="horrorHud">RADAR: MONSTER SIGNAL</div><div id="horrorJumpscare"><div class="face"><div class="eyes"><i></i><i></i></div><div class="mouth"><i></i><i></i><i></i><i></i><i></i></div></div><b>IT FOUND YOU</b></div>
+<details id="modelFiles"><summary>MODELS FOLDER · EXPECTED GLB FILES</summary><div id="modelFileList"></div></details><div id="menuStatus" style="color:#77808a;font:12px monospace;min-height:16px;text-align:center">Food delivery jobs · Singleplayer</div></div>
+<div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · X = get out / in<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X repair · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
 <script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script>
@@ -43,11 +42,12 @@
 <script>if(!window.THREE){var b=document.getElementById('vr');if(b){b.textContent='three.js failed to load (network blocked?)';b.disabled=true}}
 window.addEventListener('error',function(e){var b=document.getElementById('vr');if(b&&/Checking/.test(b.textContent)){b.textContent='Startup error: '+(e.message||'see console');b.disabled=true}});</script>
 <script>
+const RLStorage={data:{},getItem(k){try{return window.localStorage.getItem(k)}catch(_){return this.data[k]??null}},setItem(k,v){this.data[k]=String(v);try{window.localStorage.setItem(k,String(v))}catch(_){}}};
 window.__mrReal=Math.random;(function(){var a=1234567;Math.random=function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})();
 window.__rs=(function(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})(20261015);
 const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,b)=>Math.max(a,Math.min(b,v)),$=id=>document.getElementById(id);
 // Quest 1 performance mode: use built-in low-poly meshes and lower render resolution.
-const RL_QUEST1_AUTO=/\bQuest 1\b|Oculus Quest\)/i.test(navigator.userAgent||'');let RL_QUEST1_LOW=RL_QUEST1_AUTO;window.RL_QUEST1_LOW=RL_QUEST1_LOW;window.__mainMenuOpen=true;let selectedGameMode='normal',selectedPlayType='single',selectedDriveMode='free';
+const RL_QUEST1_AUTO=/\bQuest 1\b|Oculus Quest\)/i.test(navigator.userAgent||'');let RL_QUEST1_LOW=RL_QUEST1_AUTO;window.RL_QUEST1_LOW=RL_QUEST1_LOW;window.__mainMenuOpen=true;let selectedPlayType='single',selectedDriveMode='free';
 /* Optional GLB model overrides. Files live beside index.html in ./Models/.
    If a file is missing, fails to load, or GLTFLoader is unavailable, the original HTML-built model stays visible. */
 const RL_MODEL_FILES={
@@ -56,7 +56,7 @@ const RL_MODEL_FILES={
  tree:'Models/tree.glb', bush:'Models/bush.glb', rock:'Models/rock.glb', fallen_log:'Models/fallen_log.glb', fence:'Models/fence.glb',
  street_light:'Models/street_light.glb', road_sign:'Models/road_sign.glb', traffic_car:'Models/traffic_car.glb',
  ak47:'Models/p365.glb', rocket_launcher:'Models/rocket_launcher.glb', beer_can:'Models/beer_can.glb',
- monster:'Models/monster.glb', maze_wall:'Models/maze_wall.glb', flashlight:'Models/flashlight.glb', cash_bundle:'Models/cash_bundle.glb',
+ cash_bundle:'Models/cash_bundle.glb',
  mailbox:'Models/mailbox.glb', bench:'Models/bench.glb', trash_can:'Models/trash_can.glb', fire_hydrant:'Models/fire_hydrant.glb', road_barrier:'Models/road_barrier.glb'
 };
 const RL_MODEL_STATUS={};Object.keys(RL_MODEL_FILES).forEach(k=>RL_MODEL_STATUS[k]='built-in fallback');
@@ -832,7 +832,7 @@ let fuel=1,rpm=900,gi=1,shiftT=0,engineDamage=0,engineFire=0,doorGrab=null,doorG
 let night=0,nightT=0,sleepT=0,sleptDone=false,gunOut=false,gunCD=0,menuOpen=true,musicOn=true,menuPrev=0;
 const GR=[0,3.4,2.1,1.5,1.12,.88,.72],FD=3.7,RW=.32,MASS=1400,IDLE=900,RED=6400,WB=2.7;
 const $m=id=>$(id);
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.code==='KeyX')repair();if(e.code==='KeyE'){if(passengerOf){passengerOf='';passengerSeatAt=0;onFoot=true;say('Left passenger seat')}else if(MP&&MP.joined&&onFoot){let near=null,nd=4.5;for(const p of peers.values()){const dx=rig.position.x-p.cc.c.position.x,dz=rig.position.z-p.cc.c.position.z,d=Math.hypot(dx,dz);if(d<nd){nd=d;near=p}}if(near){passengerOf=near.id;passengerSeatAt=performance.now();onFoot=true;gunOut=false;cock.visible=false;carMesh.visible=false;say('Passenger seat · press E to leave')}else toggleCar()}else toggleCar()}if(e.code==='KeyF'){if(window.__horrorActive&&window.__horrorFire){window.__horrorFire();return}const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)openMenu();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.code==='KeyX')repair();if(e.code==='KeyE'){if(passengerOf){passengerOf='';passengerSeatAt=0;onFoot=true;say('Left passenger seat')}else if(MP&&MP.joined&&onFoot){let near=null,nd=4.5;for(const p of peers.values()){const dx=rig.position.x-p.cc.c.position.x,dz=rig.position.z-p.cc.c.position.z,d=Math.hypot(dx,dz);if(d<nd){nd=d;near=p}}if(near){passengerOf=near.id;passengerSeatAt=performance.now();onFoot=true;gunOut=false;cock.visible=false;carMesh.visible=false;say('Passenger seat · press E to leave')}else toggleCar()}else toggleCar()}if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)openMenu();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
 const ctrls={};
 [0,1].forEach(i=>{const c=renderer.xr.getController(i);rig.add(c);rig.add(renderer.xr.getHand(i));c.addEventListener('connected',e=>{ctrls[i]={c,src:e.data,i};bind()});c.addEventListener('disconnected',()=>{delete ctrls[i];bind()})});
 function repair(){damage=0;engineDamage=0;engineFire=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)})}
@@ -1142,7 +1142,7 @@ for(const e of crowd){if(e.st==='fall')continue;for(const hy of[.5,1.1,1.65]){co
 const len=best<80?best:60;if(tp&&best<80){if(kind===1)flingPed(tp,o);else killPerson(tp,d,true);}
 tracer.visible=true;trT=.05;tracer.position.copy(o).addScaledVector(d,len/2);tracer.scale.z=len;tracer.lookAt(o.x+d.x*len,o.y+d.y*len,o.z+d.z*len);
 if(gun){gun.userData.fl.visible=true;flT=.05}gunShot();buzz(.8,left)}
-function interact(){if(!onFoot||dead||menuOpen||sleepT>0)return;const p=rig.position;if(Math.hypot(p.x-BED.x,p.z-BED.z)<2.6){sleepT=.001;sleptDone=false;return}if(Math.hypot(p.x-TVP.x,p.z-TVP.z)<4)tvOn=!tvOn}
+function interact(){if(!onFoot||dead||menuOpen||sleepT>0)return;if(window.RLJobs?.interact())return;const p=rig.position;if(Math.hypot(p.x-BED.x,p.z-BED.z)<2.6){sleepT=.001;sleptDone=false;return}if(Math.hypot(p.x-TVP.x,p.z-TVP.z)<4)tvOn=!tvOn}
 /* ---------- boost, collisions with buildings, ramps ---------- */
 function boost(){if(boostCD<=0&&boostT<=0&&!dead&&!onFoot&&!menuOpen){boostT=2.5;boostCD=7;vyc=1.2;air=true;window.__bv0=Math.hypot(vel.x,vel.z);buzz(1)}}
 const CORN=[[-.9,-2.1],[.9,-2.1],[-.9,2.1],[.9,2.1],[-.9,0],[.9,0],[0,-2.1],[0,2.1]];
@@ -1281,7 +1281,7 @@ let AC=null,NZ=null,eng=null,bgm=null,vol=.5,stp=0;
 function setVol(v){vol=C(v,0,1);if(bgm)bgm.volume=vol;$('mv').value=vol}
 function startMode(m){selectedDriveMode=m;window.__startSelectedGame&&window.__startSelectedGame(m)}
 const mb=[
-[20,68,230,48,()=>'Mode: '+(selectedGameMode==='horror'?'HORROR':'NORMAL'),()=>{selectedGameMode=selectedGameMode==='normal'?'horror':'normal';menuSig=''}],
+[20,68,230,48,()=>'DELIVERY JOBS',()=>{menuOpen=false;panel.visible=ray.visible=dot.visible=dot2.visible=false;window.RLJobs?.guide()}],
 [262,68,230,48,()=>'Players: '+(selectedPlayType==='multi'?'MULTIPLAYER':'SINGLEPLAYER'),()=>{selectedPlayType=selectedPlayType==='single'?'multi':'single';menuSig=''}],
 [20,126,472,48,()=>'PLAY',()=>startMode(selectedDriveMode)],
 [20,190,230,46,()=>'Hand: '+S.hand,()=>{S.hand=S.hand==='left'?'right':'left';$('sHand').value=S.hand;bind()}],
@@ -1295,8 +1295,8 @@ const adminMb=[[20,68,472,48,()=>'BACK TO MENU',()=>{menuPage='main';menuSig=''}
  function dropVRWeapon(){if(!vrHeldWeapon)return;const it=vrHeldWeapon;it.m.parent?.remove(it.m);scene.add(it.m);it.held=false;it.v.set(0,0,0);const x=rig.position.x+.55*Math.cos(rig.rotation.y),z=rig.position.z-.55*Math.sin(rig.rotation.y);it.m.position.set(x,Math.max(surfaceHeightAt(x,z)+it.r,surfaceHeightAt(x,z)+.18),z);it.m.rotation.set(0,rig.rotation.y+Math.PI/2,0);vrHeldWeapon=null;}
 function equipMenuWeapon(kind){menuOpen=false;panel.visible=ray.visible=dot.visible=dot2.visible=false;menuSig='';for(const o of [left,sec])if(o&&o.item&&o.item.weapon){o.item.held=false;o.item.v.set(0,0,0);o.item=null}if(kind==='none'){gunOut=false;dropVRWeapon();return}if(kind==='pistol'){dropVRWeapon();gunOut=true;return}gunOut=false;const it=kind==='ak'?akPickup:(kind==='rocket'?rocketPickup:swordPickup);if(vrHeldWeapon&&vrHeldWeapon!==it)dropVRWeapon();if(vrHeldWeapon===it)return;const h=left&&left.src.handedness==='left'?left:(sec&&sec.src.handedness==='left'?sec:(left||sec));if(!h){window.V5&&window.V5.say('Left controller is not connected.','#ffd27d');return}for(const o of [left,sec])if(o&&o.item===it)o.item=null;if(it.m.parent)it.m.parent.remove(it.m);h.c.add(it.m);it.held=true;it.v.set(0,0,0);it.m.position.set(0,-.04,-.18);it.m.rotation.set(0,0,0);if(it.weapon==='ak'||it.weapon==='rocket')it.m.rotateY(Math.PI/2);vrHeldWeapon=it;mobileHeldWeapon=null;}
  const weaponMb=[[20,58,472,42,()=>'PISTOL',()=>equipMenuWeapon('pistol')],[20,104,472,42,()=>'AK-47',()=>equipMenuWeapon('ak')],[20,150,472,42,()=>'RPG',()=>equipMenuWeapon('rocket')],[20,196,472,42,()=>'SWORD',()=>equipMenuWeapon('sword')],[20,242,472,42,()=>'GRENADE',()=>spawnGrenade()],[20,288,472,42,()=>'NONE / HOLSTER ALL',()=>equipMenuWeapon('none')],[20,334,472,42,()=>'BACK',()=>{menuPage='main';menuSig=''}]];
-function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText(menuPage==='admin'?'ADMIN PANEL':(menuPage==='weapons'?'WEAPONS':'ROADLINE VR'),256,48);
-const menuButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
+function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font=menuPage==='jobs'?'bold 27px sans-serif':'bold 34px sans-serif';g.fillText(menuPage==='jobs'?'Do you want a job here?':(menuPage==='admin'?'ADMIN PANEL':(menuPage==='weapons'?'WEAPONS':'ROADLINE VR')),256,48);
+const menuButtons=menuPage==='jobs'?jobMb:(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb));menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
 g.font='15px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='admin'?'Available to everyone in this room':'Volume '+Math.round(vol*100)+'%  |  Tap a button with your finger',256,398);ptex.needsUpdate=true}
 function openMenu(){menuOpen=true;menuPage='main';menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true)}
 let menuSig='';
@@ -1308,14 +1308,14 @@ function menuStep(){const tips=[];
   tips.push({o,p})}
  panel.updateWorldMatrix(true,false);let h=-1,pressed=false,best=9;const mk2=[dot,dot2];
  tips.forEach((t,k)=>{const lp=panel.worldToLocal(t.p.clone()),dist=lp.z*PS,inside=Math.abs(lp.x)<=.8&&Math.abs(lp.y)<=.655;let hi=-1;
-  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;const activeButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);hi=activeButtons.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
+  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;const activeButtons=menuPage==='jobs'?jobMb:(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb));hi=activeButtons.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
   const prev=t.o.mPz===undefined?1:t.o.mPz;t.o.mPz=inside?dist:1;
   if(hi>=0&&dist<best){best=dist;h=hi;pressed=dist<.03}
-  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb))[hi][5]();menuSig=''}
+  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);(menuPage==='jobs'?jobMb:(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb)))[hi][5]();menuSig=''}
   else if(hi>=0&&t.o.mHov!==hi)buzz(.25,t.o);
   t.o.mHov=hi;const d=mk2[k];d.position.copy(t.p);d.visible=true;d.material.color.setHex(inside&&dist<.03?0xffffff:0x44ddff)});
  for(let k=tips.length;k<2;k++)mk2[k].visible=false;ray.visible=false;
- const shownButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);const sig=menuPage+'|'+h+'|'+pressed+'|'+shownButtons.map(b=>b[4]()).join();if(sig!==menuSig){menuSig=sig;drawMenu(h,pressed)}}
+ const shownButtons=menuPage==='jobs'?jobMb:(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb));const sig=menuPage+'|'+h+'|'+pressed+'|'+shownButtons.map(b=>b[4]()).join();if(sig!==menuSig){menuSig=sig;drawMenu(h,pressed)}}
 /* ---------- audio: music, engine, tires, wind, gunshots, thuds ---------- */
 function gunShot(){if(!AC)return;const t=AC.currentTime,s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();s.buffer=NZ;f.type='lowpass';f.frequency.value=2500;g.gain.setValueAtTime(.55,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t);s.stop(t+.22)}
 function thud(v){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(30,t+.25);g.gain.setValueAtTime(.7*C(v,.1,1),t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.32)}
@@ -1342,8 +1342,7 @@ const mkN=(type,f)=>{const s=AC.createBufferSource(),fl=AC.createBiquadFilter(),
 eng={o1,o2,lp,eg,wind:mkN('lowpass',600),tire:mkN('bandpass',1700)}}
 $('mf').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{if(bgm)bgm.pause();bgm=new Audio(r.result);bgm.loop=true;bgm.volume=vol;bgm.play().catch(()=>{})};r.readAsDataURL(f)};
 $('mv').oninput=e=>{vol=+e.target.value;if(bgm)bgm.volume=vol};
-function paintMenuChoices(){for(const [id,on] of [['normalChoice',selectedGameMode==='normal'],['horrorChoice',selectedGameMode==='horror'],['singleChoice',selectedPlayType==='single'],['multiChoice',selectedPlayType==='multi']])$(id).classList.toggle('selected',on);$('menuStatus').textContent=(selectedGameMode==='horror'?'Horror Mode':'Normal Mode')+' · '+(selectedPlayType==='multi'?'Multiplayer · room1':'Singleplayer');}
-document.querySelectorAll('[data-game]').forEach(b=>b.addEventListener('click',()=>{selectedGameMode=b.dataset.game;paintMenuChoices()}));
+function paintMenuChoices(){for(const [id,on] of [['singleChoice',selectedPlayType==='single'],['multiChoice',selectedPlayType==='multi']])$(id).classList.toggle('selected',on);$('menuStatus').textContent='Food delivery jobs · '+(selectedPlayType==='multi'?'Multiplayer · room1':'Singleplayer');}
 document.querySelectorAll('[data-play]').forEach(b=>b.addEventListener('click',()=>{selectedPlayType=b.dataset.play;paintMenuChoices()}));
 $('settingsToggle').onclick=()=>{$('settingsPanel').classList.toggle('open');$('settingsToggle').textContent=$('settingsPanel').classList.contains('open')?'SETTINGS ▴':'SETTINGS ▾'};
 $('sDriveMode').onchange=()=>{selectedDriveMode=$('sDriveMode').value};$('playGame').onclick=()=>window.__startSelectedGame&&window.__startSelectedGame($('sDriveMode').value);
@@ -1367,7 +1366,7 @@ if(roadlinePerfElapsed>=2){const fps=roadlinePerfFrames/Math.max(.001,roadlinePe
 _rlLodTimer-=dt;if(_rlLodTimer<=0){_rlLodTimer=.4;try{rlUpdateModelLOD()}catch(_){}}
 try{if(window.__roadlineLodUpdate)window.__roadlineLodUpdate();if(window.__roadlineHandsUpdate)window.__roadlineHandsUpdate()}catch(_){}
 try{if(window.__mpUpdate)window.__mpUpdate(dt)}catch(_){}
-lighting(dt);if(adminFlingActive){rig.position.y+=adminFlingVel*dt;adminFlingVel-=18*dt;if(rig.position.y<=0){rig.position.y=0;adminFlingVel=0;adminFlingActive=false}}for(let i=adminDropCars.length-1;i>=0;i--){const d=adminDropCars[i];d.age+=dt;d.vy-=22*dt;d.g.position.y+=d.vy*dt;if(d.g.position.y<=rig.position.y+1.2){d.g.position.y=rig.position.y+1.2;if(!dead)die({speed:22});scene.remove(d.g);adminDropCars.splice(i,1)}else if(d.age>5){scene.remove(d.g);adminDropCars.splice(i,1)}}if(window.__horrorStep)window.__horrorStep(dt);renderer.render(scene,cam);gunCD-=dt;if(trT>0){trT-=dt;if(trT<=0)tracer.visible=false}if(flT>0){flT-=dt;if(flT<=0&&gun)gun.userData.fl.visible=false}
+lighting(dt);if(adminFlingActive){rig.position.y+=adminFlingVel*dt;adminFlingVel-=18*dt;if(rig.position.y<=0){rig.position.y=0;adminFlingVel=0;adminFlingActive=false}}for(let i=adminDropCars.length-1;i>=0;i--){const d=adminDropCars[i];d.age+=dt;d.vy-=22*dt;d.g.position.y+=d.vy*dt;if(d.g.position.y<=rig.position.y+1.2){d.g.position.y=rig.position.y+1.2;if(!dead)die({speed:22});scene.remove(d.g);adminDropCars.splice(i,1)}else if(d.age>5){scene.remove(d.g);adminDropCars.splice(i,1)}}if(window.RLJobs)window.RLJobs.step(dt);renderer.render(scene,cam);gunCD-=dt;if(trT>0){trT-=dt;if(trT<=0)tracer.visible=false}if(flT>0){flT-=dt;if(flT<=0&&gun)gun.userData.fl.visible=false}
 if(tvOn){tvT-=dt;if(tvT<=0){tvT=.18;const hh=Math.random()*360;tvx.fillStyle='hsl('+hh+',60%,45%)';tvx.fillRect(0,0,128,72);tvx.fillStyle='hsl('+((hh+120)%360)+',70%,60%)';tvx.fillRect(R(0,80),R(0,40),R(20,50),R(15,32));tvx.fillStyle='#fff';tvx.fillRect(0,64,128,8);tvt.needsUpdate=true}tvL.intensity=.8}else if(tvL.intensity>0){tvL.intensity=0;tvx.fillStyle='#050505';tvx.fillRect(0,0,128,72);tvt.needsUpdate=true}
 wheelHeld=0;if(left)left.gp=getGP(left);if(sec)sec.gp=getGP(sec);
 let gas=0,brake=0,target=0;const lgp=left&&left.gp;
@@ -1377,7 +1376,7 @@ const ay=gp.axes[3]!==undefined?gp.axes[3]:(gp.axes[1]||0);brake=ay>.4?ay:0;sx=g
 const rc2=gp.buttons[3]&&gp.buttons[3].pressed?1:0;if(rc2&&!wasRec&&!onFoot)recenter();wasRec=rc2;
 const rp=gp.buttons[4]&&gp.buttons[4].pressed?1:0;if(rp){xHold+=dt;if(xHold>.65&&!xDone&&!menuOpen){xDone=1;menuOpen=true;menuPage='weapons';menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true)}}else{xHold=0;xDone=0}wasRep=rp;
 const ry=gp.buttons[5]&&gp.buttons[5].pressed?1:0;if(ry){yHold+=dt;if(yHold>1&&!yDone&&!menuOpen){yDone=1;openMenu()}}else{if(yHold>0&&yHold<=1&&!menuOpen){if(onFoot)interact();else repair()}yHold=0;yDone=0}
-if(window.__horrorActive&&lgp&&lgp.buttons[0]&&lgp.buttons[0].value>.65&&window.__horrorFire)window.__horrorFire();handStep(left,true,dt);if(sec)handStep(sec,false,dt);if(!wheelHeld)wheelA*=1-Math.min(1,dt*3);
+handStep(left,true,dt);if(sec)handStep(sec,false,dt);if(!wheelHeld)wheelA*=1-Math.min(1,dt*3);
 target=C(-wheelA/1.1,-1,1)}
 else{if(sec&&sec.gp)handStep(sec,false,dt);const J=window.__joy||{x:0,y:0},kk=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),ky=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);gas=keys.KeyW||keys.ArrowUp?1:C(-J.y,0,1);brake=keys.KeyS||keys.ArrowDown?1:C(J.y,0,1);const kt=C(kk+J.x,-1,1);
 if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;sy=C(ky+J.y,-1,1)}
@@ -2012,7 +2011,7 @@ const _flingFromCarCash=flingFromCar;flingFromCar=function(e,townLocal=false){co
 window.__buyWeapon=function(it){if(it.owned)return true;const tn=performance.now();if(it.noBuy>tn)return false;const nm=it.weapon==='ak'?'AK-47':'RPG';
  if(cash>=100){cash-=100;it.owned=true;if(it.tag)it.tag.visible=false;say('Bought '+nm+'  -$100','#7dff9a');cashBeep();buzz(.5);return true}
  it.noBuy=tn+1600;say('Need $100 for the '+nm,'#ff6a5a');return false};
-window.V5={step,reset,say,remRob(vals){if(robbed)return;robbed=true;robT=0;alarmT=16;bags.forEach((b,i)=>{b.on=true;b.v=vals[i]||2000;b.m.visible=true});say('Bank robbery nearby!','#ffd23a')},remBag(i){const b=bags[i];if(b){b.on=false;b.m.visible=false}}};
+window.V5={step,reset,say,award(n){cash+=n;sig='';cashBeep()},getCash(){return cash},remRob(vals){if(robbed)return;robbed=true;robT=0;alarmT=16;bags.forEach((b,i)=>{b.on=true;b.v=vals[i]||2000;b.m.visible=true});say('Bank robbery nearby!','#ffd23a')},remBag(i){const b=bags[i];if(b){b.on=false;b.m.visible=false}}};
 reset();
 })();
 </script><script>
@@ -2096,11 +2095,11 @@ addEventListener('blur',()=>root.querySelectorAll('button').forEach(b=>{b.classL
 /* ===== VR seat height: raises the cockpit relative to your head; adjustable in the start menu ===== */
 (function(){
 window.SEAT_Y=0.15;
-try{const v=parseFloat(localStorage.getItem('lhr_seat'));if(!isNaN(v))window.SEAT_Y=v}catch(_){}
+try{const v=parseFloat(RLStorage.getItem('lhr_seat'));if(!isNaN(v))window.SEAT_Y=v}catch(_){}
 const set=document.querySelector('#menu .set');
 if(set){const l=document.createElement('label');l.innerHTML='Seat height <input type="range" id="sSeat" min="-0.2" max="0.6" step="0.05"><span id="sSeatV"></span>';set.appendChild(l);
  const r=l.querySelector('#sSeat'),o=l.querySelector('#sSeatV');r.value=window.SEAT_Y;o.textContent=(+r.value).toFixed(2)+' m';
- r.oninput=()=>{window.SEAT_Y=+r.value;o.textContent=(+r.value).toFixed(2)+' m';try{localStorage.setItem('lhr_seat',r.value)}catch(_){}}}
+ r.oninput=()=>{window.SEAT_Y=+r.value;o.textContent=(+r.value).toFixed(2)+' m';try{RLStorage.setItem('lhr_seat',r.value)}catch(_){}}}
 const _rc=recenter;
 recenter=function(){_rc();if(renderer.xr.isPresenting)cock.position.y+=window.SEAT_Y};
 })();
@@ -2431,7 +2430,7 @@ function press(i){if(cur===i)stop();else play(i)}
 window.__radioApi={get cur(){return cur},press,stopIfOn(){if(cur>=0)stop()}};
 au.forEach((a,i)=>a.addEventListener('error',()=>{
  if(a._k<a._c.length-1){a._k++;a.src=a._c[a._k];a.load();retry[i]=0;return}
- bad[i]=1;if(cur===i){cur=-1;restore()}draw();toast('Radio: could not load '+a._c[0]+' (error '+(a.error?a.error.code:'?')+') - check the Songs folder and file names')}));
+ bad[i]=1;const requested=cur===i;if(requested){cur=-1;restore()}draw();if(requested)toast('Radio: could not load '+a._c[0]+' (error '+(a.error?a.error.code:'?')+') - check the Songs folder and file names')}));
 addEventListener('keydown',e=>{if(menuOpen||e.repeat)return;if(e.code==='Digit1')press(0);else if(e.code==='Digit2')press(1);else if(e.code==='Digit3')press(2)});
 /* phone buttons */
 const tc=document.createElement('div'),mob=[];tc.id='tc';tc.style.cssText='position:fixed;inset:0;z-index:9999;pointer-events:none';document.body.appendChild(tc);
@@ -2520,9 +2519,9 @@ draw();
    for(const u of apiList){
     try{const res=await fetch(u,{cache:'no-store'});if(!res.ok){err=new Error('Could not read the album folder ('+res.status+').');continue}const j=await res.json();if(!Array.isArray(j)){err=new Error('Album folder was not found.');continue}files=j;break}catch(e){err=e}
    }
-   if(!files){try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&Array.isArray(c.files))files=c.files}catch(_){}}
+   if(!files){try{const c=JSON.parse(RLStorage.getItem(CACHE_KEY)||'null');if(c&&Array.isArray(c.files))files=c.files}catch(_){}}
    if(!files)throw err||new Error('Could not load album. Check your connection.');
-   try{localStorage.setItem(CACHE_KEY,JSON.stringify({files:files.map(f=>({name:f.name,type:f.type,download_url:f.download_url}))}))}catch(_){}
+   try{RLStorage.setItem(CACHE_KEY,JSON.stringify({files:files.map(f=>({name:f.name,type:f.type,download_url:f.download_url}))}))}catch(_){}
    tracks=mapFiles(files);
    if(!tracks.length)throw new Error('No audio files are in the album folder yet.');
    loaded=true;idx=0;listTop=0;view='player';player.style.display='block';paintTrack();message(tracks.length+' tracks available');stopped=true;
@@ -2730,83 +2729,166 @@ renderer.domElement.addEventListener('pointerdown',e=>{try{
 <script>try{if(window.__mrReal)Math.random=window.__mrReal}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-/* ===== Main-menu game selection + low-cost Horror Mode ===== */
+/* Roadline: normal game startup + gas-station food-delivery shifts. */
+const jobMb=[
+ [30,120,215,75,()=> 'No',()=>window.RLJobs.answer(false)],
+ [267,120,215,75,()=> 'Sure',()=>window.RLJobs.answer(true)]
+];
+window.__startSelectedGame=function(driveMode){
+ selectedDriveMode=driveMode||selectedDriveMode;
+ S.hand=$('sHand').value;S.gas=+$('sGas').value;S.grab=+$('sGrab').value;
+ if(S.gas===S.grab)S.grab=1-S.gas;
+ try{bind()}catch(_){}
+ synth();menuOpen=false;window.__mainMenuOpen=false;
+ panel.visible=ray.visible=dot.visible=dot2.visible=false;
+ renderer.domElement.style.display='block';$('menu').style.display='none';$('ui').style.display='';
+ $('mp').style.display=selectedPlayType==='multi'?'flex':'none';$('help').style.display='none';
+ if(selectedPlayType==='multi')window.__rlMPJoin?.();else window.__rlMPLeave?.();
+ if(!window.__roadlineStarted||mode!==selectedDriveMode){mode=selectedDriveMode;restart();window.RLJobs?.reset();window.__roadlineStarted=true;}
+ paintMenuChoices();
+};
+window.__hideWorldForMenu=function(){};
 (function(){
-  const keep=new Set([rig,panel,ray,dot]);
-  const normalChildren=scene.children.filter(o=>!keep.has(o)).map(o=>[o,o.visible]);
-  const normalBackground=scene.background.clone(),normalFog=scene.fog;
-  const horrorGroup=new T.Group();horrorGroup.visible=false;scene.add(horrorGroup);
-  const mazeN=13,cell=8,mazeOrigin=-48,wallH=4.1,wallT=.34,mazeWalls=[];
-  const cells=Array.from({length:mazeN},()=>Array.from({length:mazeN},()=>({N:1,E:1,S:1,W:1,seen:0})));
-  // Seeded depth-first maze generation: connected corridors, dead ends, and loops in the layout.
-  const stack=[[0,0]];cells[0][0].seen=1;
-  while(stack.length){const [r,c]=stack[stack.length-1],opts=[];if(r>0&&!cells[r-1][c].seen)opts.push([r-1,c,'N','S']);if(c<mazeN-1&&!cells[r][c+1].seen)opts.push([r,c+1,'E','W']);if(r<mazeN-1&&!cells[r+1][c].seen)opts.push([r+1,c,'S','N']);if(c>0&&!cells[r][c-1].seen)opts.push([r,c-1,'W','E']);if(!opts.length){stack.pop();continue}const q=opts[(Math.random()*opts.length)|0];cells[r][c][q[2]]=0;cells[q[0]][q[1]][q[3]]=0;cells[q[0]][q[1]].seen=1;stack.push([q[0],q[1]])}
-  // Add a handful of extra openings so the maze has loops instead of being only a tree.
-  for(let i=0;i<Math.floor(mazeN*mazeN*.075);i++){const r=(Math.random()*mazeN)|0,c=(Math.random()*mazeN)|0;if(c<mazeN-1&&Math.random()<.5){cells[r][c].E=0;cells[r][c+1].W=0}else if(r<mazeN-1){cells[r][c].S=0;cells[r+1][c].N=0}}
-  const wallGeo=new T.BoxGeometry(1,1,1),wallMat=new T.MeshStandardMaterial({color:0x202329,roughness:1,metalness:0}),wallMax=mazeN*mazeN*2+mazeN*4;
-  const wallMesh=new T.InstancedMesh(wallGeo,wallMat,wallMax);wallMesh.frustumCulled=false;wallMesh.count=0;horrorGroup.add(wallMesh);
-  const im=new T.Matrix4(),iq=new T.Quaternion(),ip=new T.Vector3(),is=new T.Vector3();
-  function addWall(x,z,hx,hz){const n=wallMesh.count++;ip.set(x,wallH/2,z);is.set(hx*2,wallH,hz*2);im.compose(ip,iq.identity(),is);wallMesh.setMatrixAt(n,im);mazeWalls.push({x,z,hx,hz})}
-  for(let r=0;r<mazeN;r++)for(let c=0;c<mazeN;c++){
-    const x=mazeOrigin+c*cell,z=mazeOrigin+r*cell,q=cells[r][c];
-    if(q.N)addWall(x,z-cell/2,cell/2+wallT/2,wallT/2);
-    if(q.W)addWall(x-cell/2,z,wallT/2,cell/2+wallT/2);
-    if(r===mazeN-1&&q.S)addWall(x,z+cell/2,cell/2+wallT/2,wallT/2);
-    if(c===mazeN-1&&q.E)addWall(x+cell/2,z,wallT/2,cell/2+wallT/2);
+ const state={employed:false,phase:'idle',order:null,completed:0,total:0,dialog:false};
+ const pos=new T.Vector3(),workerPos=new T.Vector3(),goal=new T.Vector3();
+ let drawT=0;
+ const css=document.createElement('style');
+ css.textContent=`
+ #jobHint{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);padding:12px 18px;border:1px solid #7fcea5;border-radius:10px;background:#101b19ed;color:#e8fff0;font:600 14px system-ui;z-index:9998;display:none;cursor:pointer;text-align:center}
+ #jobDialog{position:fixed;inset:0;z-index:20000;background:#0009;display:none;align-items:center;justify-content:center;padding:18px}
+ #jobDialog section{box-sizing:border-box;width:410px;max-width:100%;background:#15201f;border:1px solid #83d6ab;border-radius:16px;padding:26px;color:#f2fff8;box-shadow:0 18px 80px #0008;font:16px system-ui}
+ #jobDialog small{color:#a4cbb8;font-size:11px;letter-spacing:2px}
+ #jobDialog h2{font-size:24px;line-height:1.25;margin:14px 0}
+ #jobDialog p{color:#bfd2c8;line-height:1.5}
+ #jobDialog .answers{display:flex;gap:12px;margin-top:24px}
+ #jobDialog button{flex:1;min-height:48px;border-radius:8px;border:1px solid #6e8d7d;background:#253c32;color:white;font:700 16px system-ui;cursor:pointer}
+ #jobDialog button:last-child{background:#a6edbe;color:#14251b;border-color:#a6edbe}
+ #deliveryGps{position:fixed;right:12px;top:12px;width:220px;height:210px;z-index:9996;border:1px solid #72b995;border-radius:12px;background:#0a1814;display:none;pointer-events:none}
+ @media(max-width:600px){#deliveryGps{width:180px;height:172px;top:68px;left:8px;right:auto}#jobHint{bottom:215px;font-size:12px;padding:10px 12px;max-width:80vw}}
+ `;
+ document.head.append(css);
+ const hint=document.createElement('button');hint.id='jobHint';document.body.append(hint);
+ const dialog=document.createElement('div');dialog.id='jobDialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');
+ dialog.innerHTML='<section><small>GAS STATION · FOOD DELIVERY</small><h2>Do you want a job here?</h2><p>Take a food order, follow your left-wrist GPS, and hand it to the customer to earn cash.</p><div class="answers"><button id="jobNo">No</button><button id="jobSure">Sure</button></div></section>';
+ document.body.append(dialog);
+ const gc=document.createElement('canvas');gc.id='deliveryGps';gc.width=440;gc.height=420;document.body.append(gc);
+ const gx=gc.getContext('2d'),tex=new T.CanvasTexture(gc);
+ const wrist=new T.Mesh(new T.PlaneGeometry(.13,.124),new T.MeshBasicMaterial({map:tex,side:T.DoubleSide}));
+ wrist.position.set(-.065,0,.265);
+ wrist.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(new T.Vector3(0,1,0),new T.Vector3(0,0,-1),new T.Vector3(-1,0,0)));
+ wrist.visible=false;
+ // A food bag carried in inventory. It follows the camera, not an interactable physics object.
+ const bag=new T.Group(),paper=new T.MeshLambertMaterial({color:0xb58850});
+ const bagBody=new T.Mesh(new T.BoxGeometry(.24,.3,.16),paper);bag.add(bagBody);
+ const handle=new T.Mesh(new T.TorusGeometry(.055,.009,4,10,Math.PI),paper);handle.position.y=.15;bag.add(handle);
+ bag.position.set(.3,-.25,-.6);bag.rotation.y=-.2;bag.visible=false;cam.add(bag);
+ const marker=new T.Group();
+ const ring=new T.Mesh(new T.TorusGeometry(.85,.055,5,28),new T.MeshBasicMaterial({color:0xa6edbe}));
+ ring.rotation.x=-Math.PI/2;marker.add(ring);
+ const beam=new T.Mesh(new T.CylinderGeometry(.06,.06,3,6),new T.MeshBasicMaterial({color:0xa6edbe,transparent:true,opacity:.55}));
+ beam.position.y=1.5;marker.add(beam);marker.visible=false;scene.add(marker);
+ const labelCanvas=document.createElement('canvas');labelCanvas.width=512;labelCanvas.height=96;
+ const lx=labelCanvas.getContext('2d');lx.fillStyle='#132a22';lx.fillRect(0,0,512,96);lx.fillStyle='#c9ffdc';lx.font='bold 32px sans-serif';lx.textAlign='center';lx.fillText('FOOD DELIVERY',256,60);
+ const label=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(labelCanvas),depthTest:false}));
+ label.scale.set(2.4,.45,1);label.position.y=3.2;marker.add(label);
+ function player(){return pos.copy(onFoot?rig.position:carP)}
+ function worker(){return workerPos.copy(wk.g.position).add(town.position)}
+ function available(){return !dead&&!window.__mainMenuOpen&&onFoot&&mode==='free'&&wk.st==='idle'&&player().distanceTo(worker())<4.6}
+ function target(){if(state.phase==='deliver')return goal.set(state.order.x,state.order.y,state.order.z);if(state.phase==='return')return goal.copy(worker());return null}
+ function close(){
+  state.dialog=false;dialog.style.display='none';menuOpen=false;menuPage='main';menuSig='';
+  panel.visible=ray.visible=dot.visible=dot2.visible=false;
+ }
+ function offer(){
+  if(state.dialog||!available()||state.phase==='deliver')return false;
+  gunOut=false;state.dialog=true;
+  if(renderer.xr.isPresenting){openMenu();menuPage='jobs';menuSig='';}
+  else{menuOpen=true;dialog.style.display='flex';$('jobNo').focus();}
+  return true;
+ }
+ function answer(yes){
+  if(!state.dialog)return;
+  const stillNear=player().distanceTo(worker())<5.5&&!dead;
+  close();if(!yes||!stillNear)return;
+  state.employed=true;
+  const stops=[
+   {name:'Home doorstep',x:-8,z:4,y:0},
+   {name:'Burger Barn entrance',x:town.position.x+12,z:town.position.z-50,y:town.position.y},
+   {name:'Bank entrance',x:town.position.x+12,z:town.position.z-73,y:town.position.y}
+  ];
+  const stop=stops[state.completed%stops.length];
+  state.order={...stop,pay:150+Math.round(Math.hypot(stop.x-worker().x,stop.z-worker().z)*.35)};
+  state.phase='deliver';drawT=1;V5.say('Food packed. Follow your wrist GPS.','#b9ffd0');
+ }
+ function interactJob(){
+  if(state.dialog)return true;
+  if(dead||menuOpen||window.__mainMenuOpen||!onFoot)return false;
+  if(state.phase==='deliver'){
+   const t=target();if(Math.hypot(player().x-t.x,player().z-t.z)<2.6&&Math.abs(player().y-t.y)<3){
+    const pay=state.order.pay;state.phase='return';state.completed++;state.total+=pay;
+    V5.award(pay);V5.say('Delivered! +$'+pay+' · Return for another order.','#b9ffd0');drawT=1;return true;
+   }
   }
-  wallMesh.instanceMatrix.needsUpdate=true;
-  const floor=new T.Mesh(new T.BoxGeometry(mazeN*cell+wallT,.22,mazeN*cell+wallT),new T.MeshStandardMaterial({color:0x18191b,roughness:1}));floor.position.set(0,-.16,0);horrorGroup.add(floor);
-  const ceiling=new T.Mesh(new T.BoxGeometry(mazeN*cell+wallT,.18,mazeN*cell+wallT),new T.MeshStandardMaterial({color:0x050607,roughness:1,side:T.DoubleSide}));ceiling.position.set(0,4.18,0);horrorGroup.add(ceiling);
-  const ambient=new T.AmbientLight(0x687184,.16);horrorGroup.add(ambient);
-  for(const [x,z] of [[-24,-24],[24,-24],[-24,24],[24,24],[0,0]]){const l=new T.PointLight(0x667b9d,.27,13,2);l.position.set(x,3.5,z);horrorGroup.add(l);const bulb=new T.Mesh(new T.SphereGeometry(.08,6,5),new T.MeshBasicMaterial({color:0x9db5d8}));bulb.position.set(x,3.94,z);horrorGroup.add(bulb)}
-  // Fixed head-mounted beam. There is deliberately no toggle input for this light.
-  const headFlash=new T.SpotLight(0xc9ddff,3.8,38,Math.PI/7,0.68,1.6);headFlash.position.set(0,0,0);headFlash.visible=true;cam.add(headFlash);
-  const flashTarget=new T.Object3D();horrorGroup.add(flashTarget);headFlash.target=flashTarget;
-  // A low-poly humanoid monster with long limbs and bright eyes.
-  const monster=new T.Group(),monsterMat=new T.MeshStandardMaterial({color:0x111114,roughness:.9}),skinMat=new T.MeshStandardMaterial({color:0x282327,roughness:1}),eyeMat=new T.MeshBasicMaterial({color:0xff1111});
-  const addPart=(geo,mat,x,y,z,sx=1,sy=1,sz=1)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);monster.add(m);return m};
-  addPart(new T.CylinderGeometry(.3,.35,1.2,7,1),monsterMat,0,1.25,0,.85,1.25,.7);
-  addPart(new T.SphereGeometry(.29,8,6),skinMat,0,2.12,-.02,1,1.2,.85);
-  addPart(new T.BoxGeometry(.12,.08,.05),eyeMat,-.12,2.16,-.25);addPart(new T.BoxGeometry(.12,.08,.05),eyeMat,.12,2.16,-.25);
-  const limbs=[];for(const side of [-1,1]){const arm=new T.Mesh(new T.CylinderGeometry(.075,.11,.9,6),monsterMat);arm.position.set(side*.42,1.3,-.02);arm.rotation.z=side*.22;monster.add(arm);limbs.push(arm);const leg=new T.Mesh(new T.CylinderGeometry(.11,.075,.9,6),monsterMat);leg.position.set(side*.19,.48,.02);monster.add(leg);limbs.push(leg)}
-  horrorGroup.add(monster);rlAttachModel('monster',monster,{size:[1.25,2.65,1.05]});
-  let horrorActive=false,menuWorldHidden=false,monsterAlert=0,monsterStun=0,monsterPathT=0,monsterPath=[],monsterPatrolT=0,scareT=0,fireCD=0,radarT=0,akMesh=null,radarCtx=null,radarTex=null,radarDot={x:0,y:0};
-  const mazeCell=(x,z)=>({c:C(Math.round((x-mazeOrigin)/cell),0,mazeN-1)|0,r:C(Math.round((z-mazeOrigin)/cell),0,mazeN-1)|0});
-  const cellPos=(c,r)=>({x:mazeOrigin+c*cell,z:mazeOrigin+r*cell});
-  function findPath(a,b){const key=(c,r)=>r*mazeN+c,prev=new Int32Array(mazeN*mazeN);prev.fill(-1);const q=[a.r*mazeN+a.c];prev[q[0]]=q[0];for(let qi=0;qi<q.length;qi++){const id=q[qi],r=(id/mazeN)|0,c=id%mazeN;if(c===b.c&&r===b.r)break;const v=cells[r][c],nb=[];if(!v.N)nb.push([c,r-1]);if(!v.E)nb.push([c+1,r]);if(!v.S)nb.push([c,r+1]);if(!v.W)nb.push([c-1,r]);for(const [nc,nr] of nb){const k=key(nc,nr);if(prev[k]!==-1)continue;prev[k]=id;q.push(k)}}const end=key(b.c,b.r);if(prev[end]===-1)return[];const path=[];let cur=end;while(cur!==prev[cur]){path.push({c:cur%mazeN,r:(cur/mazeN)|0});cur=prev[cur]}path.push({c:cur%mazeN,r:(cur/mazeN)|0});path.reverse();return path}
-  function mazeCan(x,z,r=.36){for(const w of mazeWalls)if(Math.abs(x-w.x)<w.hx+r&&Math.abs(z-w.z)<w.hz+r)return false;return x>-52+r&&x<52-r&&z>-52+r&&z<52-r}
-  function mazeMove(obj,dx,dz,r=.36){const nx=obj.position.x+dx,nz=obj.position.z+dz;if(mazeCan(nx,obj.position.z,r))obj.position.x=nx;if(mazeCan(obj.position.x,nz,r))obj.position.z=nz}
-  const sightRay=new T.Raycaster(),originV=new T.Vector3(),dirV=new T.Vector3(),playerV=new T.Vector3(),monsterV=new T.Vector3();
-  function monsterSeesPlayer(){monster.getWorldPosition(monsterV);playerV.copy(rig.position);playerV.y=1.5;originV.copy(monsterV).add(new T.Vector3(0,1.8,0));dirV.copy(playerV).sub(originV);const d=dirV.length();if(d>28||d<.001)return false;const ax=originV.x,az=originV.z,dx=playerV.x-ax,dz=playerV.z-az;for(const w of mazeWalls){const hx=w.hx+.08,hz=w.hz+.08;let t0=0,t1=1;for(const [a,v,lo,hi] of [[ax,dx,w.x-hx,w.x+hx],[az,dz,w.z-hz,w.z+hz]]){if(Math.abs(v)<1e-7){if(a<lo||a>hi){t0=2;break}}else{let u=(lo-a)/v,vv=(hi-a)/v;if(u>vv){const tt=u;u=vv;vv=tt}t0=Math.max(t0,u);t1=Math.min(t1,vv);if(t0>t1)break}}if(t0<=t1&&t1>=.02&&t0<.98)return false}return true}
-  function makeRadar(){if(akMesh)return;akMesh=new T.Group();const metal=new T.MeshStandardMaterial({color:0x24282c,metalness:.55,roughness:.55}),wood=new T.MeshStandardMaterial({color:0x513b26,roughness:.95});const piece=(g,m,x,y,z,sx=1,sy=1,sz=1)=>{const o=new T.Mesh(g,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);akMesh.add(o);return o};piece(new T.BoxGeometry(.14,.16,.56),metal,0,0,-.08);piece(new T.BoxGeometry(.12,.1,.38),wood,0,-.045,.27);piece(new T.BoxGeometry(.09,.19,.12),wood,0,-.15,-.05);piece(new T.BoxGeometry(.045,.045,.48),metal,0,.045,-.48);piece(new T.CylinderGeometry(.025,.025,.28,6),metal,0,-.15,-.06,1,1,1).rotation.x=.2;piece(new T.BoxGeometry(.08,.1,.08),metal,0,.105,-.12);
-    const cv=document.createElement('canvas');cv.width=cv.height=96;radarCtx=cv.getContext('2d');radarTex=new T.CanvasTexture(cv);const screen=new T.Mesh(new T.PlaneGeometry(.23,.23),new T.MeshBasicMaterial({map:radarTex,transparent:false,depthTest:true}));screen.position.set(.14,.11,-.12);screen.rotation.y=.18;akMesh.add(screen);akMesh.userData.radar=screen;rlAttachModel('ak47',akMesh,{size:[1.1,.32,.2],keep:[screen]});
+  return offer();
+ }
+ function drawGps(){
+  const p=player(),t=target();if(!t)return;
+  const dx=t.x-p.x,dz=t.z-p.z,dist=Math.hypot(dx,dz),a=onFoot?rig.rotation.y:heading;
+  const angle=Math.atan2(-dx,-dz)-a;
+  gx.fillStyle='#0a1814';gx.fillRect(0,0,440,420);
+  gx.fillStyle='#99d5b2';gx.font='bold 19px monospace';gx.textAlign='left';gx.fillText('ROADLINE / DELIVERY GPS',22,34);
+  gx.fillStyle='#f1fff6';gx.font='bold 32px sans-serif';gx.fillText(state.phase==='deliver'?state.order.name:'Gas station worker',22,75);
+  gx.save();gx.translate(220,210);
+  gx.strokeStyle='#244b38';gx.lineWidth=2;
+  for(const r of [45,90]){gx.beginPath();gx.arc(0,0,r,0,Math.PI*2);gx.stroke();}
+  gx.beginPath();gx.moveTo(-110,0);gx.lineTo(110,0);gx.moveTo(0,-110);gx.lineTo(0,110);gx.stroke();
+  gx.rotate(angle);gx.fillStyle='#a6edbe';gx.beginPath();gx.moveTo(0,-73);gx.lineTo(31,22);gx.lineTo(0,7);gx.lineTo(-31,22);gx.closePath();gx.fill();gx.restore();
+  gx.textAlign='center';gx.fillStyle='#f1fff6';gx.font='bold 40px monospace';gx.fillText(Math.round(dist)+' m',220,347);
+  gx.fillStyle='#b2ccbe';gx.font='24px sans-serif';
+  gx.fillText(dist<2.6?(onFoot?'G / Y / USE to hand over':'Park and get out to deliver'):(state.phase==='deliver'?'Food packed · Reward $'+state.order.pay:'Talk to worker for your next order'),220,384);
+  tex.needsUpdate=true;
+ }
+ function step(dt){
+  const active=state.phase==='deliver'||state.phase==='return';
+  if(dead&&state.phase!=='idle'){reset();V5.say('Delivery cancelled. Visit the gas station.');}
+  if(state.dialog&&menuPage!=='jobs'&&renderer.xr.isPresenting)close();
+  if(state.dialog&&(dead||player().distanceTo(worker())>6))close();
+  bag.visible=state.phase==='deliver'&&!dead&&!menuOpen&&onFoot;
+  marker.visible=active&&!dead&&!window.__mainMenuOpen;
+  if(marker.visible){const t=target();marker.position.copy(t);marker.position.y=t.y+.12;}
+  let ctl=null;
+  for(const o of Object.values(ctrls))if(o.src?.handedness==='left'){ctl=o.c;break;}
+  if(ctl&&wrist.parent!==ctl)ctl.add(wrist);
+  wrist.visible=!!ctl&&active&&!dead;
+  gc.style.display=active&&!dead&&!menuOpen&&!window.__mainMenuOpen&&!renderer.xr.isPresenting?'block':'none';
+  let text='';
+  if(!menuOpen&&!dead&&!window.__mainMenuOpen&&mode==='free'){
+   if(state.phase==='deliver'&&onFoot&&Math.hypot(player().x-target().x,player().z-target().z)<2.6)text='Hand over food · G / Y / USE';
+   else if(available())text=state.phase==='deliver'?'An order is already packed. Follow your GPS.':'Talk to gas-station worker · G / Y / USE';
   }
-  function attachAk(){makeRadar();if(left&&left.c){if(akMesh.parent!==left.c){if(akMesh.parent)akMesh.parent.remove(akMesh);left.c.add(akMesh)}akMesh.position.set(.02,-.08,-.28);akMesh.rotation.set(0,0,0);if(gun)gun.visible=false}else{if(akMesh.parent!==cam){if(akMesh.parent)akMesh.parent.remove(akMesh);cam.add(akMesh)}akMesh.position.set(-.24,-.25,-.48);akMesh.rotation.set(0,0,0)}}
-  function playScream(){try{if(!AC)synth();if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type='sawtooth';o.frequency.setValueAtTime(720,t);o.frequency.exponentialRampToValueAtTime(95,t+.65);f.type='bandpass';f.frequency.value=900;g.gain.setValueAtTime(.001,t);g.gain.exponentialRampToValueAtTime(.7,t+.035);g.gain.exponentialRampToValueAtTime(.001,t+.95);o.connect(f);f.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+1)}catch(_){}}
-  function horrorFire(){if(!horrorActive||scareT>0||fireCD>0)return;fireCD=.105;try{gunShot()}catch(_){}const ctl=left&&left.c,from=new T.Vector3(),d=new T.Vector3();if(ctl){ctl.getWorldPosition(from);ctl.getWorldDirection(d).negate()}else{cam.getWorldPosition(from);cam.getWorldDirection(d)}const to=monster.position.clone().add(new T.Vector3(0,1.25,0)).sub(from),along=to.dot(d);if(along>0&&along<48){const perp=to.addScaledVector(d,-along).length();if(perp<.82){monsterStun=Math.max(monsterStun,1.1);monsterAlert=Math.max(monsterAlert,3);monster.rotation.y+=.35}}}
-  window.__horrorFire=horrorFire;
-  function activateHorror(){horrorActive=true;window.__horrorActive=true;horrorGroup.visible=true;normalChildren.forEach(([o])=>o.visible=false);scene.background.set(0x010204);scene.fog=new T.Fog(0x010204,8,56);selectedGameMode='horror';$('horrorHud').style.display='block';$('horrorJumpscare').style.display='none';cam.position.set(0,1.65,0);cam.rotation.set(0,0,0);rig.position.set(mazeOrigin,0,mazeOrigin);rig.rotation.set(0,Math.PI,0);onFoot=true;dead=0;carMesh.visible=false;cock.visible=false;gunOut=false;monster.position.set(mazeOrigin+(mazeN-1)*cell,0,mazeOrigin+(mazeN-1)*cell);monster.rotation.set(0,Math.PI,0);monsterAlert=0;monsterStun=0;monsterPathT=0;monsterPatrolT=0;monsterPath=[];scareT=0;fireCD=0;makeRadar();attachAk();if(window.__rlMP&&window.__rlMP.joined)window.__rlMP.send('gm',{m:'horror'});}
-  function deactivateHorror(){horrorActive=false;menuWorldHidden=false;window.__horrorActive=false;horrorGroup.visible=false;normalChildren.forEach(([o,v])=>o.visible=v);scene.background.copy(normalBackground);scene.fog=normalFog;headFlash.intensity=0;$('horrorHud').style.display='none';$('horrorJumpscare').style.display='none';if(akMesh){if(akMesh.parent)akMesh.parent.remove(akMesh);akMesh=null;radarCtx=null;radarTex=null}if(gun)gun.visible=true;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0)}
-  function horrorWalk(dt){cam.getWorldDirection(dirV);dirV.y=0;if(dirV.lengthSq()<.001)dirV.set(0,0,-1);dirV.normalize();const a=Math.abs(sx)>.12?sx:0,b=Math.abs(sy)>.12?sy:0,sp=window.__sprint?4.1:2.45,dx=(-dirV.x*b+(-dirV.z)*a)*sp*dt,dz=(-dirV.z*b+dirV.x*a)*sp*dt;mazeMove(rig,dx,0,.36);mazeMove(rig,0,dz,.36);rig.position.y=0;}
-  const _normalWalk=walk;walk=function(dt){if(horrorActive)horrorWalk(dt);else _normalWalk(dt)};
-  function horrorStep(dt){if(!horrorActive)return;fireCD=Math.max(0,fireCD-dt);headFlash.intensity=3.8;const cp=new T.Vector3();cam.getWorldPosition(cp);cam.getWorldDirection(dirV);flashTarget.position.copy(cp).addScaledVector(dirV,20);attachAk();
-    if(radarCtx&&radarTex){radarT+=dt;if(radarT>.08){radarT=0;const g=radarCtx;g.fillStyle='#03100c';g.fillRect(0,0,96,96);g.strokeStyle='#28704e';g.lineWidth=1;g.beginPath();g.arc(48,48,39,0,Math.PI*2);g.stroke();g.beginPath();g.moveTo(48,8);g.lineTo(48,88);g.moveTo(8,48);g.lineTo(88,48);g.stroke();g.fillStyle='#51ff8b';g.beginPath();g.arc(48,48,3,0,Math.PI*2);g.fill();const dx=rig.position.x-monster.position.x,dz=rig.position.z-monster.position.z,dist=Math.hypot(dx,dz),rel=Math.atan2(dx,dz)-rig.rotation.y,r=Math.min(38,dist/48*38);const x=48+Math.sin(rel)*r,y=48-Math.cos(rel)*r;g.fillStyle='#ff2020';g.shadowColor='#ff0000';g.shadowBlur=7;g.beginPath();g.arc(x,y,5,0,Math.PI*2);g.fill();g.shadowBlur=0;g.fillStyle='#8dbfa3';g.font='8px monospace';g.fillText(Math.round(dist)+'m',34,92);radarTex.needsUpdate=true}}
-    if(scareT>0){scareT-=dt;if(scareT<=0){$('horrorJumpscare').style.display='none';rig.position.set(mazeOrigin,0,mazeOrigin);rig.rotation.y=Math.PI;monster.position.set(mazeOrigin+(mazeN-1)*cell,0,mazeOrigin+(mazeN-1)*cell);monsterAlert=0;monsterStun=0}return}
-    monsterStun=Math.max(0,monsterStun-dt);if(monsterSeesPlayer())monsterAlert=8;else monsterAlert=Math.max(0,monsterAlert-dt);monsterPathT-=dt;const mc=mazeCell(monster.position.x,monster.position.z),pc=mazeCell(rig.position.x,rig.position.z);let target=null;
-    if(monsterAlert>0){if(monsterPathT<=0){monsterPath=findPath(mc,pc);monsterPathT=.38}const next=monsterPath.length>1?monsterPath[1]:pc;target=cellPos(next.c,next.r)}else{monsterPatrolT-=dt;if(monsterPatrolT<=0||!monster.userData.patrol){const q=cells[mc.r][mc.c],opts=[];if(!q.N)opts.push([mc.c,mc.r-1]);if(!q.E)opts.push([mc.c+1,mc.r]);if(!q.S)opts.push([mc.c,mc.r+1]);if(!q.W)opts.push([mc.c-1,mc.r]);const n=opts[(Math.random()*opts.length)|0]||[mc.c,mc.r];monster.userData.patrol=cellPos(n[0],n[1]);monsterPatrolT=2+Math.random()*2}target=monster.userData.patrol||cellPos(mc.c,mc.r)}
-    if(monsterStun<=0&&target){const dx=target.x-monster.position.x,dz=target.z-monster.position.z,d=Math.hypot(dx,dz);if(d>.28){const sp=monsterAlert>0?2.65:1.35;mazeMove(monster,dx/d*sp*dt,0,.43);mazeMove(monster,0,dz/d*sp*dt,.43);monster.rotation.y=Math.atan2(dx,dz);monster.userData.walk=(monster.userData.walk||0)+dt*9;limbs[0].rotation.x=Math.sin(monster.userData.walk)*.75;limbs[2].rotation.x=-Math.sin(monster.userData.walk)*.75;limbs[1].rotation.x=-.3+Math.sin(monster.userData.walk)*.5;limbs[3].rotation.x=.3-Math.sin(monster.userData.walk)*.5}}
-    if(rig.position.distanceTo(monster.position)<1.65){scareT=2.4;$('horrorJumpscare').style.display='flex';playScream();}
-  }
-  window.__horrorStep=horrorStep;window.__activateHorror=activateHorror;window.__deactivateHorror=deactivateHorror;window.__hideWorldForMenu=function(){menuWorldHidden=true;normalChildren.forEach(([o])=>o.visible=false);scene.background.set(0x000000);scene.fog=null};
-  window.__startSelectedGame=function(driveMode){selectedDriveMode=driveMode||selectedDriveMode;S.hand=selectedGameMode==='horror'?'left':$('sHand').value;S.gas=+$('sGas').value;S.grab=+$('sGrab').value;if(S.gas===S.grab)S.grab=1-S.gas;try{bind()}catch(_){}synth();menuOpen=false;window.__mainMenuOpen=false;renderer.domElement.style.display='block';$('menu').style.display='none';$('ui').style.display='';$('mp').style.display=selectedPlayType==='multi'?'flex':'none';$('help').style.display=selectedGameMode==='horror'?'none':'block';if(selectedGameMode==='horror')$('help').innerHTML='<b>HORROR MODE:</b> Left stick moves · left trigger fires the AK-47 · flashlight is fixed to your head and cannot be toggled · red radar dot marks the monster (closer dot = closer monster) · if it catches you, survive the jumpscare and you respawn. Choose Horror Mode + Multiplayer on each player to share room1.';else $('help').innerHTML='<b>NORMAL MODE:</b> Existing Roadline VR driving, walking, traffic, NPCs, radio, and vehicle controls. Multiplayer uses the existing room1 server.';if(selectedPlayType==='multi'){if(window.__rlMPJoin)window.__rlMPJoin();}else if(window.__rlMPLeave)window.__rlMPLeave();const nextMode=selectedGameMode==='horror'?'horror':'normal',nextDrive=selectedGameMode==='horror'?'free':(selectedDriveMode||'free');const needsFreshStart=!window.__roadlineStarted||window.__roadlineLastMode!==nextMode||window.__roadlineLastDrive!==nextDrive;if(needsFreshStart){deactivateHorror();mode=nextDrive;restart();if(nextMode==='horror'){mode='free';activateHorror()}else if(window.__rlMP&&window.__rlMP.joined){window.__rlMP.send('gm',{m:'normal'})}window.__roadlineStarted=true;window.__roadlineLastMode=nextMode;window.__roadlineLastDrive=nextDrive;}paintMenuChoices();};
-  // In horror mode, a sustained left trigger fires full-auto; no hand-switch can override the left-hand lock.
-  const _oldLighting=lighting;lighting=function(dt){if(menuWorldHidden){scene.background.set(0x000000);scene.fog=null;hemi.intensity=0;sun.intensity=0;headL.intensity=0;return}if(horrorActive){scene.background.set(0x010204);scene.fog.color.set(0x010204);hemi.intensity=0;sun.intensity=0;headL.intensity=0;return}_oldLighting(dt)};
-  // Use the existing left controller's trigger as the automatic rifle trigger.
-  const _horrorMenuBtn=$('playGame');
-  // Multiplayer uses the same embedded Supabase room. Both clients should choose the same mode in the menu.
-  const _oldFrame=window.__roadlineHorrorNoop;
-  document.addEventListener('keydown',e=>{if(horrorActive&&e.code==='KeyF'){horrorFire();e.preventDefault()}});
+  hint.textContent=text;hint.style.display=text&&!renderer.xr.isPresenting?'block':'none';
+  // Floating world-space prompt remains readable in a headset.
+  workerLabel.visible=available()&&!menuOpen&&state.phase!=='deliver';
+  if(workerLabel.visible){workerLabel.position.copy(worker()).add(new T.Vector3(0,2.45,0));}
+  drawT+=dt;if(drawT>.1&&active){drawT=0;drawGps();}
+ }
+ const wc=document.createElement('canvas');wc.width=512;wc.height=128;
+ const wx=wc.getContext('2d');wx.fillStyle='#12291fec';wx.fillRect(0,0,512,128);wx.textAlign='center';wx.fillStyle='#ddffe8';wx.font='bold 31px sans-serif';wx.fillText('FOOD DELIVERY JOBS',256,49);wx.font='25px sans-serif';wx.fillText('Y / G / USE to talk',256,94);
+ const workerLabel=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(wc),depthTest:false}));
+ workerLabel.scale.set(2.3,.575,1);workerLabel.visible=false;scene.add(workerLabel);
+ function reset(){close();state.employed=false;state.phase='idle';state.order=null;marker.visible=bag.visible=wrist.visible=false;gc.style.display='none';}
+ function guide(){V5.say('Visit the gas-station worker. Y / G to talk.','#b9ffd0');}
+ hint.onclick=()=>interactJob();
+ $('jobNo').onclick=()=>answer(false);$('jobSure').onclick=()=>answer(true);
+ document.addEventListener('keydown',e=>{
+  if(!state.dialog)return;
+  if(e.code==='Escape'||e.code==='KeyN'){e.preventDefault();e.stopImmediatePropagation();answer(false);}
+  if(e.code==='Enter'){e.preventDefault();e.stopImmediatePropagation();answer(true);}
+ },true);
+ window.RLJobs={step,interact:interactJob,answer,reset,guide,state};
+ window.render_game_to_text=()=>JSON.stringify({coordinates:'x east, y up, -z forward on road',mode,menu:window.__mainMenuOpen,onFoot,dead:!!dead,player:{x:player().x,y:player().y,z:player().z},worker:{x:worker().x,y:worker().y,z:worker().z},job:{...state,gps:target()?{x:goal.x,y:goal.y,z:goal.z}:null},cash:V5.getCash()});
 })();
+
 
 /* ====== Online multiplayer (Supabase Realtime Broadcast + Presence; no database tables needed) ======
    1) Create a free project at supabase.com
@@ -2826,7 +2908,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{try{
 (function(){
 const SB_URL='https://mxprclimofjiwwbgjkux.supabase.co';
 const SB_KEY='sb_publishable_tkyzj0ENsHqjcpjX-vr9nw_IDucY7sX';const el=id=>document.getElementById(id),stEl=el('mpSt'),ROOM='room1';
-const store={get(k){try{return localStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const store={get(k){try{return RLStorage.getItem(k)||''}catch(e){return ''}},set(k,v){try{RLStorage.setItem(k,v)}catch(e){}}};
 const setSt=t=>{stEl.textContent=t};
 if(!window.supabase){setSt('Online unavailable (library blocked)');return}
 if(SB_URL.indexOf('https://')!==0){setSt('Online: add Supabase keys in index.html');return}
