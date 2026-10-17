@@ -33,7 +33,7 @@
 <button id="playGame">PLAY</button><button id="settingsToggle">SETTINGS ▾</button>
 <div class="set" id="settingsPanel"><label>Active controller (works with one controller) <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Street encounters <select id="sMuggerFrequency"><option value="0">Off</option><option value="0.35">Occasional</option><option value="0.72" selected>Normal</option><option value="1">Frequent</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label><label>Quest 1 low graphics <input type="checkbox" id="questLowGraphics"></label></div>
 <details id="modelFiles"><summary>MODELS FOLDER · EXPECTED GLB FILES</summary><div id="modelFileList"></div></details><div id="menuStatus" style="color:#77808a;font:12px monospace;min-height:16px;text-align:center">Food delivery jobs · Singleplayer</div></div>
-<div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · tap X = get out / in · hold X = weapons<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>Single-controller VR:</b> choose Left or Right in Settings; that controller handles movement and interactions. With one controller, click the thumbstick while tilting it sideways to snap-turn.<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X near car = enter (otherwise repair) · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div>
+<div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · tap X = get out / in · hold A (right) = weapons / tap A = pistol; left-only controller keeps X fallback<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>Single-controller VR:</b> choose Left or Right in Settings; that controller handles movement and interactions. With one controller, use a fist to move forward or drive.<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X near car = enter (otherwise repair) · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>window.THREE||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>')</script>
 <script>window.THREE||document.write('<script src="three.min.js"><\/script>')</script>
@@ -277,17 +277,17 @@ rx.fillStyle='#bfc0b8';rx.fillRect(2,0,3,256);rx.fillRect(251,0,3,256);rx.fillSt
 const rt=new T.CanvasTexture(rc);rt.wrapS=rt.wrapT=T.RepeatWrapping;rt.repeat.set(1,40);
 const roadGeo=new T.PlaneGeometry(11,400,2,120),road=new T.Mesh(roadGeo,new T.MeshStandardMaterial({map:rt,roughness:.9}));road.rotation.x=-Math.PI/2;road.userData.lodEssential=true;scene.add(road);
 /* Rolling elevation profile: long gentle climbs, crests, and descents. */
-function roadHeight(z){return 2.5*Math.sin(z/115)+1.35*Math.sin(z/43)+.45*Math.sin(z/19)}
+function roadHeight(z){return 1.45*Math.sin(z/140)+.5*Math.sin(z/62)+.12*Math.sin(z/26)}
 function roadGrade(z){return (roadHeight(z+.5)-roadHeight(z-.5))}
 /* Terrain follows the rolling road near the roadway, then falls away at the sides.
    This keeps distant hills from rising through roadside buildings and the town. */
-function mtn(x,z){const d=Math.max(0,Math.abs(x)-48),r=Math.min(1,d/250),sm=r*r*(3-2*r),sg=x<0?0:2.1,rd=.55+.3*Math.sin(z/140+sg)+.25*Math.sin(z/57+sg*2)+.12*Math.sin(z/23+x/31);return sm*70*Math.max(.15,rd)+sm*sm*(8*Math.abs(Math.sin(x/41+Math.sin(z/53)*2))+2.5*Math.sin(x/17+z/23))}
+function mtn(x,z){const d=Math.max(0,Math.abs(x)-60),r=Math.min(1,d/220),sm=r*r*(3-2*r),sg=x<0?0:2.1,rd=.62+.18*Math.sin(z/180+sg)+.12*Math.sin(z/82+sg*2)+.05*Math.sin(z/43+x/60);return sm*28*Math.max(.25,rd)+sm*sm*(3.2*Math.abs(Math.sin(x/75+Math.sin(z/95)*1.4))+1.0*Math.sin(x/48+z/66))}
 /* Building plots flatten the actual ground below each building footprint. The extra fade margin
    blends the flat plot into nearby hills instead of letting terrain poke through walls. */
 const terrainPads=[];
-function terrainBaseHeight(x,z,segs){const d=Math.max(0,Math.abs(x)-5.5),t=Math.min(1,d/9),sm=t*t*(3-2*t);let h=roadHeight(z)-.32-2*sm;
+function terrainBaseHeight(x,z,segs){const d=Math.max(0,Math.abs(x)-5.5),t=Math.min(1,d/9),sm=t*t*(3-2*t);let h=roadHeight(z)-.10-.55*sm;
  const L=segs||branchSegments;let bd=1e9;for(let i=0;i<L.length;i++){const q=L[i];if(z<Math.min(q.az,q.bz)-14||z>Math.max(q.az,q.bz)+14)continue;const dx=q.bx-q.ax,dz=q.bz-q.az,ll=dx*dx+dz*dz||1,u=C(((x-q.ax)*dx+(z-q.az)*dz)/ll,0,1),ex=q.ax+dx*u-x,ez=q.az+dz*u-z,e2=ex*ex+ez*ez;if(e2<bd)bd=e2}
- if(bd<1e8){const db=Math.max(0,Math.sqrt(bd)-3.5),tb=Math.min(1,db/9),sb=tb*tb*(3-2*tb);h=Math.max(h,roadHeight(z)-.32-2*sb)}return h+mtn(x,z)*(bd<1e8?C((Math.sqrt(bd)-4)/12,0,1):1)}
+ if(bd<1e8){const db=Math.max(0,Math.sqrt(bd)-3.5),tb=Math.min(1,db/9),sb=tb*tb*(3-2*tb);h=Math.max(h,roadHeight(z)-.10-.55*sb)}return h+mtn(x,z)*(bd<1e8?C((Math.sqrt(bd)-4)/12,0,1):1)}
 function terrainHeight(x,z,segs){let h=terrainBaseHeight(x,z,segs),best=0,target=h;
  for(let i=0;i<terrainPads.length;i++){const p=terrainPads[i],dx=Math.abs(x-p.x)-p.w*.5,dz=Math.abs(z-p.z)-p.d*.5,out=Math.max(dx,dz);if(out>=p.fade||dx>p.fade||dz>p.fade)continue;
   const u=out<=0?0:C(out/p.fade,0,1),smooth=u*u*(3-2*u),weight=1-smooth;if(weight>best){best=weight;target=p.y}}
@@ -331,10 +331,10 @@ function addRibbonRoad(points,width=7){
   if(i<points.length-1){const k=i*2;/* reverse winding so both road triangles face upward */inds.push(k,k+2,k+1,k+1,k+2,k+3)}
  }
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(verts,3));g.setIndex(inds);g.computeVertexNormals();
- const m=new T.Mesh(g,branchRoadMat);m.position.y=.04;m.frustumCulled=true;m.userData.lodEssential=true;scene.add(m);return m;
+ const m=new T.Mesh(g,branchRoadMat);m.position.y=0;m.frustumCulled=true;m.userData.lodEssential=true;scene.add(m);return m;
 }
 function branchPath(seed,sideSign){
- const pts=[];for(let i=0;i<=160;i++){const t=i/160,z=seed-t*620,x=sideSign*(9+20*Math.sin(t*Math.PI*1.25)+7*(Math.sin(t*4.5+seed*.01)-Math.sin(seed*.01)));pts.push(new T.Vector3(x,0,z))}
+ const pts=[];for(let i=0;i<=160;i++){const t=i/160,z=seed-t*620,x=sideSign*(9+14*Math.sin(t*Math.PI*1.25)+4*(Math.sin(t*4.5+seed*.01)-Math.sin(seed*.01)));pts.push(new T.Vector3(x,0,z))}
  for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];branchSegments.push({ax:a.x,az:a.z,bx:b.x,bz:b.z})}
  addRibbonRoad(pts,7);
 }
@@ -351,7 +351,7 @@ function xrCull(){const z=rig.position.z;for(let i=0;i<xSigns.length;i++){const 
 function xHit(x,z){for(let i=0;i<xRoads.length;i++){const c=xRoads[i];if(Math.abs(z-c.z)<9&&x>c.lo-3&&x<c.hi+3)return true}return false}
 (function(){
  const RW=3.5,FR=5,AP=[],MP=[],MC=[];
- const hz=z=>roadHeight(z)+.04;
+ const hz=z=>roadHeight(z);
  const P=(x,z,o)=>[x,hz(z)+(o||0),z];
  /* every triangle is auto-wound so it faces up */
  function tri(a,b,c,pa,pc,col){const cr=(b[2]-a[2])*(c[0]-a[0])-(b[0]-a[0])*(c[2]-a[2]);if(cr<0){const t=b;b=c;c=t}
@@ -850,7 +850,7 @@ let night=0,nightT=0,sleepT=0,sleptDone=false,gunOut=false,gunCD=0,menuOpen=true
 const GR=[0,3.4,2.1,1.5,1.12,.88,.72],FD=3.7,RW=.32,MASS=1400,IDLE=900,RED=6400,WB=2.7;
 const $m=id=>$(id);
 addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.code==='KeyX'&&!e.repeat){if(onFoot&&Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6)rlCarInteract();else repair();}if(e.code==='KeyE'&&!e.repeat)rlCarInteract();
-if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)openMenu();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
+if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)window.__roadlineOpenMainMenu?.();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
 const ctrls={};
 [0,1].forEach(i=>{const c=renderer.xr.getController(i);rig.add(c);rig.add(renderer.xr.getHand(i));c.addEventListener('connected',e=>{ctrls[i]={c,src:e.data,i};bind()});c.addEventListener('disconnected',()=>{delete ctrls[i];bind()})});
 function repair(){damage=0;engineDamage=0;engineFire=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)})}
@@ -978,11 +978,20 @@ else if(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6){
  }else gunOut=!gunOut}
 function pushOut(list,ox,oz,p,r){for(const b of list){const x0=ox+b[0]-r,x1=ox+b[2]+r,z0=oz+b[1]-r,z1=oz+b[3]+r;if(p.x>x0&&p.x<x1&&p.z>z0&&p.z<z1){const d=[p.x-x0,x1-p.x,p.z-z0,z1-p.z],m=Math.min(d[0],d[1],d[2],d[3]);if(m===d[0])p.x=x0;else if(m===d[1])p.x=x1;else if(m===d[2])p.z=z0;else p.z=z1}}}
 function walk(dt){const f=_t1;cam.getWorldDirection(f);f.y=0;if(f.lengthSq()<1e-4)f.set(0,0,-1);f.normalize();const a=Math.abs(sx)>.15?sx:0,b=Math.abs(sy)>.15?sy:0;
-const spd=window.__sprint?5.4:2.8,oldX=rig.position.x,oldZ=rig.position.z,oldH=surfaceHeightAt(oldX,oldZ),moveX=(-f.x*b+(-f.z)*a)*spd*dt,moveZ=(-f.z*b+f.x*a)*spd*dt;
+const spd=window.__sprint?5.4:2.8,oldX=rig.position.x,oldZ=rig.position.z,moveX=(-f.x*b+(-f.z)*a)*spd*dt,moveZ=(-f.z*b+f.x*a)*spd*dt;
 /* Walkable terrain is a continuous collider. Reject only a single-frame move into a near-vertical
    terrain face; ordinary hills remain climbable and the player cannot cut through steep hill sides. */
-const nx=oldX+moveX,nz=oldZ+moveZ,nh=surfaceHeightAt(nx,nz),run=Math.hypot(moveX,moveZ);
-if(run>.0001&&Math.abs(nh-oldH)>Math.max(.7,run*1.35)){const hx=surfaceHeightAt(nx,oldZ),hz=surfaceHeightAt(oldX,nz);if(Math.abs(hx-oldH)<=Math.max(.7,Math.abs(moveX)*1.35))rig.position.x=nx;if(Math.abs(hz-oldH)<=Math.max(.7,Math.abs(moveZ)*1.35))rig.position.z=nz;}else{rig.position.x=nx;rig.position.z=nz;}if(!adminFlingActive)rig.position.y=surfaceHeightAt(rig.position.x,rig.position.z);
+const run=Math.hypot(moveX,moveZ),steps=Math.max(1,Math.ceil(run/.08));let tx=oldX,tz=oldZ;
+for(let i=1;i<=steps;i++){
+ const candX=oldX+moveX*i/steps,candZ=oldZ+moveZ*i/steps,hereH=surfaceHeightAt(tx,tz),candH=surfaceHeightAt(candX,candZ),stepDist=Math.hypot(candX-tx,candZ-tz),limit=Math.max(.2,stepDist*2.6);
+ if(Math.abs(candH-hereH)<=limit||(candH<hereH&&hereH-candH<=.42)){tx=candX;tz=candZ;continue;}
+ const hx=surfaceHeightAt(candX,tz);
+ if(Math.abs(hx-hereH)<=limit||(hx<hereH&&hereH-hx<=.42))tx=candX;
+ const afterX=surfaceHeightAt(tx,tz),hz=surfaceHeightAt(tx,candZ);
+ if(Math.abs(hz-afterX)<=limit||(hz<afterX&&afterX-hz<=.42))tz=candZ;
+}
+rig.position.x=tx;rig.position.z=tz;
+if(!adminFlingActive)rig.position.y=surfaceHeightAt(rig.position.x,rig.position.z);
 pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);if(window.sidePush)window.sidePush(rig.position,.3);if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveModelCollisions(rig.position,.3);mapClamp(rig.position,.4);
 const c=Math.cos(heading),s=Math.sin(heading),dx=rig.position.x-carP.x,dz=rig.position.z-carP.z,xl=dx*c-dz*s,zl=dx*s+dz*c;
 if(Math.abs(xl)<1.2&&Math.abs(zl)<2.5){const px=1.2-Math.abs(xl),pz=2.5-Math.abs(zl);let nx=xl,nz=zl;if(px<pz)nx=Math.sign(xl||1)*1.2;else nz=Math.sign(zl||1)*2.5;rig.position.x=carP.x+nx*c+nz*s;rig.position.z=carP.z-nx*s+nz*c}}
@@ -1219,13 +1228,19 @@ function updateGrenades(dt){
 function rlUpdateBlastEffects(dt){for(let i=rlBlastEffects.length-1;i>=0;i--){const b=rlBlastEffects[i];b.t+=dt;const k=Math.min(1,b.t/b.duration),f=1-k;b.outer.scale.setScalar(.2+k*b.radius*.92);b.mid.scale.setScalar(.12+k*b.radius*.58);b.core.scale.setScalar(.08+k*b.radius*.27);b.outer.material.opacity=.72*f;b.mid.material.opacity=.82*f;b.core.material.opacity=.86*f;if(k>=1){scene.remove(b.fx);for(const m of[b.outer,b.mid,b.core]){m.geometry.dispose();m.material.dispose()}rlBlastEffects.splice(i,1)}}}
 function rlUpdateBuildingFires(dt){for(let i=rlBuildingFires.length-1;i>=0;i--){const b=rlBuildingFires[i];b.t+=dt;for(let j=0;j<b.fx.children.length;j++){const f=b.fx.children[j];f.scale.y=.75+Math.sin(b.t*12+j*2)*.25;f.rotation.z=Math.sin(b.t*8+j)*.17}if(b.t>=b.duration){const t=b.target;if(t&&t.userData){t.userData.rlDestroyed=true;t.visible=false;if(t.userData.rlModelCollider&&t.userData.rlModelCollider.model)t.userData.rlModelCollider.model.visible=false}for(let j=0;j<16;j++)fire(new T.Vector3(b.fx.position.x+R(-b.half,b.half),b.fx.position.y+R(0,2),b.fx.position.z+R(-b.half,b.half)));if(typeof sideSync==='function')sideSync(true);scene.remove(b.fx);b.fx.traverse(o=>{if(o.isMesh)o.geometry.dispose()});b.om.dispose();b.ym.dispose();rlBuildingFires.splice(i,1)}}}
 
-let xHold=0,xDone=0;
-/* X: short press enters/exits; long press opens weapons exactly once. */
+let xHold=0,xDone=0,aHold=0,aDone=0;
+/* Right A: hold for weapons, tap for pistol. If no physical right controller exists, X remains the legacy fallback. */
 function rlCancelXButton(){xHold=0;xDone=0;wasRep=0;}
+function rlCancelAButton(){aHold=0;aDone=0;}
 function rlPollXButton(dt){
- const gp=([left,sec].find(o=>o?.src.handedness==='left')||left)?.gp;
- if(!gp){rlCancelXButton();return;}
- rlHandleXButton(!!gp.buttons[4]?.pressed,dt);
+ const right=[left,sec].find(o=>o?.src.handedness==='right'&&!o.src.hand);
+ const leftPhysical=[left,sec].find(o=>o?.src.handedness==='left'&&!o.src.hand);
+ if(right?.gp){
+  if(leftPhysical?.gp)rlHandleXButton(!!leftPhysical.gp.buttons[4]?.pressed,dt);else rlCancelXButton();
+  rlHandleAButton(!!right.gp.buttons[4]?.pressed,dt);return;
+ }
+ if(leftPhysical?.gp){rlCancelAButton();rlHandleXButton(!!leftPhysical.gp.buttons[4]?.pressed,dt);return;}
+ rlCancelXButton();rlCancelAButton();
 }
 function rlCarInteract(){
  if(dead||menuOpen||sleepT>0||carEnterAnim)return false;
@@ -1251,19 +1266,32 @@ function rlCarInteract(){
  toggleCar();return true;
 }
 function rlHandleXButton(pressed,dt){
+ if(!pressed){const tap=xHold>0&&!xDone;rlCancelXButton();if(tap&&!menuOpen&&!dead&&sleepT<=0)rlCarInteract();return;}
+ wasRep=1;if(menuOpen||dead||sleepT>0){xDone=1;return;}
+ xHold+=Math.max(0,Math.min(.1,Number.isFinite(dt)?dt:0));
+ if(xHold>=.65&&!xDone){xDone=1;window.__roadlineOpenWeaponsMenu?.();}
+}
+function rlSelectControllerHand(handedness){
+ const target=[left,sec].find(o=>o?.src.handedness===handedness&&!o.src.hand);
+ if(!target)return false;
+ if(S.hand!==handedness){S.hand=handedness;const sel=$('sHand');if(sel)sel.value=handedness;bind();}
+ return true;
+}
+function rlHandleAButton(pressed,dt){
  if(!pressed){
-  const tap=xHold>0&&!xDone;
-  rlCancelXButton();
-  if(tap&&!menuOpen&&!dead&&sleepT<=0)rlCarInteract();
+  const tap=aHold>0&&!aDone,weaponPage=!!window.__roadlineWeaponPageOpen?.();
+  rlCancelAButton();
+  if(tap&&!dead&&sleepT<=0&&(!menuOpen||weaponPage)){
+   if(rlSelectControllerHand('right'))window.RLWeapons?.equip('pistol');
+  }
   return;
  }
- wasRep=1;
- if(menuOpen||dead||sleepT>0){xDone=1;return;}
- xHold+=Math.max(0,Math.min(.1,Number.isFinite(dt)?dt:0));
- if(xHold>=.65&&!xDone){
-  xDone=1;openMenu();menuPage='weapons';menuSig='';
-  if(!renderer.xr.isPresenting)window.RLUI?.show('weapons');
- }
+ if(dead||sleepT>0){aDone=1;return;}
+ const weaponPage=!!window.__roadlineWeaponPageOpen?.();
+ if(menuOpen&&!weaponPage){aDone=1;return;}
+ aHold+=Math.max(0,Math.min(.1,Number.isFinite(dt)?dt:0));
+ if(menuOpen&&aHold>=.65)aDone=1;
+ if(aHold>=.65&&!aDone){aDone=1;if(rlSelectControllerHand('right')&&!menuOpen)window.__roadlineOpenWeaponsMenu?.();}
 }
 
 let adminFlingVel=0,adminFlingActive=false;const adminDropCars=[];
@@ -1354,12 +1382,7 @@ function surfaceHeightAt(x,z){
 }
 /* Sample beneath the car's footprint as well as its center. This prevents the front or side of
    the chassis from tunnelling through a hill when only the center point is over lower ground. */
-function carGroundHeight(x,z,ang){
- const c=Math.cos(ang),s=Math.sin(ang),pts=[[0,0],[0,-2.05],[0,2.05],[-.92,-1.45],[.92,-1.45],[-.92,1.45],[.92,1.45]];
- let h=surfaceHeightAt(x,z);
- for(let i=1;i<pts.length;i++){const lx=pts[i][0],lz=pts[i][1],wx=x+lx*c+lz*s,wz=z-lx*s+lz*c;h=Math.max(h,surfaceHeightAt(wx,wz));}
- return h;
-}
+function carGroundHeight(x,z,ang){/* Center height keeps the car grounded on descents; chassis pitch/roll already follows sampled road gradients. */return surfaceHeightAt(x,z);}
 function stepCrowd(dt){for(const e of crowd){rlAnimateNpcModel(e,dt,e.st==="walk");const g=e.g,p=g.position;
 if(!dead&&!onFoot&&e.st!=='fall'&&Math.abs(speed)>2.5){const wx=p.x+town.position.x-carP.x,wz=p.z+town.position.z-carP.z,c=Math.cos(heading),s=Math.sin(heading),xl=wx*c-wz*s,zl=wx*s+wz*c;if(Math.abs(xl)<1.3&&Math.abs(zl)<2.8){vel.multiplyScalar(.93);buzz(.5);flingFromCar(e,true);continue}}
 if(e.st==='fear')continue;if(e.st==='fall'){e.v.y-=16*dt;p.addScaledVector(e.v,dt);if(p.y<=0){p.y=0;e.v.x*=1-Math.min(1,dt*4);e.v.z*=1-Math.min(1,dt*4);if(!ragBounce(e))e.v.y=0;if(!e.pl){e.pl=splat(p.x+town.position.x,p.z+town.position.z,.4)}}
@@ -1394,7 +1417,7 @@ const y=m.find(k=>k!==x);if(y){sec={c:y.c,src:y.src,i:y.i,grab:null,gp:null,p:0,
 function handPose(o){const J=renderer.xr.getHand(o.i).joints,w=J['wrist'],a=J['index-finger-tip'],b=J['thumb-tip'],m=J['middle-finger-tip'],r=J['ring-finger-tip'],k=J['pinky-finger-tip'];if(!(w&&a&&b&&m&&r&&k)||w.visible===false)return null;
 const pn=q=>C(1-(q.position.distanceTo(b.position)-.02)/.05,0,1),avg=(a.position.distanceTo(w.position)+m.position.distanceTo(w.position)+r.position.distanceTo(w.position))/3,fist=C((.14-avg)/.05,0,1),pm=Math.max(pn(m),fist),pk=pn(k);
 o.c.quaternion.copy(w.quaternion).multiply(o.src.handedness==='right'?QFr:QF);o.c.position.set(0,0,-.11).applyQuaternion(o.c.quaternion).add(w.position);
-return{buttons:[{value:fist>.5?0:pn(a)},{value:pm,pressed:pm>.5},{value:0},{pressed:false},{pressed:pk>.8},{pressed:false}],axes:[0,0,0,(pn(r)>.7&&fist<.5)?1:0]}}
+return{buttons:[{value:fist>.5?0:pn(a)},{value:pm,pressed:pm>.5},{value:0},{pressed:false},{pressed:pk>.8},{pressed:false}],axes:[0,0,0,(pn(r)>.7&&fist<.5)?1:(fist>.72?-1:0)],fistMove:fist>.72}}
 function getGP(o){if(o.src.hand)return handPose(o);return o.src.gamepad||null}
 function rim(hn,a){const ca=Math.cos(a),sa=Math.sin(a),q=_q1.setFromRotationMatrix(_mm.makeBasis(_t1.set(-ca,-sa,0),_t2.set(sa,-ca,0),_t3.set(0,0,1)));hn.position.set(ca*.2,sa*.2,.04).applyQuaternion(wTilt.quaternion).add(wTilt.position).add(cock.position);hn.quaternion.copy(wTilt.quaternion).multiply(q)}
 function handStep(o,main,dt){const hd=main?hand:hand2,gp=o.gp;hd.visible=!!gp;if(!gp){o.grab=null;if(o.item){o.item.held=false;o.item=null}return}
@@ -1412,8 +1435,8 @@ const free=!onFoot&&!dead&&!menuOpen,dW=hp.distanceTo(wTilt.position),dL=hp.dist
 if(gd&&!o.p&&!o.grab&&free){const tk=k=>oth&&oth.grab===k;
 if(dH<.2&&dH<dL&&dH<dW&&!tk('H')){o.grab='H';o.z0=hp.z;o.a0=hbA}else if(dL<.2&&dL<dW&&!tk('L')){o.grab='L';o.z0=hp.z;o.a0=stick.rotation.x}else if(dW<.3){o.grab='W';o.prev=ang;o.ha=ang-wheelA}}
 if(!gd)o.grab=null;
-const isPhysicalLeft=o.src.handedness==='left',useGun=isPhysicalLeft&&onFoot&&gunOut&&!menuOpen&&!dead&&sleepT<=0;
-if(isPhysicalLeft&&vrHeldWeapon&&onFoot&&!dead&&!menuOpen&&sleepT<=0){if(tv>.6&&(vrHeldWeapon.weapon==='ak'||!o.vrWeaponPressed))weaponFire(vrHeldWeapon,o);o.vrWeaponPressed=tv>.6}else{o.vrWeaponPressed=tv>.6}
+const isWeaponHand=!!main,useGun=isWeaponHand&&onFoot&&gunOut&&!menuOpen&&!dead&&sleepT<=0;
+if(isWeaponHand&&vrHeldWeapon&&onFoot&&!dead&&!menuOpen&&sleepT<=0){if(tv>.6&&(vrHeldWeapon.weapon==='ak'||!o.vrWeaponPressed))weaponFire(vrHeldWeapon,o);o.vrWeaponPressed=tv>.6}else{o.vrWeaponPressed=tv>.6}
 /* In-car pickup is intentionally limited to the beer on the passenger seat; other items retain normal on-foot behavior. */
 if(!onFoot&&!dead&&!menuOpen&&sleepT<=0&&gd&&!o.p&&!o.grab&&!o.item){const it=passengerBeer;if(!it.held){const dd=it.m.position.distanceTo(wp);if(dd<.48){o.item=it;it.held=true;it.seat=false;it.v.set(0,0,0);buzz(.3,o)}}}
 if(!onFoot&&o.item&&o.item.beer){if(tv>.6&&!o.tp){try{V5.say('You take a sip. No effects.','#fff')}catch(_){}o.item.sipCD=.5;}o.tp=tv>.6;o.item.m.position.copy(wp).add(new T.Vector3(0,-.04,-.18).applyQuaternion(o.c.quaternion));o.item.m.quaternion.copy(o.c.quaternion);if(!gd){o.item.held=false;o.item.seat=true;o.item.v.set(0,0,0);o.item=null}}
@@ -1427,7 +1450,7 @@ if(o.grab==='H')hbA=C(o.a0+(hp.z-o.z0)*3,0,.8);
 if(o.grab==='L'){const a=C(o.a0+(hp.z-o.z0)*3,-.5,.5);stick.rotation.x=a;if(a<-.2)gear=1;else if(a>.2)gear=-1}
 if(o.grab==='W'){wheelHeld=1;if(rad>.04&&!(!main&&left&&left.grab==='W')){let d=ang-o.prev;d=Math.atan2(Math.sin(d),Math.cos(d));wheelA=C(wheelA+d,-1.6,1.6);o.prev=ang}}
 hd.userData.upd(useGun?.9:gv,useGun?tv:(main?(gp.buttons[S.gas]?gp.buttons[S.gas].value:0):tv),!!useGun);
-if(isPhysicalLeft&&gun)gun.visible=!!useGun;
+if(isWeaponHand&&gun)gun.visible=!!useGun;
 if(o.grab==='W')rim(hd,o.ha+wheelA);
 else if(o.grab==='H'){hd.position.set(.36,-.5+.22*Math.cos(hbA),-.12+.22*Math.sin(hbA)).add(cock.position);hd.rotation.set(0,0,-Math.PI/2)}
 else if(o.grab==='L'){const a=stick.rotation.x;hd.position.set(.36,-.5+.21*Math.cos(a),-.45+.21*Math.sin(a)).add(cock.position);hd.rotation.set(0,0,-Math.PI/2)}
@@ -1458,8 +1481,11 @@ function equipMenuWeapon(kind){return window.RLWeapons?.equip(kind)}
  const weaponMb=[[20,58,472,42,()=>'PISTOL',()=>equipMenuWeapon('pistol')],[20,104,472,42,()=>'AK-47',()=>equipMenuWeapon('ak')],[20,150,472,42,()=>'RPG',()=>equipMenuWeapon('rocket')],[20,196,472,42,()=>'SWORD',()=>equipMenuWeapon('sword')],[20,242,472,42,()=>'GRENADE',()=>spawnGrenade()],[20,288,472,42,()=>'NONE / HOLSTER ALL',()=>equipMenuWeapon('none')],[20,334,230,42,()=>'RELOAD',()=>{window.RLWeapons?.reload();menuOpen=false;panel.visible=ray.visible=dot.visible=dot2.visible=false;}],[262,334,230,42,()=>'BACK',()=>{menuPage='main';menuSig=''}]];
 function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font=menuPage==='jobs'?'bold 27px sans-serif':'bold 34px sans-serif';g.fillText(rlMenuTitle(),256,48);
 const menuButtons=rlMenuButtons();menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
-g.font='12px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='upgrades'?'Cash $'+V5.getCash()+' · '+(window.RLProgress?.status||''):(menuPage==='jobs'?'Deliver food · 3 / 8 deliveries unlock bigger runs':menuPage==='admin'?'Available to everyone in this room':'Hold Y: menu · Hold X: weapons'),256,410);ptex.needsUpdate=true}
-function openMenu(){menuOpen=true;menuPage='main';menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true);if(!renderer.xr.isPresenting)window.RLUI?.show('main')}
+g.font='12px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='upgrades'?'Cash $'+V5.getCash()+' · '+(window.RLProgress?.status||''):(menuPage==='jobs'?'Deliver food · 3 / 8 deliveries unlock bigger runs':menuPage==='admin'?'Available to everyone in this room':'Hold Y: menu · Hold A: weapons / tap A: pistol'),256,410);ptex.needsUpdate=true}
+function openMenu(page='main'){menuOpen=true;menuPage=page;menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true);if(!renderer.xr.isPresenting)window.RLUI?.show(page)}
+window.__roadlineWeaponPageOpen=()=>menuOpen&&menuPage==='weapons';
+window.__roadlineOpenWeaponsMenu=()=>openMenu('weapons');
+window.__roadlineOpenMainMenu=()=>openMenu('main');
 let menuSig='';
 /* Touch screen: the menu floats within arm's reach; poke a button with your fingertip (hand tracking: index finger, controllers: the tip of the hand). No laser pointer. */
 function menuStep(){const tips=[];
@@ -1534,16 +1560,16 @@ wheelHeld=0;if(left)left.gp=getGP(left);if(sec)sec.gp=getGP(sec);
 let gas=0,brake=0,target=0;const lgp=left&&left.gp;
 window.__sprint=!!(onFoot&&((lgp&&lgp.buttons[3]&&lgp.buttons[3].pressed)||(sec&&sec.gp&&sec.gp.buttons[3]&&sec.gp.buttons[3].pressed)||keys.ShiftLeft||keys.ShiftRight));
 if(lgp){const gp=lgp;gas=gp.buttons[S.gas]?gp.buttons[S.gas].value:0;
-const ay=gp.axes[3]!==undefined?gp.axes[3]:(gp.axes[1]||0);brake=ay>.4?ay:0;sx=gp.axes[2]||0;sy=ay;
+const ay=gp.axes[3]!==undefined?gp.axes[3]:(gp.axes[1]||0);brake=ay>.4?ay:0;sx=gp.axes[2]||0;sy=ay;if(left?.src.hand&&gp.fistMove){if(onFoot){sx=0;sy=-1;}else{gas=1;brake=0;}}
 const rc2=gp.buttons[3]&&gp.buttons[3].pressed?1:0;if(rc2&&!wasRec&&!onFoot)recenter();wasRec=rc2;
 rlPollXButton(dt);
-const ygp=([left,sec].find(o=>o?.src.handedness==='left')||left)?.gp,ry=ygp?.buttons[5]?.pressed?1:0;if(ry){yHold+=dt;if(yHold>1&&!yDone&&!menuOpen){yDone=1;openMenu()}}else{if(yHold>0&&yHold<=1&&!menuOpen){if(onFoot)interact();else repair()}yHold=0;yDone=0}
+const ygp=([left,sec].find(o=>o?.src.handedness==='left')||left)?.gp,ry=ygp?.buttons[5]?.pressed?1:0;if(ry){yHold+=dt;if(yHold>1&&!yDone&&!menuOpen){yDone=1;window.__roadlineOpenMainMenu?.()}}else{if(yHold>0&&yHold<=1&&!menuOpen){if(onFoot)interact();else repair()}yHold=0;yDone=0}
 handStep(left,true,dt);if(sec)handStep(sec,false,dt);if(!wheelHeld)wheelA*=1-Math.min(1,dt*3);
 target=C(-wheelA/1.1,-1,1)}
 else{rlCancelXButton();if(sec&&sec.gp)handStep(sec,false,dt);const J=window.__joy||{x:0,y:0},kk=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),ky=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);gas=keys.KeyW||keys.ArrowUp?1:C(-J.y,0,1);brake=keys.KeyS||keys.ArrowDown?1:C(J.y,0,1);const kt=C(kk+J.x,-1,1);
 if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;sy=C(ky+J.y,-1,1)}
 wheelA+=(-kt*1.2-wheelA)*Math.min(1,dt*10);target=C(-wheelA/1.1,-1,1)}
-if(onFoot&&!dead){const turnSource=(sec&&sec.gp)?sec:((left&&left.gp)?left:null);if(turnSource){const ax=turnSource.gp.axes[2]||0;if(sec&&sec.gp){if(Math.abs(ax)>.7&&!turnSource.st){rig.rotation.y-=Math.sign(ax)*Math.PI/6;turnSource.st=1}else if(Math.abs(ax)<.4)turnSource.st=0}else{const click=!!(turnSource.gp.buttons[3]&&turnSource.gp.buttons[3].pressed);if(click&&Math.abs(ax)>.65&&!turnSource.turnLatch){rig.rotation.y-=Math.sign(ax)*Math.PI/6;turnSource.turnLatch=true;sx=0}else if(!click)turnSource.turnLatch=false}}}
+/* Snap turn removed as requested; head direction controls walking orientation in VR. */
 const driving=!onFoot&&!dead&&!menuOpen&&sleepT<=0;
 target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));steer+=(target-steer)*Math.min(1,dt*(4.5+rlUpgrade('handling')*.7));if(!driving){gas=0;brake=1;target=0}
 /* ===== realistic car physics ===== */
@@ -1629,7 +1655,7 @@ if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
 }
 /* town + decor follow */
 const wz=rig.position.z;
-if(town.position.z>wz+150||town.position.z<wz-1000){const k=Math.max(0,Math.ceil((-wz-50)/900));town.position.z=-150-900*k;town.position.y=roadHeight(town.position.z);resetItems();side.forEach(zoneCheck)}
+if(town.position.z>wz+150||town.position.z<wz-1000){const k=Math.max(0,Math.ceil((-wz-50)/900));town.position.z=-150-900*k;town.position.y=roadHeight(town.position.z);window.__roadlineAlignCityBuildings?.();resetItems();side.forEach(zoneCheck)}
 road.position.z=wz-100;rt.offset.y=-road.position.z/10;refreshRoadElevation();
 const groundCenter=Math.round(wz/15)*15;if(ground.position.z!==groundCenter){ground.position.z=groundCenter;refreshGroundElevation()}ground.position.x=0;try{NAT.step(dt,rig.position.x,wz)}catch(e){if(!window.__natErr){window.__natErr=1;console.error('NAT',e)}}
 for(const b of side){if(b.position.z>wz+30){b.position.z-=520;zoneCheck(b)}else if(b.position.z<wz-490){b.position.z+=520;zoneCheck(b)}}
@@ -1943,20 +1969,21 @@ mergeGroup(carInterior);
 mergeGroup(house);mergeGroup(cock,{skip:[hood,btnM]});mergeGroup(town);
 (function buildSandboxCity(){
  const citySpecs=[
- {label:'POLICE',x:-40,z:50,w:18,d:22,h:6.6,wall:0x7d8996,roof:0x273443,accent:0x315c91,style:'police'},
- {label:'HOSPITAL',x:-63,z:4,w:18,d:24,h:8,wall:0xe0e4e6,roof:0x8a969f,accent:0xc93636,style:'hospital'},
- {label:'AUTO SERVICE',x:-40,z:-38,w:20,d:24,h:5.8,wall:0x728894,roof:0x273039,accent:0x2584a4,style:'dealer'},
- {label:'PARKING',x:-63,z:-80,w:18,d:22,h:10,wall:0x7b8289,roof:0x363b42,accent:0xe5b333,style:'garage'},
- {label:'CITY MALL',x:-40,z:-122,w:22,d:22,h:8.5,wall:0xcfc2a8,roof:0x796b59,accent:0xc29c61,style:'mall'},
- {label:'WAREHOUSE',x:42,z:50,w:18,d:22,h:8,wall:0xb1a590,roof:0x55595b,accent:0x806c4e,style:'warehouse'},
- {label:'WEAPONS',x:64,z:5,w:14,d:18,h:4.8,wall:0x45464b,roof:0x272a30,accent:0xd64c35,style:'weapons'},
- {label:'INDUSTRIAL',x:42,z:-38,w:20,d:22,h:8.5,wall:0x7b8078,roof:0x414541,accent:0xb48a45,style:'industrial'},
- {label:'WORK ZONE',x:64,z:-80,w:18,d:22,h:5,wall:0xb8a989,roof:0x8d784f,accent:0xe1b838,style:'construction'},
- {label:'APARTMENTS',x:42,z:-122,w:18,d:20,h:7,wall:0xc5baab,roof:0x655d57,accent:0x456984,style:'residential'}];
- const batch=new T.Group();
- function cityBox(w,h,d,color,x,y,z){const m=new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshStandardMaterial({color,roughness:.82,metalness:.05}));m.position.set(x,y,z);batch.add(m)}
- function cityCylinder(rt,rb,h,color,x,y,z){const m=new T.Mesh(new T.CylinderGeometry(rt,rb,h,8),new T.MeshStandardMaterial({color,roughness:.82,metalness:.05}));m.position.set(x,y,z);batch.add(m)}
+ {label:'POLICE',x:-45,z:50,w:16,d:22,h:6.6,wall:0x7d8996,roof:0x273443,accent:0x315c91,style:'police'},
+ {label:'HOSPITAL',x:-45,z:4,w:16,d:22,h:8,wall:0xe0e4e6,roof:0x8a969f,accent:0xc93636,style:'hospital'},
+ {label:'AUTO SERVICE',x:-45,z:-38,w:16,d:22,h:5.8,wall:0x728894,roof:0x273039,accent:0x2584a4,style:'dealer'},
+ {label:'PARKING',x:-45,z:-80,w:16,d:22,h:10,wall:0x7b8289,roof:0x363b42,accent:0xe5b333,style:'garage'},
+ {label:'CITY MALL',x:-45,z:-122,w:16,d:22,h:8.5,wall:0xcfc2a8,roof:0x796b59,accent:0xc29c61,style:'mall'},
+ {label:'WAREHOUSE',x:45,z:50,w:16,d:22,h:8,wall:0xb1a590,roof:0x55595b,accent:0x806c4e,style:'warehouse'},
+ {label:'WEAPONS',x:45,z:5,w:14,d:18,h:4.8,wall:0x45464b,roof:0x272a30,accent:0xd64c35,style:'weapons'},
+ {label:'INDUSTRIAL',x:45,z:-38,w:16,d:22,h:8.5,wall:0x7b8078,roof:0x414541,accent:0xb48a45,style:'industrial'},
+ {label:'WORK ZONE',x:45,z:-80,w:16,d:22,h:5,wall:0xb8a989,roof:0x8d784f,accent:0xe1b838,style:'construction'},
+ {label:'APARTMENTS',x:45,z:-122,w:16,d:20,h:7,wall:0xc5baab,roof:0x655d57,accent:0x456984,style:'residential'}];
+ const batch=new T.Group(),cityRanges=[];let activeBaseY=0,totalVertices=0;
+ function cityBox(w,h,d,color,x,y,z){const m=new T.Mesh(new T.BoxGeometry(w,h,d),new T.MeshStandardMaterial({color,roughness:.82,metalness:.05}));m.position.set(x,y+activeBaseY,z);batch.add(m);totalVertices+=(m.geometry.index?m.geometry.index.count:m.geometry.attributes.position.count)}
+ function cityCylinder(rt,rb,h,color,x,y,z){const m=new T.Mesh(new T.CylinderGeometry(rt,rb,h,8),new T.MeshStandardMaterial({color,roughness:.82,metalness:.05}));m.position.set(x,y+activeBaseY,z);batch.add(m);totalVertices+=(m.geometry.index?m.geometry.index.count:m.geometry.attributes.position.count)}
  for(const b of citySpecs){
+  const startVertex=totalVertices;activeBaseY=terrainHeight(b.x,town.position.z+b.z)-town.position.y;
   cityBox(b.w+.7,.18,b.d+.7,0x45484c,b.x,.09,b.z);cityBox(b.w,b.h,b.d,b.wall,b.x,b.h/2+.18,b.z);cityBox(b.w+.55,.28,b.d+.55,b.roof,b.x,b.h+.32,b.z);
   const edge=b.x<0?b.x+b.w/2:b.x-b.w/2,faceX=edge+(b.x<0?.055:-.055);cityBox(.08,.26,b.d-.9,b.accent,faceX,b.h-.47,b.z);
   const levels=b.h>8?[2.25,4.85,7.35]:b.h>6?[2.2,4.55]:[2.15],count=Math.max(3,Math.floor(b.d/4));
@@ -1975,16 +2002,29 @@ mergeGroup(house);mergeGroup(cock,{skip:[hood,btnM]});mergeGroup(town);
   else if(b.style==='mall')cityBox(.1,.22,b.d*.82,0xeee1c7,faceX,5.8,b.z)
   else if(b.style==='residential')cityBox(b.w*.72,.22,.36,b.accent,b.x,b.h+.52,b.z);
   tSol.push([b.x-b.w/2-.55,b.z-b.d/2-.55,b.x+b.w/2+.55,b.z+b.d/2+.55]);
+  cityRanges.push({b,start:startVertex,end:totalVertices,offsetY:activeBaseY});
  }
  const merged=mergeGroup(batch),buildingMesh=merged.M;
  if(buildingMesh){buildingMesh.name='SandboxCity_StaticMergedBuildings';buildingMesh.frustumCulled=true;buildingMesh.userData.lodEssential=true;town.add(buildingMesh)}
  const labels=document.createElement('canvas');labels.width=1024;labels.height=512;const cx=labels.getContext('2d'),cols=5,rows=2,cw=labels.width/cols,ch=labels.height/rows;
  citySpecs.forEach((b,i)=>{const col=i%cols,row=Math.floor(i/cols),ox=col*cw,oy=row*ch;cx.fillStyle='#'+b.accent.toString(16).padStart(6,'0');cx.fillRect(ox+4,oy+4,cw-8,ch-8);cx.strokeStyle='#e9edf0';cx.lineWidth=5;cx.strokeRect(ox+8,oy+8,cw-16,ch-16);let size=36;cx.textAlign='center';cx.textBaseline='middle';cx.fillStyle='#fff';cx.font='900 '+size+'px system-ui,sans-serif';while(cx.measureText(b.label).width>cw-20&&size>18){size-=2;cx.font='900 '+size+'px system-ui,sans-serif'}cx.fillText(b.label,ox+cw/2,oy+ch/2)});
  const labelTex=new T.CanvasTexture(labels);labelTex.needsUpdate=true;const pos=[],uv=[],idx=[];
- citySpecs.forEach((b,i)=>{const edge=b.x<0?b.x+b.w/2:b.x-b.w/2,face=edge+(b.x<0?.13:-.13),halfW=Math.min(3.6,b.d*.36),halfH=.42,y=Math.max(2.65,b.h*.77);const leftZ=b.x<0?b.z+halfW:b.z-halfW,rightZ=b.x<0?b.z-halfW:b.z+halfW,base=pos.length/3;pos.push(face,y-halfH,leftZ,face,y-halfH,rightZ,face,y+halfH,rightZ,face,y+halfH,leftZ);const col=i%cols,row=Math.floor(i/cols),u0=col/cols,u1=(col+1)/cols,vB=1-(row+1)/rows,vT=1-row/rows;uv.push(u0,vB,u1,vB,u1,vT,u0,vT);idx.push(base,base+1,base+2,base,base+2,base+3)});
+ citySpecs.forEach((b,i)=>{const edge=b.x<0?b.x+b.w/2:b.x-b.w/2,face=edge+(b.x<0?.13:-.13),halfW=Math.min(3.6,b.d*.36),halfH=.42,y=Math.max(2.65,b.h*.77)+cityRanges[i].offsetY;const leftZ=b.x<0?b.z+halfW:b.z-halfW,rightZ=b.x<0?b.z-halfW:b.z+halfW,base=pos.length/3;pos.push(face,y-halfH,leftZ,face,y-halfH,rightZ,face,y+halfH,rightZ,face,y+halfH,leftZ);const col=i%cols,row=Math.floor(i/cols),u0=col/cols,u1=(col+1)/cols,vB=1-(row+1)/rows,vT=1-row/rows;uv.push(u0,vB,u1,vB,u1,vT,u0,vT);idx.push(base,base+1,base+2,base,base+2,base+3)});
  const labelGeo=new T.BufferGeometry();labelGeo.setAttribute('position',new T.Float32BufferAttribute(pos,3));labelGeo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));labelGeo.setIndex(idx);labelGeo.computeVertexNormals();labelGeo.computeBoundingSphere();
  const labelMesh=new T.Mesh(labelGeo,new T.MeshBasicMaterial({map:labelTex,side:T.DoubleSide,toneMapped:false}));labelMesh.name='SandboxCity_LabelAtlas';labelMesh.frustumCulled=true;labelMesh.userData.lodEssential=true;town.add(labelMesh);
  window.RL_CITY_BUILDINGS=citySpecs.map(b=>({label:b.label,x:b.x,z:b.z,w:b.w,d:b.d,h:b.h}));
+ window.__roadlineAlignCityBuildings=()=>{
+  if(!buildingMesh||!labelGeo)return;
+  const attr=buildingMesh.geometry.attributes.position,labelAttr=labelGeo.attributes.position;let changed=false;
+  for(let i=0;i<cityRanges.length;i++){
+   const r=cityRanges[i],next=terrainHeight(r.b.x,town.position.z+r.b.z)-town.position.y,delta=next-r.offsetY;
+   if(Math.abs(delta)<.001)continue;
+   for(let v=r.start;v<r.end;v++)attr.array[v*3+1]+=delta;
+   for(let v=i*4;v<i*4+4;v++)labelAttr.array[v*3+1]+=delta;
+   r.offsetY=next;changed=true;
+  }
+  if(changed){attr.needsUpdate=true;buildingMesh.geometry.computeBoundingSphere();labelAttr.needsUpdate=true;labelGeo.computeBoundingSphere()}
+ };
 })();
 for(const n of npcs)mergeGroup(n.g,{skip:[n.body],shared:n.body.material});
 const cbp=carMesh.children[0],cmg=mergeGroup(carMesh,{skip:[cbp],pick:m=>(m.userData.W||m.geometry.type==='CylinderGeometry')?'W':null}),carBody=[cmg.H,cmg.M,cmg.B].filter(Boolean);
@@ -3409,7 +3449,7 @@ function rlBulletBlock(origin,dir,max=100){
   else{
    it.held=true;it.v.set(0,0,0);it.m.parent?.remove(it.m);
    if(renderer.xr.isPresenting){
-    const h=[left,sec].find(o=>o?.src.handedness==='left')||left||sec;
+    const h=left||sec;
     if(!h){scene.add(it.m);it.held=false;V5.say('Connect a controller before equipping.');return false}
     scene.add(it.m);vrHeldWeapon=it;rlPoseHeldWeapon(it,h);
    }else{
@@ -3435,7 +3475,7 @@ function rlBulletBlock(origin,dir,max=100){
   if(!clear&&performance.now()>blockedNote){blockedNote=performance.now()+1300;V5.say('Muzzle blocked. Move away from the wall.','#ffd27d');}
   return clear;
  }
- function pistolClear(){return clearMuzzle(renderer.xr.isPresenting?gun:pistol,[left,sec].find(o=>o?.src.handedness==='left'))}
+ function pistolClear(){return clearMuzzle(renderer.xr.isPresenting?gun:pistol,left||sec)}
  function allowFire(it,controller){
   if(!it||!it.held||!onFoot||dead||menuOpen||sleepT>0||it.cool>0)return false;
   if(it.weapon==='sword')return true;if(!clearMuzzle(it.m,controller))return false;
@@ -3458,7 +3498,7 @@ function rlBulletBlock(origin,dir,max=100){
   if(dead||!onFoot){if(active()||gunOut)holster();}
   const it=active();if(it)gunOut=false;
   if(it&&!renderer.xr.isPresenting&&it!==mobileHeldWeapon){release(it);}
-  if(vrHeldWeapon&&renderer.xr.isPresenting){const h=[left,sec].find(o=>o?.src.handedness==='left')||left||sec;if(h)rlPoseHeldWeapon(vrHeldWeapon,h);else release(vrHeldWeapon);}
+  if(vrHeldWeapon&&renderer.xr.isPresenting){const h=left||sec;if(h)rlPoseHeldWeapon(vrHeldWeapon,h);else release(vrHeldWeapon);}
   if(mobileHeldWeapon&&renderer.xr.isPresenting)release(mobileHeldWeapon);
   for(const item of[akPickup,rocketPickup]){
    item.recoil=Math.max(0,(item.recoil||0)-dt*7);item.flash=Math.max(0,(item.flash||0)-dt);
