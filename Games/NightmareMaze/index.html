@@ -145,6 +145,7 @@ let audioCtx=null,ambientGain=null,ambOscs=[],scareAudioBusy=false;
 const keys={};
 let dragging=false,lastPX=0,lastPY=0,lookYaw=0,lookPitch=0;
 let lastSync=0,elapsed=0,localPlayerData={};
+let xrHandsReady=false,controllerSlots=[],radarCanvas=null,radarCtx=null,radarTexture=null,radarLastDraw=0,radarMode='roam';
 const mat=(color,roughness=.85,emissive=0,emissiveIntensity=0)=>new T.MeshStandardMaterial({color,roughness,metalness:.02,emissive,emissiveIntensity});
 function hashSeed(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function seededRng(seed){let a=hashSeed(seed)||123456789;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296}}
@@ -434,6 +435,8 @@ function enterGame(){
   playerColor=[0x48c8ff,0xe77af2,0xe5c766,0x7df1a8][Math.floor(Math.random()*4)];
   remotePlayers[playerId]={name:$('playerName').value||'Lost Soul',x:0,z:0,alive:true};
   buildWorld();
+  createRadarTexture();
+  initXRHands();
   menu.style.display='none';hud.hidden=false;hint.hidden=false;crosshair.hidden=!!renderer.xr.isPresenting;
   hudStatus.textContent='SOLO MODE · room '+roomKey+' · listen carefully';
   startAudio();
@@ -452,6 +455,118 @@ function tryEnterVR(){
 }
 $('vrBtn').addEventListener('click',tryEnterVR);
 $('desktopBtn').addEventListener('click',()=>{enterGame();crosshair.hidden=false;renderer.domElement.focus()});
+
+// ---------- tracked hands + left-wrist monster radar ----------
+function createRadarTexture(){
+  if(radarTexture)return radarTexture;
+  radarCanvas=document.createElement('canvas');radarCanvas.width=512;radarCanvas.height=640;
+  radarCtx=radarCanvas.getContext('2d');
+  radarTexture=new T.CanvasTexture(radarCanvas);
+  if('encoding' in radarTexture)radarTexture.encoding=T.sRGBEncoding;
+  drawWristRadar(0,0,'roam',true);
+  return radarTexture;
+}
+function drawWristRadar(distance,bearing,mode,initial=false){
+  if(!radarCtx||(!initial&&performance.now()-radarLastDraw<90))return;
+  radarLastDraw=performance.now();
+  const g=radarCtx,w=radarCanvas.width,h=radarCanvas.height;
+  g.clearRect(0,0,w,h);
+  g.fillStyle='#06100f';g.fillRect(0,0,w,h);
+  g.strokeStyle='#25433c';g.lineWidth=5;g.strokeRect(10,10,w-20,h-20);
+  g.fillStyle='#a7e8c8';g.font='bold 31px monospace';g.textAlign='center';g.fillText('THREAT RADAR',w/2,51);
+  g.fillStyle='#568c76';g.font='22px monospace';g.fillText(mode==='chase'?'!!! PURSUIT !!!':'MOTION TRACKING',w/2,82);
+  const cx=w/2,cy=280,r=154;
+  g.strokeStyle='#225b49';g.lineWidth=3;
+  for(const scale of [1,.66,.33]){g.beginPath();g.arc(cx,cy,r*scale,0,Math.PI*2);g.stroke()}
+  g.beginPath();g.moveTo(cx-r,cy);g.lineTo(cx+r,cy);g.moveTo(cx,cy-r);g.lineTo(cx,cy+r);g.stroke();
+  g.strokeStyle='#3f8c6e';g.lineWidth=2;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.sin(performance.now()*.001)*r,cy-Math.cos(performance.now()*.001)*r);g.stroke();
+  g.fillStyle='#b6f1d0';g.beginPath();g.arc(cx,cy,9,0,Math.PI*2);g.fill();
+  const maxRange=20,range=Math.max(0,Math.min(1,distance/maxRange)),dotR=Math.max(10,r*range);
+  const dx=cx+Math.sin(bearing)*dotR,dy=cy-Math.cos(bearing)*dotR;
+  g.shadowColor='#ff173e';g.shadowBlur=27;g.fillStyle='#ff2044';g.beginPath();g.arc(dx,dy,13,0,Math.PI*2);g.fill();g.shadowBlur=0;
+  g.strokeStyle='#ff6a7d';g.lineWidth=3;g.beginPath();g.arc(dx,dy,22,0,Math.PI*2);g.stroke();
+  g.fillStyle='#f3f7df';g.font='bold 76px monospace';g.fillText(Number.isFinite(distance)?distance.toFixed(1):'--.-',w/2,430);
+  g.fillStyle='#a7e8c8';g.font='bold 28px monospace';g.fillText('METERS AWAY',w/2,469);
+  g.fillStyle=mode==='chase'?'#ff3552':'#79d4a7';g.font='bold 25px monospace';g.fillText(mode==='chase'?'HOSTILE — RUN':'SIGNAL LOCKED',w/2,524);
+  g.fillStyle='#527c6b';g.font='21px monospace';g.fillText('RED DOT = CREATURE',w/2,573);
+  g.fillText('RANGE: '+(distance>maxRange?'20+ M':'0–20 M'),w/2,607);
+  if(radarTexture)radarTexture.needsUpdate=true;
+}
+function createTrackedHand(handedness){
+  const hand=new T.Group();
+  // Stylized low-poly glove: palm, four fingers, thumb and a wrist cuff.
+  const gloveMat=new T.MeshStandardMaterial({color:0x999ba5,roughness:.66,metalness:.08});
+  const cuffMat=new T.MeshStandardMaterial({color:0x252b33,roughness:.42,metalness:.45});
+  const seamMat=new T.MeshStandardMaterial({color:0x66717d,roughness:.48,metalness:.25});
+  const palm=new T.Mesh(new T.BoxGeometry(.125,.052,.115),gloveMat);palm.position.set(0,-.015,-.105);hand.add(palm);
+  const fingerXs=[-.045,-.015,.015,.045];
+  for(let i=0;i<4;i++){
+    const len=[.078,.091,.086,.068][i];
+    const finger=new T.Mesh(new T.BoxGeometry(.022,.031,len),gloveMat);
+    finger.position.set(fingerXs[i],-.014,-.175-len*.22);finger.rotation.x=-.08;hand.add(finger);
+    const tip=new T.Mesh(new T.SphereGeometry(.011,6,5),seamMat);
+    tip.position.set(fingerXs[i],-.013,-.175-len*.68);hand.add(tip);
+  }
+  const thumb=new T.Mesh(new T.BoxGeometry(.032,.034,.077),gloveMat);
+  thumb.position.set(handedness==='left'?.083:-.083,-.013,-.115);
+  thumb.rotation.y=handedness==='left'?.43:-.43;thumb.rotation.x=-.17;hand.add(thumb);
+  const cuff=new T.Mesh(new T.BoxGeometry(.137,.061,.052),cuffMat);cuff.position.set(0,-.006,-.006);hand.add(cuff);
+  const cuffLine=new T.Mesh(new T.BoxGeometry(.139,.012,.054),seamMat);cuffLine.position.set(0,.011,-.006);hand.add(cuffLine);
+  if(handedness==='left'){
+    const watch=new T.Group();
+    const caseMesh=new T.Mesh(new T.BoxGeometry(.145,.022,.169),new T.MeshStandardMaterial({color:0x111a18,roughness:.3,metalness:.6}));
+    caseMesh.position.y=.016;watch.add(caseMesh);
+    const screen=new T.Mesh(new T.PlaneGeometry(.13,.151),new T.MeshBasicMaterial({map:createRadarTexture(),toneMapped:false,side:T.DoubleSide}));
+    screen.rotation.x=-Math.PI/2;screen.position.set(0,.028,-.081);watch.add(screen);
+    watch.position.set(0,.001,-.025);hand.add(watch);
+  }
+  return hand;
+}
+function removeHandVisual(controller){
+  const old=controller.userData.handVisual;
+  if(old){controller.remove(old);controller.userData.handVisual=null}
+}
+function setControllerHand(controller,handedness,fallbackIndex){
+  if(handedness!=='left'&&handedness!=='right')handedness=fallbackIndex===0?'left':'right';
+  if(controller.userData.handVisual&&controller.userData.handSide===handedness)return;
+  removeHandVisual(controller);
+  const hand=createTrackedHand(handedness);
+  hand.name=handedness+'-hand-visual';
+  controller.add(hand);
+  controller.userData.handVisual=hand;
+  controller.userData.handSide=handedness;
+  controller.userData.handedness=handedness;
+  hand.visible=true;
+}
+function initXRHands(){
+  if(xrHandsReady)return;
+  xrHandsReady=true;
+  for(let i=0;i<2;i++){
+    const controller=renderer.xr.getController(i);
+    // Parent to the locomotion rig so the hands follow artificial movement through the maze.
+    rig.add(controller);
+    controller.userData.slot=i;
+    controller.addEventListener('connected',event=>{
+      const data=event.data||{};
+      setControllerHand(controller,data.handedness,i);
+    });
+    controller.addEventListener('disconnected',()=>{
+      removeHandVisual(controller);
+      controller.userData.handSide=null;
+    });
+    controllerSlots.push(controller);
+  }
+}
+function updateWristRadar(){
+  if(!radarCtx)return;
+  const dx=monsterState.x-rig.position.x,dz=monsterState.z-rig.position.z;
+  const distance=Math.hypot(dx,dz);
+  const forward=new T.Vector3();camera.getWorldDirection(forward);forward.y=0;
+  let yaw=0;if(forward.lengthSq()>.001){forward.normalize();yaw=Math.atan2(-forward.x,-forward.z)}
+  const bearing=Math.atan2(dx,-dz)-yaw;
+  drawWristRadar(distance,bearing,monsterState.mode||'roam');
+}
+
 function moveLocal(dt){
   if(isDead)return;
   let sx=0,sy=0,usingStick=false;
@@ -506,6 +621,7 @@ function animate(){
       monsterGroup.rotation.y=monsterState.yaw||0;
       if(monsterParts.armL){monsterParts.armL.rotation.x=Math.sin(elapsed*(monsterState.mode==='chase'?14:3))*.24;monsterParts.armR.rotation.x=-Math.sin(elapsed*(monsterState.mode==='chase'?14:3))*.24;monsterParts.legL.rotation.x=Math.sin(elapsed*(monsterState.mode==='chase'?11:2))*.16;monsterParts.legR.rotation.x=-Math.sin(elapsed*(monsterState.mode==='chase'?11:2))*.16}
     }
+    updateWristRadar();
     if(!isDead&&Math.hypot(rig.position.x-monsterState.x,rig.position.z-monsterState.z)<.92)die();
     for(let i=0;i<lamps.length;i++)lamps[i].intensity=.25+Math.random()*(i%2?.6:.25);
     playerWriteTimer+=dt;monsterWriteTimer+=dt;
