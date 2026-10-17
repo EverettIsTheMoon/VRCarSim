@@ -211,7 +211,7 @@ function createMonster(){
   const eyeMat=new T.MeshStandardMaterial({color:0xff1835,emissive:0xff001c,emissiveIntensity:5,roughness:.25});
   const mouthMat=mat(0x000000,1,0x120006,.5);
   function mesh(geo,m,x,y,z,sx=1,sy=1,sz=1){const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);monsterGroup.add(o);return o}
-  mesh(new T.CapsuleGeometry(.32,.85,4,7),skin,0,1.35,0,.9,1.22,.75);
+  mesh(new T.CylinderGeometry(.24,.38,1.2,8),skin,0,1.32,0,.9,1,.78);
   mesh(new T.SphereGeometry(.39,12,10),shadow,0,2.25,-.04,1.05,1.2,.8);
   mesh(new T.SphereGeometry(.105,10,8),eyeMat,-.16,2.31,-.335,1,1,.65);
   mesh(new T.SphereGeometry(.105,10,8),eyeMat,.16,2.31,-.335,1,1,.65);
@@ -327,7 +327,10 @@ async function connectFirebase(){
     const db=firebase.database();
     playersRef=db.ref('rooms/'+roomKey+'/players');
     monsterRef=db.ref('rooms/'+roomKey+'/monster');
+    const previousLocalId=playerId;
     playerId=playersRef.push().key;
+    delete remotePlayers[previousLocalId];
+    remotePlayers[playerId]=makePlayerData();
     playerRef=playersRef.child(playerId);
     await playerRef.set(makePlayerData());
     await playerRef.onDisconnect().remove();
