@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b16">
+  <title>VR Games</title>
+  <style>
+    :root { color-scheme: dark; --bg:#080b16; --panel:#11182a; --text:#f4f7ff; --muted:#a5b0ca; --accent:#7c5cff; --cyan:#35d8f2; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:radial-gradient(ellipse at 50% 0%,#20204b 0%,var(--bg) 52%); color:var(--text); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    a { color:inherit; }
+    .topbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:16px clamp(18px,5vw,64px); background:rgba(8,11,22,.78); border-bottom:1px solid rgba(255,255,255,.09); backdrop-filter:blur(14px); }
+    .brand { font-weight:850; letter-spacing:.08em; text-transform:uppercase; }
+    .brand span { color:var(--cyan); }
+    .navlink { text-decoration:none; color:var(--muted); font-size:.95rem; }
+    .navlink:hover { color:white; }
+    .hero { min-height:78vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:72px 22px 90px; }
+    .eyebrow { color:var(--cyan); font-weight:750; font-size:.8rem; letter-spacing:.24em; text-transform:uppercase; }
+    h1 { margin:16px 0; font-size:clamp(3.3rem,10vw,7.5rem); line-height:.95; letter-spacing:-.07em; }
+    h1 .glow { color:#b9adff; text-shadow:0 0 42px rgba(124,92,255,.45); }
+    .intro { max-width:620px; color:var(--muted); line-height:1.75; font-size:clamp(1rem,2vw,1.2rem); }
+    .scroll-btn { display:inline-flex; align-items:center; gap:10px; margin-top:30px; padding:14px 22px; border-radius:999px; background:linear-gradient(110deg,var(--accent),#4e9dff); text-decoration:none; font-weight:800; box-shadow:0 10px 35px #604cff40; transition:transform .2s,filter .2s; }
+    .scroll-btn:hover { transform:translateY(-3px); filter:brightness(1.12); }
+    .games { max-width:1120px; margin:0 auto; padding:42px 22px 100px; scroll-margin-top:75px; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; gap:16px; margin-bottom:26px; }
+    h2 { margin:0; font-size:clamp(2rem,5vw,3.3rem); letter-spacing:-.045em; }
+    .count { color:var(--muted); font-size:.9rem; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr)); gap:22px; }
+    .game-card { overflow:hidden; display:flex; flex-direction:column; min-height:330px; border:1px solid rgba(255,255,255,.12); border-radius:24px; background:linear-gradient(145deg,rgba(28,36,63,.96),rgba(14,18,32,.98)); box-shadow:0 18px 55px #0004; transition:transform .22s,border-color .22s,box-shadow .22s; }
+    .game-card:hover { transform:translateY(-6px); border-color:#8b7affaa; box-shadow:0 24px 65px #0007,0 0 30px #7c5cff18; }
+    .art { min-height:170px; display:grid; place-items:center; position:relative; overflow:hidden; background:radial-gradient(circle at 50% 40%,#3d3b86 0%,#20224a 35%,#11182b 76%); }
+    .art:before,.art:after { content:""; position:absolute; border:1px solid #9d91ff40; transform:rotate(35deg); width:230px; height:230px; border-radius:38px; }
+    .art:after { width:160px; height:160px; transform:rotate(55deg); border-color:#35d8f255; }
+    .vr-icon { z-index:1; font-size:4.5rem; filter:drop-shadow(0 0 24px #7c5cff88); }
+    .card-body { padding:24px; display:flex; flex:1; flex-direction:column; align-items:flex-start; }
+    .tag { color:var(--cyan); font-size:.72rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+    h3 { margin:9px 0 10px; font-size:1.55rem; letter-spacing:-.03em; }
+    .description { color:var(--muted); line-height:1.65; margin:0 0 24px; }
+    .play { display:inline-flex; align-items:center; gap:9px; margin-top:auto; padding:12px 17px; border-radius:12px; background:#f4f7ff; color:#101326; text-decoration:none; font-weight:850; transition:transform .2s; }
+    .play:hover { transform:translateX(3px); }
+    footer { padding:24px; text-align:center; border-top:1px solid #ffffff12; color:#7f8aa5; font-size:.85rem; }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*:before,*:after { transition:none!important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span>VR</span> GAMES</div>
+    <a class="navlink" href="#games">Browse games ↓</a>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="eyebrow">Your game collection</div>
+      <h1>VR <span class="glow">Games.</span></h1>
+      <p class="intro">Welcome to the library. Scroll down to explore the games and open one to start playing.</p>
+      <a class="scroll-btn" href="#games">Explore games <span aria-hidden="true">↓</span></a>
+    </section>
+    <section class="games" id="games">
+      <div class="section-head">
+        <div><div class="eyebrow">The library</div><h2>Choose your game</h2></div>
+        <div class="count">01 game</div>
+      </div>
+      <div class="grid">
+        <article class="game-card">
+          <div class="art"><div class="vr-icon" aria-hidden="true">◈</div></div>
+          <div class="card-body">
+            <div class="tag">VR action · Browser game</div>
+            <h3>Sandbox Galore VR</h3>
+            <p class="description">Jump into Sandbox Galore VR and explore the game directly in your browser.</p>
+            <a class="play" href="Games/SandboxGaloreVR/index.html">Play game <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer>VR Games · Pick a game and have fun.</footer>
+</body>
+</html>
