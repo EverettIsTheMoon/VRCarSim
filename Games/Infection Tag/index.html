@@ -53,7 +53,7 @@ resolveBody(rig.position);
 for(const e of enemies){const target=new THREE.Vector3(rig.position.x,0,rig.position.z),ep=e.g.position;const to=target.clone().sub(ep);const d=to.length();if(d>0.001){to.normalize();e.vel.x+=(to.x*e.speed-e.vel.x)*Math.min(1,dt*2.3);e.vel.z+=(to.z*e.speed-e.vel.z)*Math.min(1,dt*2.3);ep.x+=e.vel.x*dt;ep.z+=e.vel.z*dt;e.g.rotation.y=Math.atan2(e.vel.x,e.vel.z);}e.phase+=dt*7;e.g.position.y=.04+Math.abs(Math.sin(e.phase))*.13;const bob=e.g.children[1];if(bob)bob.position.y=1.52+Math.sin(e.phase)*.06;if(d<1.05){endRun();break;}}
 if(inVR){tip.textContent='PUSH OFF: swing your hands into the ground or a wall, then pull away. Keep momentum and dodge the glowing lava monkeys.';}else{tip.textContent='WASD move · Mouse look · Space hop. In VR, physically push your hands against the floor and walls to launch.';}
 }
-renderer.render(scene,camera);requestAnimationFrame(frame);}
+renderer.render(scene,camera);}
 renderer.setAnimationLoop(()=>{frame(performance.now());});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 renderer.xr.addEventListener('sessionstart',()=>{tip.textContent='VR ACTIVE — push off the floor and walls with your hands to launch.';});
