@@ -1074,7 +1074,7 @@ function mkWeapon(kind){
  const m=g;scene.add(m);m.position.set(town.position.x+22.35,town.position.y+.20,town.position.z-1.15+(kind==='ak'?-.52:.52));
  const it={m,v:new T.Vector3(),w:0,held:false,r:.16,weapon:kind,cool:0};items.push(it);return it;
 }
-const akPickup=mkWeapon('ak'),rocketPickup=mkWeapon('rocket');rlAttachModel('ak47',akPickup.m,{size:[1.15,.32,.18]});rlAttachModel('rocket_launcher',rocketPickup.m,{size:[.95,.28,.28]});
+const akPickup=mkWeapon('ak'),rocketPickup=mkWeapon('rocket'),swordPickup=mkWeapon('sword');swordPickup.m.clear();const swordBlade=new T.Mesh(new T.BoxGeometry(.055,.78,.035),M(0xcbd4dc,.7,.22)),swordGuard=new T.Mesh(new T.BoxGeometry(.22,.055,.075),M(0x62452b,.8,0)),swordHandle=new T.Mesh(new T.CylinderGeometry(.035,.045,.25,8),M(0x202329,.65,.15));swordBlade.position.set(.25,0,0);swordBlade.rotation.z=-.12;swordGuard.position.set(-.13,-.12,0);swordHandle.position.set(-.13,-.25,0);swordPickup.m.add(swordBlade,swordGuard,swordHandle);swordPickup.m.position.set(town.position.x+23.4,town.position.y+.2,town.position.z-1.15);rlAttachModel('ak47',akPickup.m,{size:[1.15,.32,.18]});rlAttachModel('rocket_launcher',rocketPickup.m,{size:[.95,.28,.28]});
 function weaponFire(it,o){if(it.cool>0)return;it.cool=it.weapon==='ak'?.095:1.1;
  const origin=new T.Vector3(),dir=new T.Vector3();
  if(o&&o.c){o.c.getWorldPosition(origin);o.c.getWorldDirection(dir)}else{cam.getWorldPosition(origin);cam.getWorldDirection(dir)}
@@ -1276,8 +1276,10 @@ const mb=[
 [20,356,472,38,()=>'ADMIN PANEL',()=>{menuPage='admin';menuSig=''}]];
 let menuPage='main';
 const adminMb=[[20,68,472,48,()=>'BACK TO MENU',()=>{menuPage='main';menuSig=''}],[20,126,472,48,()=>'TELEPORT TO NEAREST PLAYER',()=>adminAction('teleport')],[20,190,472,48,()=>'FLING NEAREST PLAYER UP',()=>adminAction('fling')],[20,254,472,48,()=>'DROP CAR ON NEAREST PLAYER',()=>adminAction('car')]];
-function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText(menuPage==='admin'?'ADMIN PANEL':'ROADLINE VR',256,48);
-const menuButtons=menuPage==='admin'?adminMb:mb;menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
+ function equipMenuWeapon(kind){menuOpen=false;panel.visible=ray.visible=dot.visible=dot2.visible=false;menuSig='';if(kind==='pistol'){gunOut=true;mobileHeldWeapon=null;return}gunOut=false;const it=kind==='ak'?akPickup:(kind==='rocket'?rocketPickup:swordPickup);if(mobileHeldWeapon&&mobileHeldWeapon!==it){const old=mobileHeldWeapon;cam.remove(old.m);scene.add(old.m);old.held=false;old.v.set(0,0,0);old.m.position.set(rig.position.x+1,Math.max(.2,rig.position.y+.2),rig.position.z)}if(it.m.parent)it.m.parent.remove(it.m);scene.add(it.m);it.held=true;it.v.set(0,0,0);cam.add(it.m);it.m.position.set(.28,-.26,-.64);it.m.rotation.set(0,Math.PI/2,0);mobileHeldWeapon=it;}
+ const weaponMb=[[20,68,472,48,()=>'PISTOL',()=>equipMenuWeapon('pistol')],[20,126,472,48,()=>'AK-47',()=>equipMenuWeapon('ak')],[20,184,472,48,()=>'RPG',()=>equipMenuWeapon('rocket')],[20,242,472,48,()=>'SWORD',()=>equipMenuWeapon('sword')],[20,310,472,44,()=>'BACK',()=>{menuPage='main';menuSig=''}]];
+function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText(menuPage==='admin'?'ADMIN PANEL':(menuPage==='weapons'?'WEAPONS':'ROADLINE VR'),256,48);
+const menuButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
 g.font='15px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='admin'?'Available to everyone in this room':'Volume '+Math.round(vol*100)+'%  |  Tap a button with your finger',256,398);ptex.needsUpdate=true}
 function openMenu(){menuOpen=true;menuPage='main';menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true)}
 let menuSig='';
@@ -1289,14 +1291,14 @@ function menuStep(){const tips=[];
   tips.push({o,p})}
  panel.updateWorldMatrix(true,false);let h=-1,pressed=false,best=9;const mk2=[dot,dot2];
  tips.forEach((t,k)=>{const lp=panel.worldToLocal(t.p.clone()),dist=lp.z*PS,inside=Math.abs(lp.x)<=.8&&Math.abs(lp.y)<=.655;let hi=-1;
-  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;const activeButtons=menuPage==='admin'?adminMb:mb;hi=activeButtons.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
+  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;const activeButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);hi=activeButtons.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
   const prev=t.o.mPz===undefined?1:t.o.mPz;t.o.mPz=inside?dist:1;
   if(hi>=0&&dist<best){best=dist;h=hi;pressed=dist<.03}
-  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);(menuPage==='admin'?adminMb:mb)[hi][5]();menuSig=''}
+  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);(menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb))[hi][5]();menuSig=''}
   else if(hi>=0&&t.o.mHov!==hi)buzz(.25,t.o);
   t.o.mHov=hi;const d=mk2[k];d.position.copy(t.p);d.visible=true;d.material.color.setHex(inside&&dist<.03?0xffffff:0x44ddff)});
  for(let k=tips.length;k<2;k++)mk2[k].visible=false;ray.visible=false;
- const sig=h+'|'+pressed+'|'+mb.map(b=>b[4]()).join();if(sig!==menuSig){menuSig=sig;drawMenu(h,pressed)}}
+ const shownButtons=menuPage==='admin'?adminMb:(menuPage==='weapons'?weaponMb:mb);const sig=menuPage+'|'+h+'|'+pressed+'|'+shownButtons.map(b=>b[4]()).join();if(sig!==menuSig){menuSig=sig;drawMenu(h,pressed)}}
 /* ---------- audio: music, engine, tires, wind, gunshots, thuds ---------- */
 function gunShot(){if(!AC)return;const t=AC.currentTime,s=AC.createBufferSource(),g=AC.createGain(),f=AC.createBiquadFilter();s.buffer=NZ;f.type='lowpass';f.frequency.value=2500;g.gain.setValueAtTime(.55,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t);s.stop(t+.22)}
 function thud(v){if(!AC)return;const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(30,t+.25);g.gain.setValueAtTime(.7*C(v,.1,1),t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.32)}
