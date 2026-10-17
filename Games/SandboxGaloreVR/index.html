@@ -248,7 +248,7 @@ g.userData.upd=(gr,tr,gun)=>{F.forEach((f,i)=>{const c=i?gr:(gun?(.1+.9*Math.max
 function mkGun(){const g=new T.Group(),bm=M(0x1a1a1e,.35,.8);
 box(.03,.09,.045,M(0x2a2a2e,.6,.2),.04,0,-.012,g);box(.03,.034,.17,bm,.04,.058,-.075,g);const br=new T.Mesh(new T.CylinderGeometry(.008,.008,.04,8),bm);br.rotation.x=Math.PI/2;br.position.set(.04,.058,-.17);g.add(br);
 const mz=new T.Object3D();mz.position.set(.04,.058,-.2);g.add(mz);g.userData.mz=mz;
-const fl=new T.Mesh(new T.SphereGeometry(.03,8,6),new T.MeshBasicMaterial({color:0xffcc55}));fl.position.copy(mz.position);fl.visible=false;g.add(fl);g.userData.fl=fl;g.visible=false;return g}
+const fl=new T.Mesh(new T.SphereGeometry(.03,8,6),new T.MeshBasicMaterial({color:0xffcc55}));fl.position.copy(mz.position);fl.visible=false;g.add(fl);g.userData.fl=fl;g.visible=false;g.scale.set(.62,.9,.92);return g}
 const lev=new T.Group();lev.position.set(.36,-.5,-.45);cock.add(lev);box(.08,.04,.08,M(0x333333),0,0,0,lev);
 const stick=new T.Group();lev.add(stick);box(.02,.16,.02,M(0xaaaaaa),0,.08,0,stick);
 const kMat=M(0x111111),kn=new T.Mesh(new T.SphereGeometry(.03,12,8),kMat);kn.position.y=.17;stick.add(kn);
