@@ -121,19 +121,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     fatal.textContent = 'THE NIGHT SHIFT COULD NOT START\n\n' + message + '\n\nTry a current browser with WebGL enabled. WebXR requires HTTPS (or localhost). Reload after fixing the issue.';
   }
 
-  try {
-    initRenderer();
-    buildScene();
-    wireControls();
-    resize();
-    setStatus('CAMERA FEED: STANDBY', 'BUILDING POWER: UNSTABLE<br>ANIMATRONIC TRACKING: ACTIVE · THREAT AI: DISABLED');
-    checkXRSupport();
-    renderer.setAnimationLoop(renderFrame);
-  } catch (error) {
-    console.error(error);
-    fatalError(error && error.stack ? error.stack : String(error));
-    return;
-  }
+
 
   function initRenderer() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -865,6 +853,21 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     updateAmbience(dt);
     updateRay(xrFrame);
     renderer.render(scene,camera);
+  }
+
+  // Initialize only after all shared textures/materials have been constructed.
+  try {
+    initRenderer();
+    buildScene();
+    wireControls();
+    resize();
+    setStatus('CAMERA FEED: STANDBY', 'BUILDING POWER: UNSTABLE<br>ANIMATRONIC TRACKING: ACTIVE · THREAT AI: DISABLED');
+    checkXRSupport();
+    renderer.setAnimationLoop(renderFrame);
+  } catch (error) {
+    console.error(error);
+    fatalError(error && error.stack ? error.stack : String(error));
+    return;
   }
 })();
 </script>
