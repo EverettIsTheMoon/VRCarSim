@@ -19,7 +19,7 @@
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 const statusEl=document.querySelector('#status'),counter=document.querySelector('#counter'),startBtn=document.querySelector('#start'),doneBtn=document.querySelector('#done'),resetBtn=document.querySelector('#reset'),panel=document.querySelector('#panel'),hint=document.querySelector('#hint');
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x17202b);scene.fog=new THREE.Fog(0x17202b,18,55);
+const scene=new THREE.Scene();scene.background=null;scene.fog=new THREE.Fog(0x17202b,18,55);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.05,1000);
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');document.body.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd9edff,0x303744,2));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(4,8,3);scene.add(sun);
