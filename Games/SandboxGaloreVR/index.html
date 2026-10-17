@@ -1075,10 +1075,11 @@ function mkWeapon(kind){
  const it={m,v:new T.Vector3(),w:0,held:false,r:.16,weapon:kind,cool:0};items.push(it);return it;
 }
 const akPickup=mkWeapon('ak'),rocketPickup=mkWeapon('rocket'),swordPickup=mkWeapon('sword');swordPickup.m.clear();const swordBlade=new T.Mesh(new T.BoxGeometry(.055,.78,.035),M(0xcbd4dc,.7,.22)),swordGuard=new T.Mesh(new T.BoxGeometry(.22,.055,.075),M(0x62452b,.8,0)),swordHandle=new T.Mesh(new T.CylinderGeometry(.035,.045,.25,8),M(0x202329,.65,.15));swordBlade.position.set(.25,0,0);swordBlade.rotation.z=-.12;swordGuard.position.set(-.13,-.12,0);swordHandle.position.set(-.13,-.25,0);swordPickup.m.add(swordBlade,swordGuard,swordHandle);swordPickup.m.position.set(town.position.x+23.4,town.position.y+.2,town.position.z-1.15);rlAttachModel('ak47',akPickup.m,{size:[1.15,.32,.18]});rlAttachModel('rocket_launcher',rocketPickup.m,{size:[.95,.28,.28]});
-function weaponFire(it,o){if(it.cool>0)return;it.cool=it.weapon==='ak'?.095:1.1;
+function weaponFire(it,o){if(it.cool>0)return;it.cool=it.weapon==='ak'?.095:(it.weapon==='sword'?.55:1.1);
  const origin=new T.Vector3(),dir=new T.Vector3();
  if(o&&o.c){o.c.getWorldPosition(origin);o.c.getWorldDirection(dir)}else{cam.getWorldPosition(origin);cam.getWorldDirection(dir)}
- if(it.weapon==='ak'){
+ if(it.weapon==='sword'){let hit=false;for(const e of peds){if(e.st==='fall')continue;if(e.g.position.distanceTo(origin)<2.5){flingPed(e,origin);hit=true}}for(const e of crowd){if(e.st==='fall')continue;const q=e.g.position.clone().add(town.position);if(q.distanceTo(origin)<2.5){killPerson(e,dir,true);hit=true}}thud(hit?1:.45);
+  }else if(it.weapon==='ak'){
   const spread=(Math.random()-.5)*.025;dir.x+=spread;dir.y+=(Math.random()-.5)*.018;dir.normalize();
   let best=1e9,target=null,kind=0,pt=new T.Vector3();
   for(const e of peds){if(e.st==='fall')continue;for(const y of [.55,1.15,1.65]){const d=rayT(origin,dir,pt.set(e.g.position.x,y,e.g.position.z),.34);if(d<best){best=d;target=e;kind=1}}}
