@@ -24,7 +24,7 @@ canvas{display:block}
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 const statusEl=document.querySelector('#status'), startBtn=document.querySelector('#start');
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a1221); scene.fog=new THREE.Fog(0x0a1221,8,24);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a1221); scene.fog=new THREE.Fog(0x0a1221,18,42);
 const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.05,100);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.xr.enabled=true;
@@ -52,15 +52,44 @@ for(let i=0;i<12;i++){let a=i*Math.PI*2/12;addToy(i%4,new THREE.Vector3(Math.sin
 for(let i=0;i<5;i++)addToy(i%4,new THREE.Vector3((i-2)*.28,1.0+(i%2)*.22,-1.05),materials[(i+2)%materials.length]);
 
 // WebXR hand joint positions drive pinch detection; no controller buttons are required.
-const hands=[];
+const people=[], bloodBits=[];
+const fingerChains=[
+ ['wrist','thumb-metacarpal','thumb-phalanx-proximal','thumb-phalanx-distal','thumb-tip'],
+ ['wrist','index-finger-metacarpal','index-finger-phalanx-proximal','index-finger-phalanx-intermediate','index-finger-phalanx-distal','index-finger-tip'],
+ ['wrist','middle-finger-metacarpal','middle-finger-phalanx-proximal','middle-finger-phalanx-intermediate','middle-finger-phalanx-distal','middle-finger-tip'],
+ ['wrist','ring-finger-metacarpal','ring-finger-phalanx-proximal','ring-finger-phalanx-intermediate','ring-finger-phalanx-distal','ring-finger-tip'],
+ ['wrist','pinky-finger-metacarpal','pinky-finger-phalanx-proximal','pinky-finger-phalanx-intermediate','pinky-finger-phalanx-distal','pinky-finger-tip']
+];
 function makeHand(handedness){
  const group=new THREE.Group();scene.add(group);
- const dot=new THREE.Mesh(new THREE.SphereGeometry(.035,12,10),new THREE.MeshBasicMaterial({color:handedness==='left'?0x63d9ff:0xff8bd5}));
- group.add(dot);
- const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(0,.1,0)]),new THREE.LineBasicMaterial({color:handedness==='left'?0x63d9ff:0xff8bd5}));
- group.add(line);
- const h={handedness,group,dot,line,wasPinching:false,held:null,lastPos:new THREE.Vector3(),velocity:new THREE.Vector3(),samples:[],jointPos:new Map(),pinchPoint:new THREE.Vector3(),pinchDistance:1};
+ const skin=new THREE.MeshStandardMaterial({color:handedness==='left'?0x83c9ed:0xe2ad91,roughness:.72});
+ const palm=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),skin);palm.scale.set(.055,.018,.072);group.add(palm);
+ const joints={},bones=[];
+ const jointNames=[...new Set(fingerChains.flat())];
+ for(const name of jointNames){const j=new THREE.Mesh(new THREE.SphereGeometry(name==='wrist'?.018:.013,10,8),skin);group.add(j);joints[name]=j;}
+ for(const chain of fingerChains)for(let i=1;i<chain.length;i++){
+  const a=chain[i-1],b=chain[i],geo=new THREE.CylinderGeometry(.009,.012,1,8);
+  const mesh=new THREE.Mesh(geo,skin);group.add(mesh);bones.push({mesh,a,b});
+ }
+ const h={handedness,group,palm,joints,bones,wasPinching:false,held:null,lastPos:new THREE.Vector3(),velocity:new THREE.Vector3(),samples:[],jointPos:new Map(),pinchPoint:new THREE.Vector3(),pinchDistance:1};
  hands.push(h);return h;
+}
+function updateHandMesh(h,frame,input,ref){
+ for(const name of Object.keys(h.joints)){
+  const p=jointPose(frame,input,name,ref);
+  if(p){h.jointPos.set(name,p);h.joints[name].visible=true;h.joints[name].position.copy(p);}
+  else h.joints[name].visible=false;
+ }
+ const wrist=h.jointPos.get('wrist');
+ const middle=h.jointPos.get('middle-finger-metacarpal');
+ if(wrist&&middle){h.palm.position.copy(wrist).lerp(middle,.48);h.palm.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),middle.clone().sub(wrist).normalize());}
+ for(const b of h.bones){
+  const a=h.jointPos.get(b.a),z=h.jointPos.get(b.b);
+  if(!a||!z){b.mesh.visible=false;continue;}
+  b.mesh.visible=true;const d=z.clone().sub(a);
+  b.mesh.position.copy(a).addScaledVector(d,.5);b.mesh.scale.set(1,d.length(),1);
+  b.mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());
+ }
 }
 function jointPose(frame,space,name,ref){
  const j=space.hand.get(name);if(!j)return null;const p=frame.getJointPose(j,ref);return p?new THREE.Vector3(p.transform.position.x,p.transform.position.y,p.transform.position.z):null;
@@ -77,11 +106,11 @@ function updateHands(frame,ref,dt){
   if(!input.hand)continue;
   let h=hands[idx++]||makeHand(input.handedness||'right');
   h.group.visible=true;
+  updateHandMesh(h,frame,input,ref);
   const thumb=jointPose(frame,input,'thumb-tip',ref),tip=jointPose(frame,input,'index-finger-tip',ref),wrist=jointPose(frame,input,'wrist',ref);
   if(!thumb||!tip||!wrist)continue;
   const pinch=thumb.distanceTo(tip);h.pinchDistance=pinch;h.pinchPoint.copy(thumb).add(tip).multiplyScalar(.5);
-  h.group.position.copy(h.pinchPoint);h.dot.scale.setScalar(pinch<.035?1.5:1);
-  h.line.geometry.dispose();h.line.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),wrist.clone().sub(h.pinchPoint)]);
+  h.group.position.set(0,0,0);
   h.samples.push({p:wrist.clone(),t:performance.now()});while(h.samples.length>5)h.samples.shift();
   const pinching=pinch<.035;
   if(pinching&&!h.wasPinching){
@@ -94,25 +123,51 @@ function updateHands(frame,ref,dt){
   }
   if(!pinching&&h.wasPinching&&h.held){
     const o=h.held;o.heldBy=null;o.simulate=true;
-    if(h.samples.length>=2){const a=h.samples[0],b=h.samples[h.samples.length-1],elapsed=Math.max(.01,(b.t-a.t)/1000);o.vel.copy(b.p).sub(a.p).multiplyScalar(1/elapsed).clampLength(0,8);}
+    if(h.samples.length>=2){const a=h.samples[0],b=h.samples[h.samples.length-1],elapsed=Math.max(.01,(b.t-a.t)/1000);o.vel.copy(b.p).sub(a.p).multiplyScalar(1/elapsed).clampLength(0,14);}
     h.held=null;
   }
   h.wasPinching=pinching;h.lastPos.copy(wrist);
  }
  for(let i=idx;i<hands.length;i++)hands[i].group.visible=false;
 }
+function makePerson(i){
+ const group=new THREE.Group();scene.add(group);
+ const skin=new THREE.MeshStandardMaterial({color:[0xc88e70,0x9b6c50,0xe0b08b,0x76533f][i%4],roughness:.85});
+ const shirt=new THREE.MeshStandardMaterial({color:[0x4b8bd6,0x6cbd91,0xb58ad8,0xd4a24d,0xd35f70][i%5],roughness:.8});
+ const pants=new THREE.MeshStandardMaterial({color:0x26364c,roughness:.9});
+ function part(geo,mat,pos){const m=new THREE.Mesh(geo,mat);m.position.set(...pos);m.castShadow=true;group.add(m);return m;}
+ part(new THREE.CapsuleGeometry(.13,.38,4,8),shirt,[0,.82,0]);
+ part(new THREE.SphereGeometry(.115,12,10),skin,[0,1.17,0]);
+ part(new THREE.CylinderGeometry(.045,.055,.34,8),pants,[-.075,.43,0]);
+ part(new THREE.CylinderGeometry(.045,.055,.34,8),pants,[.075,.43,0]);
+ part(new THREE.CylinderGeometry(.035,.045,.32,8),shirt,[-.19,.85,0]).rotation.z=-.18;
+ part(new THREE.CylinderGeometry(.035,.045,.32,8),shirt,[.19,.85,0]).rotation.z=.18;
+ const p={group,dead:false,phase:Math.random()*6.28,speed:.25+Math.random()*.3,center:new THREE.Vector3((Math.random()-.5)*9,0,-2-Math.random()*8),radius:2+Math.random()*5,fallDir:new THREE.Vector3()};
+ group.position.set(p.center.x,0,p.center.z);people.push(p);
+}
+for(let i=0;i<24;i++)makePerson(i);
+function spawnBlood(pos){
+ for(let i=0;i<9;i++){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(.025+Math.random()*.025,6,5),new THREE.MeshBasicMaterial({color:0x9d1025}));
+  m.position.copy(pos).add(new THREE.Vector3((Math.random()-.5)*.35,.3+Math.random()*.55,(Math.random()-.5)*.35));scene.add(m);
+  bloodBits.push({mesh:m,vel:new THREE.Vector3((Math.random()-.5)*2,Math.random()*2,(Math.random()-.5)*2),life:.8+Math.random()*.6});
+ }
+}
 let lastFrame=performance.now();
 renderer.setAnimationLoop((time,frame)=>{
  const dt=Math.min(.04,(time-lastFrame)/1000||.016);lastFrame=time;
  if(frame){const ref=renderer.xr.getReferenceSpace();updateHands(frame,ref,dt);}
+ for(const p of people){if(p.dead)continue;p.phase+=dt*p.speed;p.group.position.x=p.center.x+Math.cos(p.phase)*p.radius;p.group.position.z=p.center.z+Math.sin(p.phase)*p.radius;const ahead=new THREE.Vector3(-Math.sin(p.phase),0,Math.cos(p.phase));p.group.rotation.y=Math.atan2(ahead.x,ahead.z);}
+ for(let i=bloodBits.length-1;i>=0;i--){const b=bloodBits[i];b.life-=dt;b.vel.y-=3*dt;b.mesh.position.addScaledVector(b.vel,dt);if(b.life<=0||b.mesh.position.y<-.9){scene.remove(b.mesh);b.mesh.geometry.dispose();b.mesh.material.dispose();bloodBits.splice(i,1);}}
  for(const o of objects){
   if(o.heldBy||!o.simulate)continue;
   o.vel.y-=2.7*dt;o.mesh.position.addScaledVector(o.vel,dt);
   if(o.mesh.position.y-o.radius<-.99){o.mesh.position.y=-.99+o.radius;if(o.vel.y<0)o.vel.y*=-.58;o.vel.x*=.91;o.vel.z*=.91;if(Math.abs(o.vel.y)<.12)o.vel.y=0;}
   // Keep tossed toys inside the play area.
-  for(const axis of ['x','z']){if(Math.abs(o.mesh.position[axis])>4){o.mesh.position[axis]=Math.sign(o.mesh.position[axis])*4;o.vel[axis]*=-.55;}}
+  for(const axis of ['x','z']){if(Math.abs(o.mesh.position[axis])>12){o.mesh.position[axis]=Math.sign(o.mesh.position[axis])*12;o.vel[axis]*=-.55;}}
   o.mesh.rotation.x+=o.spin.x*dt*(o.vel.length()*.25+.2);o.mesh.rotation.y+=o.spin.y*dt*(o.vel.length()*.25+.2);
-  o.vel.multiplyScalar(Math.pow(.992,dt*60));
+  o.vel.multiplyScalar(Math.pow(.998,dt*60));
+  if(o.vel.length()>.8){for(const p of people){if(p.dead)continue;const d=o.mesh.position.distanceTo(p.group.position);if(d<.48){p.dead=true;p.fallDir.copy(o.vel).normalize();p.group.rotation.z=Math.PI/2*(p.fallDir.x>=0?1:-1);p.group.position.y=.25;spawnBlood(p.group.position);o.vel.multiplyScalar(.38);break;}}}
  }
  renderer.render(scene,camera);
 });
