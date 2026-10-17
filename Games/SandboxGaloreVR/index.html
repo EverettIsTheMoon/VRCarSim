@@ -32,7 +32,7 @@
 <div class="choiceRow"><button id="singleChoice" class="selected" data-play="single" style="flex:1">Singleplayer</button><button id="multiChoice" data-play="multi" style="flex:1">Multiplayer</button></div>
 <div class="choiceRow" style="align-items:center"><label for="sDriveMode" style="color:#999;flex:1">Driving mode</label><select id="sDriveMode" style="flex:1;padding:10px;background:#111;color:#eee;border:1px solid #333;border-radius:8px"><option value="free">Free Ride</option><option value="race">Race (2.5 km)</option></select></div>
 <button id="playGame">PLAY</button><button id="settingsToggle">SETTINGS ▾</button>
-<div class="set" id="settingsPanel"><label>Controller hand <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label></div>
+<div class="set" id="settingsPanel"><label>Controller hand <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label><label>Quest 1 low graphics <input type="checkbox" id="questLowGraphics"></label></div>
 <details id="modelFiles"><summary>MODELS FOLDER · EXPECTED GLB FILES</summary><div id="modelFileList"></div></details><div id="menuStatus" style="color:#77808a;font:12px monospace;min-height:16px;text-align:center">Normal Mode · Singleplayer</div></div>
 <div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · X = get out / in<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X repair · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div><div id="horrorHud">RADAR: MONSTER SIGNAL</div><div id="horrorJumpscare"><div class="face"><div class="eyes"><i></i><i></i></div><div class="mouth"><i></i><i></i><i></i><i></i><i></i></div></div><b>IT FOUND YOU</b></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -45,7 +45,9 @@ window.addEventListener('error',function(e){var b=document.getElementById('vr');
 <script>
 window.__mrReal=Math.random;(function(){var a=1234567;Math.random=function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})();
 window.__rs=(function(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}})(20261015);
-const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,b)=>Math.max(a,Math.min(b,v)),$=id=>document.getElementById(id);window.__mainMenuOpen=true;let selectedGameMode='normal',selectedPlayType='single',selectedDriveMode='free';
+const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,b)=>Math.max(a,Math.min(b,v)),$=id=>document.getElementById(id);
+// Quest 1 performance mode: use built-in low-poly meshes and lower render resolution.
+const RL_QUEST1_AUTO=/\bQuest 1\b|Oculus Quest\)/i.test(navigator.userAgent||'');let RL_QUEST1_LOW=RL_QUEST1_AUTO;window.RL_QUEST1_LOW=RL_QUEST1_LOW;window.__mainMenuOpen=true;let selectedGameMode='normal',selectedPlayType='single',selectedDriveMode='free';
 /* Optional GLB model overrides. Files live beside index.html in ./Models/.
    If a file is missing, fails to load, or GLTFLoader is unavailable, the original HTML-built model stays visible. */
 const RL_MODEL_FILES={
@@ -93,6 +95,8 @@ function rlUpdateModelLOD(){
 
 function rlAttachModel(key,target,opts={}){
  if(!target||!RL_MODEL_FILES[key])return;
+ // Quest 1 uses the built-in lightweight meshes instead of expensive external GLBs.
+ if(RL_QUEST1_LOW)return;
  const keep=opts.keep||[];
  rlGetModel(key).then(asset=>{
   if(!target||target.userData.rlModelApplied)return;
@@ -169,9 +173,9 @@ rlUpdateModelList();
 const renderer=new T.WebGLRenderer({antialias:false,alpha:false,powerPreference:'high-performance'});
 /* Keep the 3D scene crisp on phones; adapt render resolution only when frame rate drops.
    HTML HUD/menu text remains at native screen resolution. */
-let roadlineRenderScale=.8,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
-function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.15)*Math.max(.65,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
-roadlineApplyRenderScale();renderer.setClearColor(0x9ec8e8,1);renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0';renderer.xr.enabled=true;if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(.55);document.body.appendChild(renderer.domElement);
+let roadlineRenderScale=RL_QUEST1_LOW?.48:.8,roadlinePerfElapsed=0,roadlinePerfFrames=0,roadlinePerfSeconds=0;
+function roadlineApplyRenderScale(){renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,RL_QUEST1_LOW?.8:1.15)*Math.max(.42,roadlineRenderScale));renderer.setSize(innerWidth,innerHeight,false)}
+roadlineApplyRenderScale();renderer.setClearColor(0x9ec8e8,1);renderer.domElement.style.cssText='position:fixed;inset:0;width:100%;height:100%;display:none;z-index:0';renderer.xr.enabled=true;if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(RL_QUEST1_LOW?.35:.55);document.body.appendChild(renderer.domElement);
 const SKY_D=new T.Color(0x9ec8e8),SKY_N=new T.Color(0x070b18);
 const scene=new T.Scene();scene.background=SKY_D.clone();scene.fog=new T.Fog(0x9ec8e8,90,520);
 const cam=new T.PerspectiveCamera(70,innerWidth/innerHeight,.05,500),rig=new T.Group();scene.add(rig);rig.add(cam);cam.position.set(0,1.2,0);
@@ -1090,6 +1094,9 @@ function weaponFire(it,o){if(it.cool>0)return;it.cool=it.weapon==='ak'?.095:1.1;
  buzz(.55,o);
 }
 const rocketProjectiles=[];
+let adminFlingVel=0,adminFlingActive=false;const adminDropCars=[];
+function adminAction(action){const mp=window.__rlMP,peers=mp&&mp.peers;let target=null,dist=Infinity;if(peers&&peers.size){for(const p of peers.values()){const pp=p.t&&p.t.g;if(!pp||!Array.isArray(pp)||pp.length<3)continue;const d=Math.hypot(pp[0]-rig.position.x,pp[2]-rig.position.z);if(d<dist){dist=d;target=p}}}if(!target){window.V5&&window.V5.say('Join Multiplayer with another player to use admin actions.','#ffd27d');return}if(!mp||!mp.joined||!mp.send){window.V5&&window.V5.say('Join Multiplayer first.','#ffd27d');return}const pos=[onFoot?rig.position.x:carP.x,onFoot?rig.position.y+1:carP.y+1,onFoot?rig.position.z:carP.z];mp.send('ad',{to:target.id,a:action,p:pos});window.V5&&window.V5.say('Admin action sent to '+(target.name||'player')+'.','#9fe0ff')}
+window.__rlAdminReceive=function(d){if(!d||typeof d.a!=='string')return;if(d.a==='teleport'&&Array.isArray(d.p)&&d.p.length>=3){onFoot=true;gunOut=false;cock.visible=false;carMesh.visible=true;rig.position.set(+d.p[0]+1.2,Math.max(0,+d.p[1]),+d.p[2]+1.2);rig.rotation.y=0;return}if(d.a==='fling'){onFoot=true;gunOut=false;cock.visible=false;carMesh.visible=true;adminFlingActive=true;adminFlingVel=72;rig.position.y=Math.max(1,rig.position.y);return}if(d.a==='car'){const g=new T.Group(),mat=new T.MeshStandardMaterial({color:0x33383e,metalness:.25,roughness:.7}),body=new T.Mesh(new T.BoxGeometry(2.1,.7,4.2),mat);body.position.y=.65;g.add(body);for(const x of[-1,1])for(const z of[-1.35,1.35]){const w=new T.Mesh(new T.CylinderGeometry(.34,.34,.18,8),new T.MeshStandardMaterial({color:0x111111}));w.rotation.z=Math.PI/2;w.position.set(x,.35,z);g.add(w)}g.position.set(rig.position.x,rig.position.y+12,rig.position.z);scene.add(g);adminDropCars.push({g,vy:0,age:0})}};
 
 function resetItems(){if(mobileBeer){mobileBeer=false;scene.add(passengerBeer.m)}if(mobileHeldWeapon){cam.remove(mobileHeldWeapon.m);scene.add(mobileHeldWeapon.m);mobileHeldWeapon=null}items.forEach((it,i)=>{it.held=false;it.v.set(0,0,0);it.w=0;it.m.rotation.set(0,0,0);if(it.beer){it.seat=true;it.m.position.copy(beerSeatPosition());it.m.rotation.set(0,heading,0);return}if(it.weapon){if(it.m.parent!==scene){it.m.parent.remove(it.m);scene.add(it.m)}it.cool=0;it.m.position.set(town.position.x+22.35,town.position.y+.20,town.position.z-1.15+(it.weapon==='ak'?-.52:.52))}else it.m.position.set(town.position.x+22.5+R(-.2,.2),1.05+it.r,town.position.z-3.3+i*.5)})}
 
@@ -1115,8 +1122,8 @@ function rayT(o,d,c,r){const ox=c.x-o.x,oy=c.y-o.y,oz=c.z-o.z,t=ox*d.x+oy*d.y+oz
 function shoot(){if(!onFoot||!gunOut||dead||menuOpen||sleepT>0||gunCD>0)return;gunCD=.22;const o=new T.Vector3(),d=new T.Vector3();
 if(left&&hand&&gun){hand.updateWorldMatrix(true,true);gun.userData.mz.getWorldPosition(o);const q=new T.Quaternion();hand.getWorldQuaternion(q);d.set(0,0,-1).applyQuaternion(q)}else{cam.getWorldPosition(o);cam.getWorldDirection(d)}
 let best=1e9,tp=null,kind=0;const wp=new T.Vector3();
-for(const e of peds){if(e.st==='fall')continue;wp.copy(e.g.position);for(const hy of[.5,1.1,1.65]){const t=rayT(o,d,wp.set(e.g.position.x,hy,e.g.position.z),.3);if(t<best){best=t;tp=e;kind=1}}}
-for(const e of crowd){if(e.st==='fall')continue;for(const hy of[.5,1.1,1.65]){const t=rayT(o,d,wp.set(e.g.position.x+town.position.x,hy,e.g.position.z+town.position.z),.3);if(t<best){best=t;tp=e;kind=2}}}
+for(const e of peds){if(e.st==='fall')continue;wp.copy(e.g.position);for(const hy of[.5,1.1,1.65]){const t=rayT(o,d,wp.set(e.g.position.x,hy,e.g.position.z),.58);if(t<best){best=t;tp=e;kind=1}}}
+for(const e of crowd){if(e.st==='fall')continue;for(const hy of[.5,1.1,1.65]){const t=rayT(o,d,wp.set(e.g.position.x+town.position.x,hy,e.g.position.z+town.position.z),.58);if(t<best){best=t;tp=e;kind=2}}}
 const len=best<80?best:60;if(tp&&best<80){if(kind===1)flingPed(tp,o);else killPerson(tp,d,true);}
 tracer.visible=true;trT=.05;tracer.position.copy(o).addScaledVector(d,len/2);tracer.scale.z=len;tracer.lookAt(o.x+d.x*len,o.y+d.y*len,o.z+d.z*len);
 if(gun){gun.userData.fl.visible=true;flT=.05}gunShot();buzz(.8,left)}
@@ -1266,11 +1273,13 @@ const mb=[
 [20,246,230,46,()=>'Grab: '+(S.grab?'Grip':'Trigger'),()=>{S.grab=1-S.grab;S.gas=1-S.grab}],
 [262,246,230,46,()=>'Music: '+(bgm?(bgm.paused?'off':'custom'):(musicOn?'on':'off')),()=>{if(bgm){bgm.paused?bgm.play():bgm.pause()}else musicOn=!musicOn}],
 [20,302,472,44,()=>'Driving: '+(selectedDriveMode==='race'?'RACE 2.5 km':'FREE RIDE'),()=>{selectedDriveMode=selectedDriveMode==='free'?'race':'free';$('sDriveMode').value=selectedDriveMode;menuSig=''}],
-[20,356,230,38,()=>'Vol -',()=>setVol(vol-.1)],[262,356,230,38,()=>'Vol +',()=>setVol(vol+.1)]];
-function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.70)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText('ROADLINE VR',256,48);
-mb.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
-g.font='15px sans-serif';g.fillStyle='#c4c7cb';g.fillText('Volume '+Math.round(vol*100)+'%  |  Tap a button with your finger',256,398);ptex.needsUpdate=true}
-function openMenu(){menuOpen=true;menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true)}
+[20,356,472,38,()=>'ADMIN PANEL',()=>{menuPage='admin';menuSig=''}]];
+let menuPage='main';
+const adminMb=[[20,68,472,48,()=>'BACK TO MENU',()=>{menuPage='main';menuSig=''}],[20,126,472,48,()=>'TELEPORT TO NEAREST PLAYER',()=>adminAction('teleport')],[20,190,472,48,()=>'FLING NEAREST PLAYER UP',()=>adminAction('fling')],[20,254,472,48,()=>'DROP CAR ON NEAREST PLAYER',()=>adminAction('car')]];
+function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font='bold 34px sans-serif';g.fillText(menuPage==='admin'?'ADMIN PANEL':'ROADLINE VR',256,48);
+const menuButtons=menuPage==='admin'?adminMb:mb;menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
+g.font='15px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='admin'?'Available to everyone in this room':'Volume '+Math.round(vol*100)+'%  |  Tap a button with your finger',256,398);ptex.needsUpdate=true}
+function openMenu(){menuOpen=true;menuPage='main';menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true)}
 let menuSig='';
 /* Touch screen: the menu floats within arm's reach; poke a button with your fingertip (hand tracking: index finger, controllers: the tip of the hand). No laser pointer. */
 function menuStep(){const tips=[];
@@ -1280,10 +1289,10 @@ function menuStep(){const tips=[];
   tips.push({o,p})}
  panel.updateWorldMatrix(true,false);let h=-1,pressed=false,best=9;const mk2=[dot,dot2];
  tips.forEach((t,k)=>{const lp=panel.worldToLocal(t.p.clone()),dist=lp.z*PS,inside=Math.abs(lp.x)<=.8&&Math.abs(lp.y)<=.655;let hi=-1;
-  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;hi=mb.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
+  if(inside&&dist>-.08&&dist<.12){const X=(lp.x/1.6+.5)*512,Y=(.5-lp.y/1.31)*PH;const activeButtons=menuPage==='admin'?adminMb:mb;hi=activeButtons.findIndex(b=>X>=b[0]&&X<=b[0]+b[2]&&Y>=b[1]&&Y<=b[1]+b[3])}
   const prev=t.o.mPz===undefined?1:t.o.mPz;t.o.mPz=inside?dist:1;
   if(hi>=0&&dist<best){best=dist;h=hi;pressed=dist<.03}
-  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);mb[hi][5]();menuSig=''}
+  if(hi>=0&&prev>.025&&dist<=.025&&Date.now()-menuLast>220){menuLast=Date.now();buzz(.9,t.o);(menuPage==='admin'?adminMb:mb)[hi][5]();menuSig=''}
   else if(hi>=0&&t.o.mHov!==hi)buzz(.25,t.o);
   t.o.mHov=hi;const d=mk2[k];d.position.copy(t.p);d.visible=true;d.material.color.setHex(inside&&dist<.03?0xffffff:0x44ddff)});
  for(let k=tips.length;k<2;k++)mk2[k].visible=false;ray.visible=false;
@@ -1319,6 +1328,7 @@ document.querySelectorAll('[data-game]').forEach(b=>b.addEventListener('click',(
 document.querySelectorAll('[data-play]').forEach(b=>b.addEventListener('click',()=>{selectedPlayType=b.dataset.play;paintMenuChoices()}));
 $('settingsToggle').onclick=()=>{$('settingsPanel').classList.toggle('open');$('settingsToggle').textContent=$('settingsPanel').classList.contains('open')?'SETTINGS ▴':'SETTINGS ▾'};
 $('sDriveMode').onchange=()=>{selectedDriveMode=$('sDriveMode').value};$('playGame').onclick=()=>window.__startSelectedGame&&window.__startSelectedGame($('sDriveMode').value);
+const qLow=$('questLowGraphics');if(qLow){qLow.checked=RL_QUEST1_LOW;qLow.addEventListener('change',()=>{RL_QUEST1_LOW=!!qLow.checked;window.RL_QUEST1_LOW=RL_QUEST1_LOW;roadlineRenderScale=RL_QUEST1_LOW?.48:.8;roadlineApplyRenderScale();if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(RL_QUEST1_LOW?.35:.55);$('menuStatus').textContent=RL_QUEST1_LOW?'Low graphics enabled · reload game to fully apply':'Low graphics disabled · reload game to fully apply';});}
 paintMenuChoices();
 /* ---------- day/night ---------- */
 function lighting(dt){night+=(nightT-night)*Math.min(1,dt*1.5);scene.background.copy(SKY_D).lerp(SKY_N,night);scene.fog.color.copy(scene.background);hemi.intensity=.9-.74*night;sun.intensity=.8-.76*night;stars.material.opacity=C(night*1.4-.3,0,1);stars.position.copy(rig.position);
@@ -1331,22 +1341,22 @@ renderer.setAnimationLoop(()=>{const now=performance.now(),dt=Math.min(.05,(now-
 /* Automatically lower only 3D render resolution on sustained slow frames, and recover gradually. */
 roadlinePerfElapsed+=dt;roadlinePerfFrames++;roadlinePerfSeconds+=dt;
 if(roadlinePerfElapsed>=2){const fps=roadlinePerfFrames/Math.max(.001,roadlinePerfSeconds);let next=roadlineRenderScale;
- if(fps<24)next=Math.max(.55,roadlineRenderScale-.12);else if(fps<35)next=Math.max(.65,roadlineRenderScale-.08);else if(fps>52)next=Math.min(.85,roadlineRenderScale+.025);
+ if(fps<24)next=Math.max(RL_QUEST1_LOW?.32:.55,roadlineRenderScale-.12);else if(fps<35)next=Math.max(RL_QUEST1_LOW?.38:.65,roadlineRenderScale-.08);else if(fps>52&&!RL_QUEST1_LOW)next=Math.min(.85,roadlineRenderScale+.025);
  if(next!==roadlineRenderScale){roadlineRenderScale=next;roadlineApplyRenderScale()}
  roadlinePerfElapsed=0;roadlinePerfFrames=0;roadlinePerfSeconds=0;
 }
 _rlLodTimer-=dt;if(_rlLodTimer<=0){_rlLodTimer=.4;try{rlUpdateModelLOD()}catch(_){}}
 try{if(window.__roadlineLodUpdate)window.__roadlineLodUpdate();if(window.__roadlineHandsUpdate)window.__roadlineHandsUpdate()}catch(_){}
 try{if(window.__mpUpdate)window.__mpUpdate(dt)}catch(_){}
-lighting(dt);if(window.__horrorStep)window.__horrorStep(dt);renderer.render(scene,cam);gunCD-=dt;if(trT>0){trT-=dt;if(trT<=0)tracer.visible=false}if(flT>0){flT-=dt;if(flT<=0&&gun)gun.userData.fl.visible=false}
+lighting(dt);if(adminFlingActive){rig.position.y+=adminFlingVel*dt;adminFlingVel-=18*dt;if(rig.position.y<=0){rig.position.y=0;adminFlingVel=0;adminFlingActive=false}}for(let i=adminDropCars.length-1;i>=0;i--){const d=adminDropCars[i];d.age+=dt;d.vy-=22*dt;d.g.position.y+=d.vy*dt;if(d.g.position.y<=rig.position.y+1.2){d.g.position.y=rig.position.y+1.2;if(!dead)die({speed:22});scene.remove(d.g);adminDropCars.splice(i,1)}else if(d.age>5){scene.remove(d.g);adminDropCars.splice(i,1)}}if(window.__horrorStep)window.__horrorStep(dt);renderer.render(scene,cam);gunCD-=dt;if(trT>0){trT-=dt;if(trT<=0)tracer.visible=false}if(flT>0){flT-=dt;if(flT<=0&&gun)gun.userData.fl.visible=false}
 if(tvOn){tvT-=dt;if(tvT<=0){tvT=.18;const hh=Math.random()*360;tvx.fillStyle='hsl('+hh+',60%,45%)';tvx.fillRect(0,0,128,72);tvx.fillStyle='hsl('+((hh+120)%360)+',70%,60%)';tvx.fillRect(R(0,80),R(0,40),R(20,50),R(15,32));tvx.fillStyle='#fff';tvx.fillRect(0,64,128,8);tvt.needsUpdate=true}tvL.intensity=.8}else if(tvL.intensity>0){tvL.intensity=0;tvx.fillStyle='#050505';tvx.fillRect(0,0,128,72);tvt.needsUpdate=true}
 wheelHeld=0;if(left)left.gp=getGP(left);if(sec)sec.gp=getGP(sec);
-let gas=0,brake=0,target=0;const lgp=left&&left.gp;
+let gas=0,brake=0,target=0;let xHold=0,xDone=0;const lgp=left&&left.gp;
 window.__sprint=!!(onFoot&&((lgp&&lgp.buttons[3]&&lgp.buttons[3].pressed)||(sec&&sec.gp&&sec.gp.buttons[3]&&sec.gp.buttons[3].pressed)||keys.ShiftLeft||keys.ShiftRight));
 if(lgp){const gp=lgp;gas=gp.buttons[S.gas]?gp.buttons[S.gas].value:0;
 const ay=gp.axes[3]!==undefined?gp.axes[3]:(gp.axes[1]||0);brake=ay>.4?ay:0;sx=gp.axes[2]||0;sy=ay;
 const rc2=gp.buttons[3]&&gp.buttons[3].pressed?1:0;if(rc2&&!wasRec&&!onFoot)recenter();wasRec=rc2;
-const rp=gp.buttons[4]&&gp.buttons[4].pressed?1:0;if(rp&&!wasRep)toggleCar();wasRep=rp;
+const rp=gp.buttons[4]&&gp.buttons[4].pressed?1:0;if(rp){xHold+=dt;if(xHold>1&&!xDone){xDone=1;openMenu()}}else{if(xHold>0&&xHold<=1&&!menuOpen)toggleCar();xHold=0;xDone=0}wasRep=rp;
 const ry=gp.buttons[5]&&gp.buttons[5].pressed?1:0;if(ry){yHold+=dt;if(yHold>1&&!yDone&&!menuOpen){yDone=1;openMenu()}}else{if(yHold>0&&yHold<=1&&!menuOpen){if(onFoot)interact();else repair()}yHold=0;yDone=0}
 if(window.__horrorActive&&lgp&&lgp.buttons[0]&&lgp.buttons[0].value>.65&&window.__horrorFire)window.__horrorFire();handStep(left,true,dt);if(sec)handStep(sec,false,dt);if(!wheelHeld)wheelA*=1-Math.min(1,dt*3);
 target=C(-wheelA/1.1,-1,1)}
@@ -2769,7 +2779,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{try{
     if(rig.position.distanceTo(monster.position)<1.65){scareT=2.4;$('horrorJumpscare').style.display='flex';playScream();}
   }
   window.__horrorStep=horrorStep;window.__activateHorror=activateHorror;window.__deactivateHorror=deactivateHorror;window.__hideWorldForMenu=function(){menuWorldHidden=true;normalChildren.forEach(([o])=>o.visible=false);scene.background.set(0x000000);scene.fog=null};
-  window.__startSelectedGame=function(driveMode){selectedDriveMode=driveMode||selectedDriveMode;S.hand=selectedGameMode==='horror'?'left':$('sHand').value;S.gas=+$('sGas').value;S.grab=+$('sGrab').value;if(S.gas===S.grab)S.grab=1-S.gas;try{bind()}catch(_){}synth();menuOpen=false;window.__mainMenuOpen=false;renderer.domElement.style.display='block';$('menu').style.display='none';$('ui').style.display='';$('mp').style.display=selectedPlayType==='multi'?'flex':'none';$('help').style.display=selectedGameMode==='horror'?'none':'block';if(selectedGameMode==='horror')$('help').innerHTML='<b>HORROR MODE:</b> Left stick moves · left trigger fires the AK-47 · flashlight is fixed to your head and cannot be toggled · red radar dot marks the monster (closer dot = closer monster) · if it catches you, survive the jumpscare and you respawn. Choose Horror Mode + Multiplayer on each player to share room1.';else $('help').innerHTML='<b>NORMAL MODE:</b> Existing Roadline VR driving, walking, traffic, NPCs, radio, and vehicle controls. Multiplayer uses the existing room1 server.';if(selectedPlayType==='multi'){if(window.__rlMPJoin)window.__rlMPJoin();}else if(window.__rlMPLeave)window.__rlMPLeave();deactivateHorror();mode=selectedDriveMode||'free';restart();if(selectedGameMode==='horror'){mode='free';activateHorror()}else if(window.__rlMP&&window.__rlMP.joined){window.__rlMP.send('gm',{m:'normal'})}paintMenuChoices();};
+  window.__startSelectedGame=function(driveMode){selectedDriveMode=driveMode||selectedDriveMode;S.hand=selectedGameMode==='horror'?'left':$('sHand').value;S.gas=+$('sGas').value;S.grab=+$('sGrab').value;if(S.gas===S.grab)S.grab=1-S.gas;try{bind()}catch(_){}synth();menuOpen=false;window.__mainMenuOpen=false;renderer.domElement.style.display='block';$('menu').style.display='none';$('ui').style.display='';$('mp').style.display=selectedPlayType==='multi'?'flex':'none';$('help').style.display=selectedGameMode==='horror'?'none':'block';if(selectedGameMode==='horror')$('help').innerHTML='<b>HORROR MODE:</b> Left stick moves · left trigger fires the AK-47 · flashlight is fixed to your head and cannot be toggled · red radar dot marks the monster (closer dot = closer monster) · if it catches you, survive the jumpscare and you respawn. Choose Horror Mode + Multiplayer on each player to share room1.';else $('help').innerHTML='<b>NORMAL MODE:</b> Existing Roadline VR driving, walking, traffic, NPCs, radio, and vehicle controls. Multiplayer uses the existing room1 server.';if(selectedPlayType==='multi'){if(window.__rlMPJoin)window.__rlMPJoin();}else if(window.__rlMPLeave)window.__rlMPLeave();const nextMode=selectedGameMode==='horror'?'horror':'normal',nextDrive=selectedGameMode==='horror'?'free':(selectedDriveMode||'free');const needsFreshStart=!window.__roadlineStarted||window.__roadlineLastMode!==nextMode||window.__roadlineLastDrive!==nextDrive;if(needsFreshStart){deactivateHorror();mode=nextDrive;restart();if(nextMode==='horror'){mode='free';activateHorror()}else if(window.__rlMP&&window.__rlMP.joined){window.__rlMP.send('gm',{m:'normal'})}window.__roadlineStarted=true;window.__roadlineLastMode=nextMode;window.__roadlineLastDrive=nextDrive;}paintMenuChoices();};
   // In horror mode, a sustained left trigger fires full-auto; no hand-switch can override the left-hand lock.
   const _oldLighting=lighting;lighting=function(dt){if(menuWorldHidden){scene.background.set(0x000000);scene.fog=null;hemi.intensity=0;sun.intensity=0;headL.intensity=0;return}if(horrorActive){scene.background.set(0x010204);scene.fog.color.set(0x010204);hemi.intensity=0;sun.intensity=0;headL.intensity=0;return}_oldLighting(dt)};
   // Use the existing left controller's trigger as the automatic rifle trigger.
@@ -3083,7 +3093,7 @@ async function join(){
  const ch=sb.channel('roadline-'+rm,{config:{broadcast:{self:false},presence:{key:me}}});MP.ch=ch;
  const Hd={rd:d=>{if(typeof d.r==='number'&&d.r>=-1&&d.r<3)radioOf.set(d.i,d.r|0)},vo:onVO,s:onS,w:applyW,k:onK,wf:onWF,ig:onIG,ir:onIR,nh:onNH,nd:onND,cd:onCD,ce:onCE,cp:onCP,ws:onWS,
   cr:d=>{const p=peers.get(d.i);if(p)resetCar(p)},wc:applyWorld,rq:()=>{if(MP.host)setTimeout(sendWS,300)},
-  rob:d=>{try{V5.remRob(d.v)}catch(e){}},bag:d=>{try{V5.remBag(d.b)}catch(e){}}};
+  rob:d=>{try{V5.remRob(d.v)}catch(e){}},bag:d=>{try{V5.remBag(d.b)}catch(e){}},ad:d=>{try{window.__rlAdminReceive&&window.__rlAdminReceive(d)}catch(e){}}};
  Object.keys(Hd).forEach(ev=>ch.on('broadcast',{event:ev},m=>{try{const d=m&&m.payload;if(d&&typeof d.i==='string'&&d.i!==me)Hd[ev](d)}catch(e){console.error('mp',ev,e)}}));
  ch.on('presence',{event:'sync'},calcHost);
  ch.on('presence',{event:'join'},()=>{if(MP.host)setTimeout(sendWS,700)});
