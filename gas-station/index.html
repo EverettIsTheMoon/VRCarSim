@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Night Shift — WebXR Gas Station</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif}*{box-sizing:border-box}body{margin:0;background:#101820;color:#f5f7fa}#hud{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;pointer-events:none;z-index:2}.panel{background:#101820d9;border:1px solid #ffffff25;border-radius:12px;padding:10px 13px;backdrop-filter:blur(8px);font-size:13px;line-height:1.4;max-width:360px}.panel strong{color:#ffd166}#order{font-size:15px}#status{color:#bde0fe}#start{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(140deg,#132c35ee,#101820f5);z-index:4;padding:22px}#start .card{max-width:560px;text-align:center;background:#1d3039;border:1px solid #ffffff25;border-radius:22px;padding:28px;box-shadow:0 20px 80px #0007}h1{font-size:clamp(28px,5vw,48px);margin:0 0 8px}p{line-height:1.55;color:#d1dde3}button{border:0;border-radius:12px;padding:13px 18px;font-weight:750;font-size:16px;cursor:pointer;background:#ffd166;color:#17242a}button:focus-visible{outline:3px solid white;outline-offset:3px}.small{font-size:12px;color:#b5c5cc}#crosshair{position:fixed;left:50%;top:50%;width:12px;height:12px;border:2px solid #fff9;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:1}#mobile{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:3}#mobile button{font-size:13px;padding:10px 12px;background:#243b46;color:white;border:1px solid #ffffff35}@media(min-width:900px){#mobile{display:none}}
+</style>
+</head>
+<body>
+<div id="hud">
+ <div class="panel"><strong>NIGHT SHIFT</strong><br>Cash: $<span id="cash">0</span> · Served: <span id="served">0</span> · Missed: <span id="missed">0</span></div>
+ <div class="panel" id="order">Next customer is on the way…</div>
+ <div class="panel" id="status">Loading the station…</div>
+</div>
+<div id="crosshair"></div>
+<div id="mobile"><button id="serveBtn">Serve selected item</button><button id="grabBtn">Grab / drop</button><button id="shootBtn">Foam blaster</button></div>
+<div id="start"><div class="card"><h1>⛽ Night Shift</h1><p>Run a tiny late-night gas station in hand-tracked VR. Grab snacks and drinks by pinching your thumb and index finger together. Put the customer's requested item on the counter to serve them. A harmless foam blaster is tucked beside the register for arcade-style target practice.</p><p><b>Quest / WebXR:</b> open in the headset browser, allow hand tracking, then enter VR. Desktop fallback: click items to grab/drop, click the blaster to fire, and use the buttons below.</p><button id="begin">Start shift</button><p class="small">Best in a WebXR-compatible browser over HTTPS. Hand tracking depends on headset/browser support.</p></div></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91b8c7);scene.fog=new THREE.Fog(0x91b8c7,14,32);
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.05,80);camera.position.set(0,1.62,4.8);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.xr.enabled=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xdcefff,0x4a3c30,2.0));const sun=new THREE.DirectionalLight(0xffe2b1,2.5);sun.position.set(-3,7,5);sun.castShadow=true;scene.add(sun);
+const mat=(color,roughness=.78)=>new THREE.MeshStandardMaterial({color,roughness});
+const materials={floor:mat(0x48545a),wall:mat(0xd5d0bc),red:mat(0xd94b40),blue:mat(0x2f7f9d),wood:mat(0x8e6746),white:mat(0xf0eee4),black:mat(0x20282b),green:mat(0x68a86d),yellow:mat(0xffcf56),glass: new THREE.MeshStandardMaterial({color:0x8ed5e8,transparent:true,opacity:.23,roughness:.2}),skin:mat(0xc98c68),dark:mat(0x34323e),can:mat(0x58b6c9),snack:mat(0xe4a33b)};
+function box(w,h,d,m,x,y,z,shadow=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=shadow;o.receiveShadow=true;scene.add(o);return o}
+function cyl(r1,r2,h,m,x,y,z,seg=16){const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,seg),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
+box(30,.2,30,materials.floor,0,-.12,0);box(12,3.5,.25,materials.wall,0,1.65,-4.5);box(.25,3.5,9,materials.wall,-6,1.65,0);box(.25,3.5,9,materials.wall,6,1.65,0);
+box(12,.25,.4,materials.red,0,3.1,-4.45);box(3,.45,.1,materials.white,0,2.8,-4.29).material=mat(0x132d38);
+box(2.8,.15,2.5,materials.wood,-3.9,1.2,-1.5);box(2.8,.15,2.5,materials.wood,3.9,1.2,-1.5);
+box(3.6,1.05,.9,materials.wood,0,.62,-.15);box(3.65,.08,.95,materials.white,0,1.18,-.15);
+box(1.1,.18,.7,materials.black,-.9,1.31,-.15);box(.9,.12,.55,materials.green,-.9,1.43,-.15);
+box(.8,.65,.08,materials.black,-.9,1.5,-.48);box(.7,.52,.04,materials.green,-.9,1.52,-.425);
+for(let i=0;i<4;i++){box(1.0,.08,.48,materials.black,-4.65,.75,-2.1+i*.62);for(let j=0;j<3;j++)box(.17,.2,.17,[materials.red,materials.yellow,materials.green,materials.blue][(i+j)%4],-5.02+j*.28,.88,-2.1+i*.62)}
+// drink fridge and visible shelves
+box(1.4,2.35,.65,materials.blue,4.75,1.2,-3.65);box(1.18,2.05,.06,materials.glass,4.75,1.25,-3.28);
+for(let y of [.62,1.15,1.68,2.18]){box(1.1,.055,.45,materials.white,4.75,y,-3.5);for(let i=0;i<4;i++)cyl(.09,.09,.3,[materials.red,materials.can,materials.green,materials.yellow][(i+Math.round(y*10))%4],4.36+i*.25,y+.17,-3.48,12)}
+// product objects are physical, grabbable meshes
+const items=[];let selected=null,held=null,handed=false;
+function product(name,color,x,y,z,type='box'){let o;if(type==='banana'){o=new THREE.Group();const curve=new THREE.TorusGeometry(.17,.055,8,18,Math.PI*1.25);const arc=new THREE.Mesh(curve,mat(color));arc.rotation.z=-.5;o.add(arc);o.position.set(x,y,z);scene.add(o)}else if(type==='can'){o=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(.105,.105,.3,16),mat(color));o.add(c);const top=new THREE.Mesh(new THREE.CircleGeometry(.085,16),mat(0xc9d6d8));top.rotation.x=-Math.PI/2;top.position.y=.151;o.add(top);o.position.set(x,y,z);scene.add(o)}else{o=box(.2,.25,.12,mat(color),x,y,z)}
+o.userData={isItem:true,name,home:new THREE.Vector3(x,y,z),held:false};items.push(o);return o}
+product('Banana',0xf4d448,-4.6,.99,-2.1,'banana');product('Granola bar',0x9a5932,-4.25,.97,-2.1);product('Chips',0xe2a22e,-3.95,.97,-2.1);product('Cola',0xd84535,4.25,.88,-3.48,'can');product('Water',0x64b9e7,4.55,.88,-3.48,'can');product('Energy drink',0x9ad34e,4.85,.88,-3.48,'can');product('Juice',0xffa74e,5.15,.88,-3.48,'can');
+const blaster=new THREE.Group();const bm=mat(0x293844),orange=mat(0xff7b38);let b1=new THREE.Mesh(new THREE.BoxGeometry(.18,.15,.48),bm);b1.position.z=-.08;blaster.add(b1);let b2=new THREE.Mesh(new THREE.CylinderGeometry(.045,.055,.23,12),orange);b2.rotation.x=Math.PI/2;b2.position.z=-.36;blaster.add(b2);blaster.position.set(.75,1.3,-.2);scene.add(blaster);blaster.userData.isBlaster=true;
+const customers=[];const orderEl=$('order');let cash=0,served=0,missed=0,spawnTimer=1.8,gameStarted=false;
+const orderNames=['Banana','Granola bar','Chips','Cola','Water','Energy drink','Juice'];
+function customer(){const name=orderNames[Math.floor(Math.random()*orderNames.length)];const g=new THREE.Group();const skin=new THREE.Mesh(new THREE.SphereGeometry(.19,14,12),materials.skin);skin.position.y=1.48;g.add(skin);const body=new THREE.Mesh(new THREE.BoxGeometry(.45,.65,.27),[materials.red,materials.blue,materials.green,materials.dark][Math.floor(Math.random()*4)]);body.position.y=.95;g.add(body);for(let x of [-.13,.13]){const leg=new THREE.Mesh(new THREE.BoxGeometry(.13,.48,.15),materials.dark);leg.position.set(x,.38,0);g.add(leg)}const hair=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8,0,Math.PI*2,0,Math.PI*.55),materials.dark);hair.position.y=1.57;g.add(hair);g.position.set((Math.random()-.5)*1.2,0,-3.05);g.userData={order:name,age:0,served:false,phase:'arrive',startX:g.position.x};scene.add(g);customers.push(g);orderEl.textContent='Customer wants: '+name+' · put it on the counter';}
+function updateHud(){ $('cash').textContent=cash;$('served').textContent=served;$('missed').textContent=missed; }
+function setStatus(s){$('status').textContent=s}
+function serve(){const c=customers.find(c=>!c.userData.served);if(!c){setStatus('No customer waiting. Grab a snack or try the foam blaster.');return}const candidate=held||selected;if(candidate&&candidate.userData?.isItem&&candidate.userData.name===c.userData.order){c.userData.served=true;cash+=5;served++;orderEl.textContent='Order complete! +$5. Next customer soon.';setStatus('Perfect! '+candidate.userData.name+' served.');c.userData.phase='leave';if(held){held.userData.held=false;held=null}candidate.position.set(0,1.28,-.2);setTimeout(()=>{if(candidate.parent)candidate.position.copy(candidate.userData.home)},650);updateHud()}else{setStatus(candidate?.userData?.name?'They asked for '+c.userData.order+'. You offered '+candidate.userData.name+'.':'Pinch and grab the item they ordered, then place it on the counter.')}} 
+function fire(){const origin=camera.position.clone();const dir=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);const ray=new THREE.Raycaster(origin,dir,0,15);const hits=[];customers.forEach(c=>{if(c.userData.phase!=='leave'){c.traverse(o=>{if(o.isMesh)hits.push(o)})}});const hit=ray.intersectObjects(hits,false)[0];if(hit){let c=customers.find(c=>{let found=false;c.traverse(o=>{if(o===hit.object)found=true});return found});if(c){c.userData.phase='leave';setStatus('Foam dart hit! Customer does a silly spin and exits.');cash=Math.max(0,cash-1);updateHud();const t=c;const spin=()=>{if(!t.parent)return;t.rotation.y+=.16;t.position.z+=.025;if(t.position.z>1){scene.remove(t);const i=customers.indexOf(t);if(i>=0)customers.splice(i,1)}else requestAnimationFrame(spin)};spin();return}}setStatus('Pfft! Foam dart launched. Try aiming at a customer.')}
+function pickAt(clientX,clientY){const r=renderer.domElement.getBoundingClientRect();const ndc=new THREE.Vector2((clientX-r.left)/r.width*2-1,-((clientY-r.top)/r.height)*2+1);const ray=new THREE.Raycaster();ray.setFromCamera(ndc,camera);const all=[...items,blaster];const hit=ray.intersectObjects(all,true)[0];if(hit){let obj=hit.object;while(obj.parent&&obj!==blaster&&!obj.userData.isItem)obj=obj.parent;if(obj.userData.isItem){if(held){held.userData.held=false;held.position.copy(held.userData.home)}held=obj;selected=obj;obj.userData.held=true;setStatus('Holding '+obj.userData.name+'. Serve it if it matches.')}else if(obj===blaster||obj.parent===blaster)fire()}}
+renderer.domElement.addEventListener('pointerdown',e=>{if(!gameStarted)return;pickAt(e.clientX,e.clientY)});
+$('serveBtn').addEventListener('click',serve);$('grabBtn').addEventListener('click',()=>{if(held){held.userData.held=false;held.position.copy(held.userData.home);held=null;setStatus('Item returned to shelf.')}else if(selected){held=selected;held.userData.held=true;setStatus('Holding '+held.userData.name)}else setStatus('Click a product to grab it.')});$('shootBtn').addEventListener('click',fire);
+$('begin').addEventListener('click',async()=>{gameStarted=true;$('start').style.display='none';if(navigator.xr){try{const ok=await navigator.xr.isSessionSupported('immersive-vr');if(ok){const button=renderer.xr.getSession()?null:document.createElement('button');if(button){button.textContent='Enter VR';button.style.cssText='position:fixed;bottom:18px;right:18px;z-index:5';button.onclick=async()=>{try{const session=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['hand-tracking','local-floor']});await renderer.xr.setSession(session);button.remove();setStatus('VR active — pinch thumb + index to grab.')}catch(e){setStatus('Could not start VR: '+e.message)}};document.body.appendChild(button)}}}catch(e){}}customer();spawnTimer=10;setStatus('Shift started! Customers arrive about every 10 seconds.');});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+const handRays=[];const handStates=new Map();const jointTmp=new THREE.Vector3();
+function dist(a,b){return a.distanceTo(b)}
+renderer.xr.addEventListener('sessionstart',()=>setStatus('VR active. Pinch thumb + index finger to grab; release to drop.'));
+function handInput(){const session=renderer.xr.getSession();if(!session)return;for(const source of session.inputSources){if(!source.hand)continue;const hand=source.hand;const thumb=hand.get('thumb-tip'),index=hand.get('index-finger-tip'),wrist=hand.get('wrist');if(!thumb||!index)continue;const frame=renderer.xr.getFrame();if(!frame)continue;const a=frame.getJointPose(thumb,renderer.xr.getReferenceSpace()),b=frame.getJointPose(index,renderer.xr.getReferenceSpace());if(!a||!b)continue;const p1=new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().fromArray(a.transform.matrix));const p2=new THREE.Vector3().setFromMatrixPosition(new THREE.Matrix4().fromArray(b.transform.matrix));const mid=p1.clone().add(p2).multiplyScalar(.5);const pinch=p1.distanceTo(p2)<.035;const was=handStates.get(source)||false;
+if(pinch&&!was){let nearest=null,nd=.23;for(const item of [...items,blaster]){const d=item.getWorldPosition(new THREE.Vector3()).distanceTo(mid);if(d<nd){nearest=item;nd=d}}if(nearest?.userData.isItem){if(held&&held!==nearest){held.userData.held=false;held.position.copy(held.userData.home)}held=nearest;selected=nearest;held.userData.held=true;setStatus('Pinching: '+nearest.userData.name)}else if(nearest===blaster){fire()}}
+if(!pinch&&was&&held){held.userData.held=false;held=null;setStatus('Dropped item. Place the correct product on the counter and use Serve.')}
+handStates.set(source,pinch);
+if(pinch&&held){held.position.lerp(mid,.72);held.position.z-=.03}
+}}
+const clock=new THREE.Clock();
+function animate(){const dt=Math.min(clock.getDelta(),.05);if(gameStarted){spawnTimer-=dt;if(spawnTimer<=0){if(customers.filter(c=>c.userData.phase!=='leave').length<2)customer();spawnTimer=10}
+for(let i=customers.length-1;i>=0;i--){const c=customers[i];c.userData.age+=dt;if(c.userData.phase==='arrive'){c.position.z=Math.min(-1.25,c.position.z+dt*.65);if(c.position.z>=-1.26)c.userData.phase='wait'}else if(c.userData.phase==='wait'&&c.userData.age>18){c.userData.phase='leave';missed++;updateHud();orderEl.textContent='Customer left! Next customer soon.';setStatus('Customer got tired of waiting. Try to serve faster.')}else if(c.userData.phase==='leave'&&c.position.z<2){c.position.z+=dt*1.25;if(c.position.z>=1.9){scene.remove(c);customers.splice(i,1)}}}
+if(held){const forward=new THREE.Vector3(0,0,-.6).applyQuaternion(camera.quaternion);held.position.copy(camera.position).add(forward);held.position.y-=.12;held.position.x+=.12}
+handInput()}
+renderer.render(scene,camera)}
+renderer.setAnimationLoop(animate);
+</script>
+</body>
+</html>
