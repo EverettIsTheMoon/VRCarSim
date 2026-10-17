@@ -55,12 +55,12 @@
   <div class="menuCard">
     <div class="tiny">After-hours security training // prototype A-07</div>
     <h1>Five Nights<br>at Freddy's<span>Night Shift // WebXR</span></h1>
-    <p class="menuCopy">The restaurant is closed. The power grid is unstable. The animatronics are moving where nobody left them. Explore the building, test the security shutters, and watch their patrols. This build is for movement testing: <b>they will not chase, attack, or kill you.</b></p>
+    <p class="menuCopy">The restaurant is closed. The power grid is unstable. Four animatronics patrol different rooms and sometimes stop at a security door. Use the head-mounted flashlight to explore. If one waits at an open door, close that shutter within 10 seconds or the night ends.</p>
     <div class="menuButtons">
       <button id="startButton" class="bigButton" type="button">START NIGHT</button>
       <button id="menuVrButton" class="bigButton secondary" type="button">START IN VR</button>
     </div>
-    <p class="warning">VR: use the <b>left controller only</b>. Left stick moves; point at a door panel and press the left trigger to use it. Head movement aims your view. Desktop test: WASD move, mouse-look after clicking the scene, click door controls to test. Use in a secure context (HTTPS) for WebXR.</p>
+    <p class="warning">VR: use the <b>left controller only</b>. Left stick moves; point at a door panel and press the left trigger. Your head-mounted flashlight follows your view. Desktop: WASD, mouse-look, click panels, or press 1/2 for shutters. WebXR requires HTTPS.</p>
   </div>
 </div>
 <div id="notice" aria-live="polite"></div>
@@ -81,6 +81,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
 
   let renderer, scene, camera, playerRig, clock;
   let started = false, activeSession = null, audioCtx = null, humGain = null;
+  let gameOver = false, gameOverPanel = null, gameOverBoard = null, restartTarget = null;
   let noticeTimer = 0, randomCreakTimer = 9, lastStepSound = 0, timeSinceStart = 0;
   const roomColliders = [];
   const interactiveMeshes = [];
@@ -129,7 +130,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = 1.18;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.xr.enabled = true;
@@ -137,7 +138,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x030407);
-    scene.fog = new THREE.FogExp2(0x05060a, 0.023);
+    scene.fog = new THREE.FogExp2(0x090a0d, 0.013);
     camera = new THREE.PerspectiveCamera(76, window.innerWidth / window.innerHeight, 0.06, 95);
     camera.rotation.order = 'YXZ';
     playerRig = new THREE.Group();
@@ -147,9 +148,19 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     camera.position.set(0, 1.65, 0);
     clock = new THREE.Clock();
 
-    const hemi = new THREE.HemisphereLight(0x79849c, 0x101013, 0.42);
+    // Head-mounted flashlight: the beam follows the camera, including the tracked Quest headset pose.
+    const headlamp = new THREE.SpotLight(0xffe2bd, 9.0, 26, Math.PI / 6.2, 0.62, 1.35);
+    headlamp.position.set(0, -0.08, -0.16);
+    headlamp.castShadow = false;
+    const headlampTarget = new THREE.Object3D();
+    headlampTarget.position.set(0, 0, -14);
+    camera.add(headlamp);
+    camera.add(headlampTarget);
+    headlamp.target = headlampTarget;
+
+    const hemi = new THREE.HemisphereLight(0x9daac2, 0x28232a, 1.05);
     scene.add(hemi);
-    const moon = new THREE.DirectionalLight(0x65708b, 0.42);
+    const moon = new THREE.DirectionalLight(0x8b91a4, 0.58);
     moon.position.set(-12, 18, 8);
     moon.castShadow = true;
     moon.shadow.mapSize.set(1024, 1024);
@@ -357,8 +368,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     createControlPanel('left',-4.56,-1.05,Math.PI/2);
     createControlPanel('right',4.56,-1.05,-Math.PI/2);
     // Office flicker light.
-    hallLights.office=addPointLight(0xffd8af,2.6,10,0,2.75,0.15);
-    addBox(0,.08,.8,0,2.98,.15,new THREE.MeshStandardMaterial({color:0x5d4e47,emissive:0x25130d,emissiveIntensity:.7}),{castShadow:false});
+    hallLights.office=addPointLight(0xffd8af,5.8,15,0,2.72,0.15);
+    addPointLight(0xffd7b0,2.4,8,-2.65,2.62,1.25);
+    addPointLight(0xffd7b0,2.4,8,2.65,2.62,1.25);
+    addBox(0,.08,.8,0,2.98,.15,new THREE.MeshStandardMaterial({color:0x8b7561,emissive:0x4d2e1d,emissiveIntensity:1.25}),{castShadow:false});
   }
   function createDoor(side,x,z) {
     const metalDoorMat=new THREE.MeshStandardMaterial({color:0x34363b,metalness:.82,roughness:.42});
@@ -498,7 +511,9 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
     mesh.castShadow=true;return mesh;
   }
   function createAnimatronic(name, kind, colors, route, speed) {
-    const root=new THREE.Group();scene.add(root);
+    const root=new THREE.Group();
+    root.position.set(route[0][0], 0, route[0][1]);
+    scene.add(root);
     const fur=new THREE.MeshStandardMaterial({color:colors.fur,roughness:.93,metalness:.1});
     const darkFur=new THREE.MeshStandardMaterial({color:colors.dark||0x252026,roughness:.86,metalness:.25});
     const metal=new THREE.MeshStandardMaterial({color:colors.metal||0x4e4d4f,metalness:.8,roughness:.4});
@@ -561,22 +576,23 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
       const bolt=new THREE.Mesh(new THREE.SphereGeometry(.045,6,5),metal);bolt.position.set(s*.37,1.36,.22);body.add(bolt);
       const plate=new THREE.Mesh(new THREE.BoxGeometry(.12,.26,.04),metal);plate.position.set(s*.37,.95,.3);body.add(plate);
     }
-    const state={name,kind,root,body,headPivot,armL,armR,legL,legR,route,speed,waypoint:0,pause:Math.random()*1.4,phase:Math.random()*8,baseY:0};
+    const state={name,kind,root,body,headPivot,armL,armR,legL,legR,route,speed,waypoint:route.length>1?1:0,pause:Math.random()*.45,phase:Math.random()*8,baseY:0,doorSide,behavior:'patrol',doorTimer:0,hudTick:0};
     scene.add(root);monsters.push(state);return state;
   }
   function addAnimatronics() {
+    // Each route starts in a separate room/wing. Door markers sit on the corridor side of each shutter.
     createAnimatronic('Freddy','bear',{fur:0x554039,dark:0x282125,metal:0x514c4b,muzzle:0x987e68},[
-      [0,-23], [0,-16.5], [0,-10], [0,-5.8], [-2.3,-2.5], [-5.7,0], [-11,0], [-17.5,0], [-11,0], [-5.7,0], [-2.3,-2.5], [0,-8]
-    ],.52);
+      [0,-23], [0,-16.5], [0,-10], [0,-5.8], [-2.3,-2.5], [-5.8,0], [-11,0], [-17.5,0], [-11,0], [-5.8,0], [-2.3,-2.5], [0,-8]
+    ],.52,'left');
     createAnimatronic('Bonnie','rabbit',{fur:0x3f5265,dark:0x202b37,metal:0x4d565f,muzzle:0x82909c},[
-      [13,-7], [14,-4], [17,0], [12,0], [7,0], [5.5,-.35], [3.3,-2.2], [0,-7], [0,-14], [0,-21], [0,-14], [5,-14], [14,-14], [15,-9]
-    ],.62);
+      [13,-7], [14,-4], [17,0], [12,0], [7,0], [5.8,0], [7,0], [12,0], [17,0], [17,-5], [15,-9], [14,-14], [5,-14], [0,-14], [0,-21], [0,-14], [5,-14], [14,-14], [15,-9]
+    ],.62,'right');
     createAnimatronic('Chica','bird',{fur:0x8b7135,dark:0x4b3d27,metal:0x62605a,muzzle:0xb5a067},[
-      [-14,-6], [-14,-11.8], [-14,-14.5], [-7,-14.5], [0,-14.5], [0,-17], [0,-23], [-6,-23], [-6,-19], [-6,-14.5], [-14,-14.5], [-14,-6]
-    ],.43);
+      [-14,-6], [-14,-11.8], [-14,-14.5], [-7,-14.5], [0,-14.5], [0,-17], [0,-23], [-6,-23], [-6,-19], [-6,-14.5], [-14,-14.5], [-14,-6], [-14,-2.4], [-10,0], [-7,0], [-5.8,0], [-7,0], [-10,0], [-14,-2.4]
+    ],.43,'left');
     createAnimatronic('Endoskeleton','endo',{fur:0x45474a,dark:0x111215,metal:0x74777a,muzzle:0x393b3e},[
-      [14,-9], [17,-11], [17,-5], [17,0], [12,0], [12,-4], [14,-9], [17,-11], [14,-12], [12,-8]
-    ],.34);
+      [14,-9], [17,-11], [17,-5], [17,0], [12,0], [7,0], [5.8,0], [7,0], [12,0], [17,0], [17,-5], [14,-9], [14,-12], [12,-8]
+    ],.34,'right');
   }
 
   function wireControls() {
@@ -616,9 +632,120 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
   }
   function startGame() {
     if(started)return;
+    gameOver = false;
     started=true;menu.classList.add('hidden');
-    setStatus('NIGHT 01 // BUILDING ONLINE','ANIMATRONIC TRACKING: ACTIVE<br>THREAT AI: DISABLED · SHUTTERS: OPEN');
-    startAudio();showNotice('NIGHT SHIFT ACTIVE · MOVEMENT TEST ONLY',3000);
+    setStatus('NIGHT 01 // BUILDING ONLINE','ANIMATRONIC PATROLS: ACTIVE<br>HEADLAMP: ON · SHUTTERS: OPEN');
+    startAudio();showNotice('NIGHT SHIFT ACTIVE · CLOSE A DOOR IF A MONSTER WAITS THERE',3600);
+  }
+
+  function makeGameOverTexture(monsterName) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 768; canvas.height = 600;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#08090d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(150,24,34,.12)';
+    for (let y = 0; y < 600; y += 6) ctx.fillRect(0, y, 768, 2);
+    ctx.strokeStyle = '#aa2935'; ctx.lineWidth = 10; ctx.strokeRect(10, 10, 748, 580);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '900 49px monospace'; ctx.fillStyle = '#f0e1dd'; ctx.fillText('SHIFT TERMINATED', 384, 110);
+    ctx.font = '900 39px monospace'; ctx.fillStyle = '#e34a55'; ctx.fillText(monsterName.toUpperCase() + ' GOT YOU', 384, 214);
+    ctx.font = 'bold 23px monospace'; ctx.fillStyle = '#c8c4c7'; ctx.fillText('THE SHUTTER STAYED OPEN FOR 10 SECONDS', 384, 305);
+    ctx.font = '21px monospace'; ctx.fillStyle = '#a9abb3'; ctx.fillText('Close the correct door before time runs out.', 384, 365);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }
+
+  function makeRestartTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#741620'; ctx.fillRect(0, 0, 512, 128);
+    ctx.strokeStyle = '#f0787f'; ctx.lineWidth = 7; ctx.strokeRect(4, 4, 504, 120);
+    ctx.font = '900 42px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff0ec'; ctx.fillText('RESTART NIGHT', 256, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }
+
+  function createGameOverPanel() {
+    gameOverPanel = new THREE.Group();
+    gameOverPanel.position.set(0, 0, -2.35);
+    camera.add(gameOverPanel);
+    gameOverBoard = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.72, 1.35),
+      new THREE.MeshBasicMaterial({ color: 0x120d12, side: THREE.DoubleSide, depthTest: false })
+    );
+    gameOverPanel.add(gameOverBoard);
+    restartTarget = new THREE.Mesh(
+      new THREE.PlaneGeometry(.86, .235),
+      new THREE.MeshBasicMaterial({ map: makeRestartTexture(), side: THREE.DoubleSide, depthTest: false })
+    );
+    restartTarget.position.set(0, -.49, .014);
+    restartTarget.userData = { action: restartShift, label: 'RESTART NIGHT' };
+    gameOverPanel.add(restartTarget);
+    interactiveMeshes.push(restartTarget);
+    gameOverPanel.visible = false;
+    restartTarget.visible = false;
+  }
+
+  function triggerGameOver(monster) {
+    if (gameOver || !started) return;
+    gameOver = true;
+    started = false;
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
+    if (gameOverBoard && gameOverBoard.material) {
+      if (gameOverBoard.material.map) gameOverBoard.material.map.dispose();
+      gameOverBoard.material.map = makeGameOverTexture(monster.name);
+      gameOverBoard.material.needsUpdate = true;
+    }
+    if (gameOverPanel) gameOverPanel.visible = true;
+    if (restartTarget) restartTarget.visible = true;
+    setStatus('SHIFT TERMINATED', monster.name.toUpperCase() + ' GOT YOU<br>THE SHUTTER STAYED OPEN FOR 10 SECONDS');
+    showNotice(monster.name.toUpperCase() + ' GOT INSIDE. THE NIGHT IS OVER.', 5000);
+
+    // DOM retry is the desktop fallback; the camera-mounted panel also works in immersive VR.
+    const card = menu.querySelector('.menuCard');
+    if (card) {
+      card.innerHTML = '<div class="tiny">Security incident // shift failed</div><h1>Shift<br>Terminated<span>Night Shift</span></h1><p class="menuCopy">An animatronic waited at an open door for more than 10 seconds. Watch the warning and close the matching shutter before the countdown ends.</p><div class="menuButtons"><button id="retryNightButton" class="bigButton" type="button">RETRY NIGHT</button></div><p class="warning">In VR, point the left controller at the RESTART NIGHT panel and press the left trigger. The right controller is not used.</p>';
+      const retryButton = $('retryNightButton');
+      if (retryButton) retryButton.addEventListener('click', restartShift);
+    }
+    menu.classList.remove('hidden');
+    playTone(48, .8, .055, 'sawtooth');
+  }
+
+  function restartShift() {
+    gameOver = false;
+    started = true;
+    menu.classList.add('hidden');
+    if (gameOverPanel) gameOverPanel.visible = false;
+    if (restartTarget) restartTarget.visible = false;
+    playerRig.position.set(0, 0, 1.1);
+    camera.position.set(0, renderer.xr.isPresenting ? 0 : 1.65, 0);
+    camera.rotation.set(0, 0, 0, 'YXZ');
+    desktopYaw = 0; desktopPitch = 0;
+    for (const side of ['left', 'right']) {
+      const d = doors[side];
+      d.closed = false; d.currentY = 3.25; d.targetY = 3.25; d.group.position.y = 3.25;
+      if (hallLights[side]) { hallLights[side].userData.on = false; hallLights[side].intensity = 0; }
+      updateControlVisuals(side);
+    }
+    for (const m of monsters) {
+      m.root.position.set(m.route[0][0], 0, m.route[0][1]);
+      m.root.rotation.set(0, 0, 0);
+      m.waypoint = m.route.length > 1 ? 1 : 0;
+      m.pause = .15 + Math.random() * .3;
+      m.phase = Math.random() * 8;
+      m.body.position.set(0, 0, 0);
+      m.behavior = 'patrol'; m.doorTimer = 0; m.hudTick = 0;
+    }
+    totalSteps = 0; lastStepSound = 0; timeSinceStart = 0;
+    randomCreakTimer = 7 + Math.random() * 5;
+    startAudio();
+    setStatus('NIGHT 01 // BUILDING ONLINE','ANIMATRONIC PATROLS: ACTIVE<br>HEADLAMP: ON · SHUTTERS: OPEN');
+    showNotice('NEW SHIFT STARTED · WATCH BOTH DOORS', 2800);
   }
   async function checkXRSupport() {
     const button=$('vrToggle');
@@ -734,27 +861,98 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
       if(Math.abs(diff)>.045 && Math.random()<.04)playTone(70+Math.random()*20,.025,.003,'square');
     }
   }
+  function isDoorWaypoint(monster, target) {
+    if (!target || !monster.doorSide) return false;
+    const doorX = monster.doorSide === 'left' ? -5.8 : 5.8;
+    return Math.abs(target[0] - doorX) < 0.55 && Math.abs(target[1]) < 0.9;
+  }
+
   function updateMonsters(dt) {
-    for(const m of monsters){
-      m.phase+=dt;
-      if(m.pause>0){m.pause-=dt; m.body.position.y=Math.sin(m.phase*2)*.018;}
-      else {
-        const target=m.route[m.waypoint];
-        const dx=target[0]-m.root.position.x,dz=target[1]-m.root.position.z;
-        const dist=Math.hypot(dx,dz);
-        if(dist<.18){m.waypoint=(m.waypoint+1)%m.route.length;m.pause=.18+Math.random()*.95;}
-        else {
-          const step=Math.min(dist,m.speed*dt);
-          m.root.position.x+=dx/dist*step;m.root.position.z+=dz/dist*step;
-          m.root.rotation.y=Math.atan2(dx,dz);
-          m.body.position.y=.035+Math.abs(Math.sin(m.phase*5.2))*.035;
+    if (!started || gameOver) return;
+    for (const m of monsters) {
+      m.phase += dt;
+      let waitingAtDoor = false;
+
+      if (m.behavior === 'doorWait') {
+        const door = doors[m.doorSide];
+        if (!door || door.closed) {
+          // Sealing the shutter makes the visitor retreat along its route.
+          m.behavior = 'patrol';
+          m.doorTimer = 0;
+          m.waypoint = (m.waypoint + 1) % m.route.length;
+          m.pause = 0.16;
+          showNotice(m.name + ' is backing away from the ' + m.doorSide + ' door.', 2300);
+          setStatus('DOOR SEALED', 'THE ANIMATRONIC IS RETREATING<br>HEADLAMP: ON · WATCH THE OTHER DOOR');
+        } else {
+          waitingAtDoor = true;
+          m.doorTimer += dt;
+          m.hudTick -= dt;
+          if (m.hudTick <= 0) {
+            const secondsLeft = Math.max(0, Math.ceil(10 - m.doorTimer));
+            setStatus('WARNING: ' + m.name.toUpperCase() + ' AT THE ' + m.doorSide.toUpperCase() + ' DOOR',
+              'CLOSE THE SHUTTER NOW · ' + secondsLeft + ' SECONDS REMAINING<br>IF IT STAYS OPEN, YOU WILL BE CAUGHT');
+            m.hudTick = 0.35;
+          }
+          if (m.doorTimer >= 10) {
+            triggerGameOver(m);
+            return;
+          }
         }
       }
-      const swing=Math.sin(m.phase*4.9)*.22;
-      m.armL.rotation.x=swing;m.armR.rotation.x=-swing;
-      m.legL.rotation.x=-swing*.8;m.legR.rotation.x=swing*.8;
-      m.headPivot.rotation.z=Math.sin(m.phase*1.8)*.035;
-      m.headPivot.rotation.x=Math.sin(m.phase*1.1)*.02;
+
+      if (!waitingAtDoor) {
+        if (m.pause > 0) {
+          m.pause -= dt;
+          m.body.position.y = Math.sin(m.phase * 2) * .018;
+        } else {
+          const target = m.route[m.waypoint];
+          const dx = target[0] - m.root.position.x;
+          const dz = target[1] - m.root.position.z;
+          const dist = Math.hypot(dx, dz);
+          const doorWaypoint = isDoorWaypoint(m, target);
+          const activeDoor = doors[m.doorSide];
+          const isInsideFacingClosedDoor = activeDoor && activeDoor.closed &&
+            (m.doorSide === 'left' ? m.root.position.x > -5 : m.root.position.x < 5);
+
+          // If a shutter was closed before the monster got through from the office side,
+          // turn it back toward the previous safe waypoint instead of letting it clip through metal.
+          if (doorWaypoint && isInsideFacingClosedDoor && dist < 1.45) {
+            m.waypoint = (m.waypoint - 1 + m.route.length) % m.route.length;
+            m.pause = 0.08;
+          } else if (dist < .2) {
+            if (doorWaypoint) {
+              if (activeDoor && !activeDoor.closed) {
+                m.behavior = 'doorWait';
+                m.doorTimer = 0;
+                m.hudTick = 0;
+                waitingAtDoor = true;
+                showNotice(m.name + ' IS AT THE ' + m.doorSide.toUpperCase() + ' DOOR! CLOSE IT!', 4200);
+                setStatus('WARNING: ' + m.name.toUpperCase() + ' AT THE ' + m.doorSide.toUpperCase() + ' DOOR',
+                  'CLOSE THE SHUTTER WITHIN 10 SECONDS<br>DOOR BUTTONS ARE ON THE OFFICE WALLS');
+              } else {
+                // A closed shutter sends the patrol onward without starting a danger timer.
+                m.waypoint = (m.waypoint + 1) % m.route.length;
+                m.pause = .18;
+              }
+            } else {
+              m.waypoint = (m.waypoint + 1) % m.route.length;
+              m.pause = .18 + Math.random() * .55;
+            }
+          } else {
+            const step = Math.min(dist, m.speed * dt);
+            m.root.position.x += dx / dist * step;
+            m.root.position.z += dz / dist * step;
+            m.root.rotation.y = Math.atan2(dx, dz);
+            m.body.position.y = .035 + Math.abs(Math.sin(m.phase * 5.2)) * .035;
+          }
+        }
+      }
+
+      const swing = Math.sin(m.phase * 4.9) * .22;
+      m.armL.rotation.x = swing; m.armR.rotation.x = -swing;
+      m.legL.rotation.x = -swing * .8; m.legR.rotation.x = swing * .8;
+      m.headPivot.rotation.z = Math.sin(m.phase * 1.8) * .035;
+      m.headPivot.rotation.x = Math.sin(m.phase * 1.1) * .02;
     }
   }
   function updateLighting(time) {
@@ -859,9 +1057,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.m
   try {
     initRenderer();
     buildScene();
+    createGameOverPanel();
     wireControls();
     resize();
-    setStatus('CAMERA FEED: STANDBY', 'BUILDING POWER: UNSTABLE<br>ANIMATRONIC TRACKING: ACTIVE · THREAT AI: DISABLED');
+    setStatus('CAMERA FEED: STANDBY', 'BUILDING POWER: UNSTABLE<br>ANIMATRONIC PATROLS: READY · DOOR WATCH ACTIVE');
     checkXRSupport();
     renderer.setAnimationLoop(renderFrame);
   } catch (error) {
