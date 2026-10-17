@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Room Mapper — VR Test</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#10141b;color:#f3f6fb;font:16px system-ui, sans-serif;overflow:hidden}canvas{display:block}#panel{position:fixed;z-index:5;left:12px;top:12px;width:min(360px,calc(100vw - 24px));padding:16px;border:1px solid #ffffff25;border-radius:18px;background:#111923eF;backdrop-filter:blur(14px)}h1{font-size:20px;margin:0 0 7px}p{font-size:13px;line-height:1.45;color:#c2ccd9;margin:6px 0 12px}.row{display:flex;gap:8px;flex-wrap:wrap}button{border:0;border-radius:12px;padding:11px 13px;font-weight:700;background:#8bd7ff;color:#07131d;cursor:pointer;min-height:44px}button.secondary{background:#2a3544;color:#eef5ff}button:disabled{opacity:.45;cursor:default}#status{font-size:13px;color:#9be4c4;margin-top:10px;min-height:18px}#counter{font-size:12px;color:#aebdce;margin-top:6px}#hint{position:fixed;z-index:4;bottom:16px;left:50%;transform:translateX(-50%);max-width:90vw;padding:10px 14px;border-radius:12px;background:#111923d9;color:#edf6ff;font-size:13px;text-align:center}#panel.hidden{display:none}@media(max-width:500px){#panel{padding:12px}h1{font-size:18px}}
+</style>
+</head>
+<body>
+<section id="panel">
+<h1>Room Mapper · VR Test</h1>
+<p>Enter passthrough to detect room planes. Aim at a detected surface and press the trigger to add a simple block there. Press <b>Done</b> to explore the assembled test map.</p>
+<div class="row"><button id="start">Enter passthrough scan</button><button id="done" class="secondary" disabled>Done → map</button><button id="reset" class="secondary">Reset</button></div>
+<div id="status" role="status" aria-live="polite">Waiting for Quest Browser…</div><div id="counter">Detected surfaces: 0 · Added objects: 0</div>
+<p><b>Important:</b> This browser prototype detects planes, not full 3D furniture or raw camera images. For automatic furniture recognition and a complete room mesh, this needs a native Quest APK with Meta's Scene API / camera permissions.</p>
+</section>
+<div id="hint">Quest: use the controller trigger to place a block. Left stick moves in map mode.</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const statusEl=document.querySelector('#status'),counter=document.querySelector('#counter'),startBtn=document.querySelector('#start'),doneBtn=document.querySelector('#done'),resetBtn=document.querySelector('#reset'),panel=document.querySelector('#panel'),hint=document.querySelector('#hint');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x17202b);scene.fog=new THREE.Fog(0x17202b,18,55);
+const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.05,1000);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');document.body.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd9edff,0x303744,2));const sun=new THREE.DirectionalLight(0xffffff,2);sun.position.set(4,8,3);scene.add(sun);
+const grid=new THREE.GridHelper(50,50,0x57738b,0x344453);grid.position.y=0;scene.add(grid);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:0x202a36,roughness:1,side:THREE.DoubleSide}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;scene.add(floor);
+const world=new THREE.Group();scene.add(world);
+const controller=renderer.xr.getController(0);scene.add(controller);const rayLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(0,0,-8)]),new THREE.LineBasicMaterial({color:0x8bd7ff}));controller.add(rayLine);
+const raycaster=new THREE.Raycaster();raycaster.far=12;
+const planeMeshes=new Map(),objects=[];let session=null,scanMode=true,moveX=0,moveZ=0,objectCount=0;
+const colors=[0x78c5e8,0xe8b878,0x9ad6a6,0xc3a5f5,0xe98e9e];
+function say(s){statusEl.textContent=s}
+function updateCounter(){counter.textContent='Detected surfaces: '+planeMeshes.size+' · Added objects: '+objects.length}
+function clearWorld(){for(const m of planeMeshes.values()){scene.remove(m);m.geometry.dispose();m.material.dispose()}planeMeshes.clear();for(const o of objects){world.remove(o);o.geometry.dispose();o.material.dispose()}objects.length=0;updateCounter()}
+function makePlaneMesh(plane,pose){
+ let points=[];try{points=Array.from(plane.polygon||[])}catch(e){}
+ let xs=points.map(p=>p.x),zs=points.map(p=>p.z);
+ let minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);
+ let w=Math.max(.15,Math.min(8,maxX-minX||.5)),h=Math.max(.15,Math.min(8,maxZ-minZ||.5));
+ const geom=new THREE.PlaneGeometry(w,h);const mat=new THREE.MeshBasicMaterial({color:0x63d7c0,wireframe:true,transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false});
+ const mesh=new THREE.Mesh(geom,mat);mesh.matrixAutoUpdate=false;mesh.matrix.fromArray(pose.transform.matrix);mesh.matrix.decompose(mesh.position,mesh.quaternion,mesh.scale);mesh.matrixAutoUpdate=true;
+ // Plane-local visual is a flat sheet; detected plane pose provides its orientation.
+ mesh.position.add(new THREE.Vector3((minX+maxX)/2,0,(minZ+maxZ)/2).applyQuaternion(mesh.quaternion));
+ mesh.userData.plane=plane;mesh.userData.center=true;return mesh;
+}
+function updateDetectedPlanes(){
+ const frame=renderer.xr.getFrame();if(!frame||!session||!frame.detectedPlanes)return;
+ const ref=renderer.xr.getReferenceSpace();const current=new Set();
+ for(const plane of frame.detectedPlanes){current.add(plane);const pose=frame.getPose(plane.planeSpace,ref);if(!pose)continue;
+  let mesh=planeMeshes.get(plane);if(!mesh){mesh=makePlaneMesh(plane,pose);planeMeshes.set(plane,mesh);scene.add(mesh)}else{mesh.position.setFromMatrixPosition(new THREE.Matrix4().fromArray(pose.transform.matrix));mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(pose.transform.matrix));}
+ }
+ for(const [plane,mesh] of planeMeshes){if(!current.has(plane)){scene.remove(mesh);mesh.geometry.dispose();mesh.material.dispose();planeMeshes.delete(plane)}}
+ updateCounter();
+}
+function addBlockAt(point){
+ const size=.22+Math.random()*.22;const geo=new THREE.BoxGeometry(size,size,size);const mat=new THREE.MeshStandardMaterial({color:colors[objects.length%colors.length],roughness:.7});const box=new THREE.Mesh(geo,mat);box.position.copy(point);box.position.y+=size/2;box.userData.kind='placed-object';world.add(box);objects.push(box);updateCounter();say('Added test object. Aim and trigger to add another.');
+}
+function placeFromController(){
+ raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);const direction=new THREE.Vector3(0,0,-1).applyQuaternion(controller.quaternion);raycaster.ray.direction.copy(direction);
+ const targets=[...planeMeshes.values()];const hits=raycaster.intersectObjects(targets,false);
+ if(hits.length){addBlockAt(hits[0].point);return}
+ const origin=raycaster.ray.origin,dir=raycaster.ray.direction;const t=(0-origin.y)/(dir.y||.0001);if(t>0&&t<8){addBlockAt(origin.clone().addScaledVector(dir,t));return}
+ say('No surface in reach. Point at the floor or a detected plane.');
+}
+controller.addEventListener('select',()=>{if(scanMode)placeFromController()});
+function onInputSources(){
+ const s=renderer.xr.getSession();if(!s)return;
+ for(const source of s.inputSources){if(source.handedness==='left'&&source.gamepad){const a=source.gamepad.axes;moveX=a.length>=4?a[2]:a[0]||0;moveZ=a.length>=4?a[3]:a[1]||0}}
+}
+async function begin(){
+ if(!navigator.xr){say('WebXR is unavailable in this browser. Open this page in Quest Browser.');return}
+ try{
+  const supported=await navigator.xr.isSessionSupported('immersive-ar');if(!supported){say('Passthrough WebXR is not supported here. This page needs Quest Browser on a supported headset.');return}
+  session=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['local-floor'],optionalFeatures:['plane-detection','anchors','hit-test']});
+  await renderer.xr.setSession(session);scanMode=true;startBtn.disabled=true;doneBtn.disabled=false;say('Passthrough started. Slowly look around the room so supported surfaces can be detected.');hint.textContent='Scan: look around, aim at a surface, squeeze the trigger to place a block.';
+  session.addEventListener('end',()=>{session=null;startBtn.disabled=false;doneBtn.disabled=true;say('VR session ended.')});
+ }catch(e){say('Could not start passthrough: '+(e.message||e)+' · Check Quest Browser permissions and try again.')}
+}
+startBtn.addEventListener('click',begin);
+doneBtn.addEventListener('click',()=>{scanMode=false;panel.classList.add('hidden');hint.textContent='Map mode: use the left joystick to walk around; press the menu button or refresh to return to setup.';say('Map assembled from detected surfaces and placed blocks. Passthrough stays on in this browser test.');grid.visible=true;});
+resetBtn.addEventListener('click',()=>{clearWorld();scanMode=true;panel.classList.remove('hidden');hint.textContent='Quest: use the controller trigger to place a block. Left stick moves in map mode.';say('Reset. Start scanning again.');});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){panel.classList.remove('hidden');scanMode=true}});
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+function animate(){
+ renderer.setAnimationLoop(()=>{
+  if(renderer.xr.isPresenting){if(scanMode)updateDetectedPlanes();else{onInputSources();const rig=renderer.xr.getCamera();const forward=new THREE.Vector3(0,0,-1).applyQuaternion(rig.quaternion);forward.y=0;forward.normalize();const right=new THREE.Vector3(1,0,0).applyQuaternion(rig.quaternion);right.y=0;right.normalize();const speed=.045;world.position.addScaledVector(forward,-moveZ*speed);world.position.addScaledVector(right,moveX*speed)}}
+  renderer.render(scene,camera);
+ });
+}
+animate();
+</script>
+</body></html>
