@@ -515,7 +515,7 @@ function createTrackedHand(handedness){
   if(handedness==='left'){
     const watch=new T.Group();
     const caseMesh=new T.Mesh(new T.BoxGeometry(.145,.022,.169),new T.MeshStandardMaterial({color:0x111a18,roughness:.3,metalness:.6}));
-    caseMesh.position.y=.016;watch.add(caseMesh);
+    caseMesh.position.set(0,.016,-.081);watch.add(caseMesh);
     const screen=new T.Mesh(new T.PlaneGeometry(.13,.151),new T.MeshBasicMaterial({map:createRadarTexture(),toneMapped:false,side:T.DoubleSide}));
     screen.rotation.x=-Math.PI/2;screen.position.set(0,.028,-.081);watch.add(screen);
     watch.position.set(0,.001,-.025);hand.add(watch);
