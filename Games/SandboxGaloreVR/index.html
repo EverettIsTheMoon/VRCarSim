@@ -1874,7 +1874,7 @@ restart();
 (function(){
 const ZMX=new T.Matrix4().makeScale(0,0,0),_m=new T.Matrix4(),_ao=new T.Vector3(),_ad=new T.Vector3(),_ac=new T.Vector3(),_aq=new T.Quaternion(),_cp=new T.Vector3(),ZERO=new T.Vector3();
 const HY=[.5,1.1,1.65],fearL=[],cops=[],trc=[],bags=[];
-let hp=100,hpT=0,cash=0,heat=0,wanted=0,ammo=12,reloadT=0,msgL=0,hitA=0,sig='',scrCD=0,alarmT=0,aimAcc=0,dec=0,robbed=false,robT=0,holdT=0,vOpen=0,nearD=999,spawnCD=0,lastPh=-1,wasIn=false,ti=0,wristT=0,au=null;
+let hp=100,hpT=0,cash=0,heat=0,wanted=0,ammo=12,reloadT=0,msgL=0,hitA=0,sig='',scrCD=0,alarmT=0,aimAcc=0,dec=0,robbed=false,robT=0,holdT=0,vOpen=0,nearD=999,spawnCD=0,lastPh=-1,wasIn=false,ti=0,wristT=0,au=null,robberyPursuitUntil=0,robberyRocketCD=0,robberyRocketImpact=0;
 
 /* ================= static geometry merging (fewer draw calls) ================= */
 function mergeGroup(g,o){o=o||{};const skip=o.skip||[],bk={},rm=[];
@@ -2398,11 +2398,12 @@ function mkCop(){const car=new T.Group();copParts.forEach(p=>car.add(new T.Mesh(
 const la=new T.Mesh(LB,copA),lb=new T.Mesh(LB,copB);la.position.set(-.3,1.53,.25);lb.position.set(.3,1.53,.25);car.add(la);car.add(lb);car.visible=false;scene.add(car);
 const off=mkPerson(0x1a2a55,0x15151f);off.g.visible=false;scene.add(off.g);regPerson(off);
 return{car,off,act:false,st:'drive',os:'in',x:0,z:0,h:0,s:0,tx:0,tz:0,ts:0,hp:100,cd:1,bc:0,stuck:0,ot:0,d:99,dead:0}}
-for(let i=0;i<4;i++)cops.push(mkCop());
+for(let i=0;i<30;i++)cops.push(mkCop());
 {const g=new T.BoxGeometry(.012,.012,1),m=new T.MeshBasicMaterial({color:0xffee99});for(let i=0;i<6;i++){const t=new T.Mesh(g,m);t.visible=false;scene.add(t);trc.push({m:t,l:0})}}
 PBI[0].count=PB.n*2;PBI[1].count=PB.n*2;PBI[2].count=PB.n;PBI[3].count=PB.n;
 
 function spawnCop(){const u=cops.find(c=>!c.act);if(!u)return;const pp=onFoot?rig.position:carP;u.act=true;u.st='drive';u.os='in';u.hp=100;u.s=22;u.x=R(-3.4,3.4);u.z=pp.z+R(130,180);u.h=0;u.cd=1.2;u.stuck=0;u.dead=0;u.car.visible=true;u.off.g.visible=false;u.car.position.set(u.x,roadHeight(u.z),u.z);u.car.rotation.y=0}
+window.addEventListener('rl-cashier-robbery',()=>{robberyPursuitUntil=performance.now()+90000;robberyRocketCD=1.2;robberyRocketImpact=0;heat=10;wanted=3;spawnCD=0;say('ROBBERY REPORTED! 30 POLICE UNITS INBOUND — OFFICERS ARMED WITH RPGs!','#ff4e4e');});
 function deact(u){u.act=false;u.car.visible=false;u.off.g.visible=false;u.os='in';u.st='drive'}
 function exitCar(u){u.os='run';u.ot=0;const g=u.off.g,rx=Math.cos(u.h),rz=-Math.sin(u.h),fx=-Math.sin(u.h),fz=-Math.cos(u.h);g.position.set(u.x-rx*1.7+fx*.4,roadHeight(u.z-rz*1.7+fz*.4),u.z-rz*1.7+fz*.4);g.rotation.set(0,0,0);g.visible=true}
 function hurt(n){if(dead||menuOpen)return;hpT=0;hitA=.5;buzz(.8,left);if(onFoot){hp=Math.max(0,hp-n);if(hp<=0)die({speed:0})}else if(!(boostT>0||bGrace>0))damage=Math.min(.9,damage+rlDamage(n*.0015))}
@@ -2478,11 +2479,14 @@ if(e.tw){if(e.home){e.g.position.x=e.home.x;e.g.position.z=e.home.z;e.g.rotation
 fearL.length=0;streetMuggers.forEach(streetMuggerReset);streetEncounterTimer=R(20,34);endRob();vOpen=0;vaultP.rotation.y=0;SU.y=SU.v=SU.p=SU.pv=SU.r=SU.rv=0;msgM.visible=false;hitM.visible=false;sig=''}
 
 function slow(d,tn){
+const robberyActive=tn<robberyPursuitUntil;
+if(robberyActive){heat=10;wanted=3;}
 const cand=heat>=5?3:heat>=3?2:heat>=1?1:0;
 if(cand>wanted){wanted=cand;say('WANTED  LEVEL '+wanted,'#ff6a5a')}else if(cand<wanted){wanted=cand;if(!wanted)say('You lost the cops','#7dff9a')}
 if(heat>0)heat=Math.max(0,heat-d*(nearD>75?.12:.012));
 nearD=999;let act=0;for(const u of cops){if(!u.act)continue;act++;copDecide(u,d);if(u.st!=='dead'&&u.d<nearD)nearD=u.d}
-spawnCD-=d;if(act<[0,2,3,4][wanted]&&spawnCD<=0&&!dead){spawnCop();spawnCD=2.2}
+spawnCD-=d;
+if(robberyActive){if(act<30&&spawnCD<=0&&!dead){spawnCop();spawnCD=.42;}robberyRocketCD-=d;if(robberyRocketCD<=0&&act>0&&!dead){let shooter=null,best=Infinity;const pp=onFoot?rig.position:carP;for(const u of cops)if(u.act&&u.os==='in'){const dd=Math.hypot(pp.x-u.x,pp.z-u.z);if(dd<best){best=dd;shooter=u}}if(shooter){const origin=new T.Vector3(shooter.x,roadHeight(shooter.z)+1.55,shooter.z),target=pp.clone().add(new T.Vector3(0,.9,0)),dir=target.sub(origin).normalize();spawnRocketProjectile(origin,dir);robberyRocketImpact=tn+2300;robberyRocketCD=4.4;}}if(robberyRocketImpact&&tn>=robberyRocketImpact){robberyRocketImpact=0;if(!dead){const pp=(onFoot?rig.position:carP).clone();rlHugeExplosion(pp.clone().add(new T.Vector3(0,.15,0)),'rocket',false);hurt(14);say('RPG STRIKE! TAKE COVER!','#ff5757');}}}else if(act<[0,2,3,4][wanted]&&spawnCD<=0&&!dead){spawnCop();spawnCD=2.2}
 audioInit();audioStep(tn);wristT+=d;if(wristT>1){wristT=0;ensureWrist()}hudTick(tn)}
 
 function step(dt,tn){
