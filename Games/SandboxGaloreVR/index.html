@@ -836,6 +836,33 @@ e.path=[[WALK,z0]].concat(p,[[WALK,z1]]);e.i=mid?1+(Math.random()*(e.path.length
 for(let i=0;i<8;i++){const e=mkCrowd();crowd.push(e);plan(e,true)}
 const wk=mkCrowd();wk.worker=true;wk.st='idle';wk.g.position.set(24.2,0,-1);wk.g.rotation.y=-Math.PI/2;crowd.push(wk);
 [-53.5,-50.5].forEach(z=>{const c=mkCrowd();c.worker=true;c.st='idle';c.g.position.set(25.2,0,z);c.g.rotation.y=-Math.PI/2;crowd.push(c)});
+/* Insult reaction: each cashier can draw a visible pistol and fire harmless warning shots. */
+const cashierShots=[];
+window.addEventListener('rl-cashier-insult',()=>{
+ const pp=onFoot?rig.position:carP;let target=null,best=Infinity;
+ for(const e of crowd){if(!e.worker||e.st==='fall')continue;const wp=new T.Vector3();e.g.updateWorldMatrix(true,false);e.g.getWorldPosition(wp);const dd=wp.distanceTo(pp);if(dd<best){best=dd;target=e}}
+ if(!target)return;
+ if(!target.cashierGun){target.cashierGun=mkGun();target.cashierGun.scale.setScalar(.72);target.cashierGun.position.set(.20,1.12,.02);target.g.add(target.cashierGun);}
+ target.cashierGun.visible=true;target.cashierAngryUntil=performance.now()+18000;target.cashierFireAt=performance.now()+550;
+ say('YO DUDE, WHAT IS WRONG WITH YOU?!','#ff6565');
+});
+function cashierAttackStep(tn){
+ const pp=onFoot?rig.position:carP;
+ for(const e of crowd){
+  if(!e.cashierGun||!e.cashierGun.visible)continue;
+  if(tn>e.cashierAngryUntil){e.cashierGun.visible=false;continue}
+  const muzzle=new T.Vector3();e.cashierGun.userData.mz.getWorldPosition(muzzle);
+  const aim=pp.clone().add(new T.Vector3(0,.9,0));e.cashierGun.lookAt(aim);
+  if(tn>=e.cashierFireAt){
+   e.cashierFireAt=tn+1450;
+   const geo=new T.BufferGeometry().setFromPoints([muzzle,aim]);
+   const line=new T.Line(geo,new T.LineBasicMaterial({color:0xff4545,transparent:true,opacity:.85,depthTest:false}));
+   line.renderOrder=1001;scene.add(line);cashierShots.push({line,until:tn+115});
+  }
+ }
+ for(let i=cashierShots.length-1;i>=0;i--){const s=cashierShots[i];if(tn>=s.until){scene.remove(s.line);s.line.geometry.dispose();s.line.material.dispose();cashierShots.splice(i,1)}}
+}
+
 const tmpV=new T.Vector3(),_t1=new T.Vector3(),_t2=new T.Vector3(),_t3=new T.Vector3(),_q1=new T.Quaternion(),_mm=new T.Matrix4();
 /* ---------- smoke ---------- */
 const sc=document.createElement('canvas');sc.width=sc.height=64;const sg=sc.getContext('2d'),gr=sg.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,'rgba(255,255,255,.9)');gr.addColorStop(1,'rgba(255,255,255,0)');sg.fillStyle=gr;sg.fillRect(0,0,64,64);
@@ -2490,7 +2517,7 @@ if(robberyActive){if(act<30&&spawnCD<=0&&!dead){spawnCop();spawnCD=.42;}robberyR
 audioInit();audioStep(tn);wristT+=d;if(wristT>1){wristT=0;ensureWrist()}hudTick(tn)}
 
 function step(dt,tn){
-streetMuggerStep(dt,tn);sideSync();scrCD-=dt;
+cashierAttackStep(tn);streetMuggerStep(dt,tn);sideSync();scrCD-=dt;
 aimAcc+=dt;if(aimAcc>.066){aimAcc=0;aimScan(tn)}
 fearStep(dt,tn);bankStep(dt,tn);cashStep(dt);
 const ph=(tn/230|0)&1;if(ph!==lastPh){lastPh=ph;copA.color.setHex(ph?0xff2020:0x2a0606);copB.color.setHex(ph?0x06062a:0x2858ff)}
