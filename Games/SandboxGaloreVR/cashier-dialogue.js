@@ -218,7 +218,7 @@
       if(renderer && renderer.xr && renderer.xr.getController){
         for(let i=0;i<2;i++){
           const controller=renderer.xr.getController(i);
-          const handler=()=>{ if(!phraseOpen)return; phraseRaycaster.setFromCamera({x:0,y:0},renderer.xr.getCamera(camera||renderer.camera)); phraseRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld); phraseRaycaster.ray.direction.set(0,0,-1).transformDirection(controller.matrixWorld); const hits=phraseRaycaster.intersectObjects(phraseKeys,false); if(hits.length) hits[0].object.userData.phraseAction(); };
+          const handler=()=>{ if(!phraseOpen)return; controller.updateWorldMatrix(true,false); phraseRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld); phraseRaycaster.ray.direction.set(0,0,-1).transformDirection(controller.matrixWorld); const hits=phraseRaycaster.intersectObjects(phraseKeys,false); if(hits.length) hits[0].object.userData.phraseAction(); };
           controller.addEventListener('selectstart',handler);
           phraseControllerHooks.push([controller,handler]);
         }
@@ -630,22 +630,17 @@
   }
   // Optional desktop test button; it is hidden during immersive VR and is not needed on Quest.
   function addDesktopButton(){
-    speechModeButton=document.createElement('button');
-    speechModeButton.type='button';
-    speechModeButton.textContent='🧪 Local Whisper tiny.en ON';
-    speechModeButton.setAttribute('aria-label','Toggle experimental Moonshine local speech recognition');
-    Object.assign(speechModeButton.style,{position:'fixed',right:'14px',bottom:'70px',zIndex:'10000',display:'none',padding:'10px 12px',border:'1px solid #fff8',borderRadius:'12px',background:'#26313d',color:'#fff',font:'bold 13px system-ui',cursor:'pointer',pointerEvents:'auto',maxWidth:'calc(100vw - 28px)'});
-    speechModeButton.addEventListener('click',()=>setMoonshineEnabled(!moonshineEnabled));
-    document.body.appendChild(speechModeButton);
-    updateSpeechModeLabel();
     const b=document.createElement('button');
-    b.textContent='🎙 Talk to cashier';
-    b.setAttribute('aria-label','Talk to cashier using microphone');
+    b.textContent='⌨ Talk / Type to cashier';
+    b.setAttribute('aria-label','Open floating cashier keyboard');
     Object.assign(b.style,{position:'fixed',right:'14px',bottom:'14px',zIndex:'9999',display:'none',padding:'12px 16px',border:'1px solid #fff8',borderRadius:'12px',background:'#202832',color:'#fff',font:'bold 15px system-ui',cursor:'pointer',pointerEvents:'auto'});
     b.addEventListener('click',()=>startListening());
     document.body.appendChild(b);
-    const update=()=>{ const visible=!(renderer && renderer.xr && renderer.xr.isPresenting); b.style.display=visible?'block':'none'; if(speechModeButton) speechModeButton.style.display=visible?'block':'none'; };
-    setInterval(update,1000);
+    const update=()=>{
+      const visible=!(renderer && renderer.xr && renderer.xr.isPresenting);
+      b.style.display=visible?'block':'none';
+    };
+    setInterval(update,500);
   }
   window.RLCashierDialogue={
     startListening,
