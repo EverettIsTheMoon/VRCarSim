@@ -12,6 +12,7 @@
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
+  let fallbackMenu = false, fallbackIndex = 0, lastFallbackX = false, lastFallbackLeft = false, lastFallbackRight = false, fallbackAxisReady = true, lastFallbackMove = 0;
   const flatTriggers = [];
   const fallback = [
     "What?", "I don't know what you're talking about.", "Dude, I just work here.",
@@ -155,8 +156,10 @@
     lastTriggerAt=performance.now();
     const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SR){
-      showBubble('Voice recognition is not supported by this browser. Try updating Quest Browser.',7000,false);
-      console.warn('[Cashier] SpeechRecognition unavailable.');
+      fallbackMenu = true;
+      fallbackIndex = Math.max(0, flatTriggers.findIndex(x => x.phrase === 'hello'));
+      showFallbackPrompt();
+      console.warn('[Cashier] SpeechRecognition unavailable; controller phrase-picker enabled.');
       return;
     }
     try{
@@ -193,6 +196,54 @@
       console.warn('[Cashier] start failed:',e);
     }
   }
+  function showFallbackPrompt(){
+    const item=flatTriggers[fallbackIndex];
+    const phrase=item ? item.phrase : 'hello';
+    showBubble('VOICE INPUT UNAVAILABLE — choose a phrase with the LEFT STICK, then press X: "'+phrase+'"',120000,false);
+  }
+  function fallbackController(){
+    if(!fallbackMenu) return;
+    let leftX=false, leftStick=0, leftTrigger=false;
+    const objs=[left,sec].filter(Boolean);
+    for(const o of objs){
+      try{
+        if(o.src && o.src.handedness==='left' && !o.src.hand && o.gp){
+          const gp=o.gp;
+          leftX=!!gp.buttons?.[4]?.pressed;
+          leftTrigger=!!gp.buttons?.[0]?.pressed;
+          const axes=gp.axes||[];
+          leftStick=Math.abs(axes[2]||0)>Math.abs(axes[0]||0)?(axes[2]||0):(axes[0]||0);
+        }
+      }catch(_){}
+    }
+    leftX=leftX||!!keys?.KeyX;
+    const leftKey=!!keys?.ArrowLeft, rightKey=!!keys?.ArrowRight;
+    const now=performance.now();
+    if(now-lastFallbackMove>260){
+      if(leftStick < -0.55 || (leftKey && !lastFallbackLeft)){
+        fallbackIndex=(fallbackIndex-1+flatTriggers.length)%Math.max(1,flatTriggers.length);
+        lastFallbackMove=now; showFallbackPrompt();
+      } else if(leftStick > 0.55 || (rightKey && !lastFallbackRight)){
+        fallbackIndex=(fallbackIndex+1)%Math.max(1,flatTriggers.length);
+        lastFallbackMove=now; showFallbackPrompt();
+      }
+    }
+    if(leftX && !lastFallbackX){
+      const item=flatTriggers[fallbackIndex];
+      fallbackMenu=false;
+      if(item) speakReply(item.phrase);
+      else showBubble('I could not load the phrase list. Please refresh the game.',5000,false);
+    }
+    // The trigger also confirms, for controllers whose X button mapping differs.
+    if(leftTrigger && !lastFallbackLeft && !leftX){
+      const item=flatTriggers[fallbackIndex];
+      fallbackMenu=false;
+      if(item) speakReply(item.phrase);
+    }
+    lastFallbackX=leftX;
+    lastFallbackLeft=leftKey||leftTrigger;
+    lastFallbackRight=rightKey;
+  }
   function handleTalkButton(){
     const objs=[left,sec].filter(Boolean);
     let pressed=false;
@@ -211,6 +262,7 @@
       }
     }
     lastY=pressed;
+    fallbackController();
   }
   function tick(){
     try{
@@ -252,7 +304,9 @@
     startListening,
     respond: speakReply,
     get ready(){return !!library;},
-    get triggerCount(){return flatTriggers.length;}
+    get triggerCount(){return flatTriggers.length;},
+    get speechRecognitionAvailable(){return !!(window.SpeechRecognition || window.webkitSpeechRecognition);},
+    closePhrasePicker(){fallbackMenu=false;}
   };
   loadLibrary();
   const waitForScene=setInterval(()=>{
