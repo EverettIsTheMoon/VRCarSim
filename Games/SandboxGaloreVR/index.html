@@ -850,6 +850,7 @@ function cashierAttackStep(tn){
  const pp=onFoot?rig.position:carP;
  for(const e of crowd){
   if(!e.cashierGun||!e.cashierGun.visible)continue;
+  if(e.st==='fall'){e.cashierGun.visible=false;continue}
   if(tn>e.cashierAngryUntil){e.cashierGun.visible=false;continue}
   const muzzle=new T.Vector3();e.cashierGun.userData.mz.getWorldPosition(muzzle);
   const aim=pp.clone().add(new T.Vector3(0,.9,0));e.cashierGun.lookAt(aim);
@@ -4148,5 +4149,5 @@ window.__rlMPJoin=join;window.__rlMPLeave=leave;
 ['pointerdown','keydown','click'].forEach(ev=>addEventListener(ev,()=>{vcCtx();if(!VC.track&&!VC.tried){VC.tried=1;enableMic()}},{capture:true}));
 })();
 </script>
-<script src="cashier-dialogue.js?v=20261018-1"></script>
+<script src="cashier-dialogue.js?v=20261018-2"></script>
 </body></html>
