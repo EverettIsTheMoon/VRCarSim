@@ -11,7 +11,8 @@
   let library = null, recognition = null, listening = false, lastTriggerAt = 0;
   // Experimental local Whisper tiny.en model. Audio is processed in this browser; no speech API is used.
   let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false, moonshineSawText = false;
-  let whisperPipelinePromise = null, whisperRecording = false, whisperStream = null, whisperRecorder = null, whisperChunks = [], whisperModel = null;
+  let whisperWorker = null, whisperWorkerUrl = null, whisperWorkerReady = null, whisperWorkerRequest = 0, whisperWorkerPending = new Map();
+  let whisperRecording = false, whisperStream = null, whisperRecorder = null, whisperChunks = [];
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
@@ -217,59 +218,115 @@
     }
   }
 
-  // Experimental local Whisper Tiny English model via Transformers.js (WASM/CPU).
-  // First run downloads and caches the model; expect a large download and slow first inference.
+  // Run Whisper inside a Web Worker so WASM inference doesn't block the game's render loop.
+  // The model stays local in the browser and is cached after the first download.
+  function ensureWhisperWorker(){
+    if(whisperWorker && whisperWorkerReady) return whisperWorkerReady;
+    const workerSource = `
+      let pipe = null;
+      self.onmessage = async (event) => {
+        const msg = event.data || {};
+        try {
+          if (msg.type === 'init') {
+            if (!pipe) {
+              const mod = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2');
+              pipe = await mod.pipeline('automatic-speech-recognition', 'onnx-community/whisper-tiny.en', {
+                device: 'wasm', dtype: 'q8',
+                progress_callback: p => self.postMessage({type:'progress', progress:p})
+              });
+            }
+            self.postMessage({type:'ready'});
+          } else if (msg.type === 'transcribe') {
+            if (!pipe) throw new Error('Whisper model is not ready.');
+            const result = await pipe(new Float32Array(msg.audio), {sampling_rate:16000});
+            self.postMessage({type:'transcript', id:msg.id, text:String(result && (result.text || result[0]?.text) || '')});
+          }
+        } catch (err) {
+          self.postMessage({type:'error', id:msg.id, message:String(err && (err.message || err) || err)});
+        }
+      };
+    `;
+    whisperWorkerUrl = URL.createObjectURL(new Blob([workerSource], {type:'text/javascript'}));
+    whisperWorker = new Worker(whisperWorkerUrl);
+    whisperWorkerReady = new Promise((resolve,reject)=>{
+      const onMessage = event => {
+        const data=event.data||{};
+        if(data.type==='progress'){
+          const p=data.progress;
+          if(p && typeof p.progress==='number') showBubble('Downloading local Whisper model… '+Math.round(p.progress)+'%',2600,false);
+          else if(p && p.status==='ready') showBubble('Whisper model ready.',1800,false);
+        } else if(data.type==='ready'){
+          whisperWorker.removeEventListener('message',onMessage);
+          resolve();
+        } else if(data.type==='error' && data.id == null){
+          whisperWorker.removeEventListener('message',onMessage);
+          whisperWorkerReady=null;
+          reject(new Error(data.message||'Whisper worker failed to load.'));
+        } else if(data.type==='transcript' || data.type==='error'){
+          const pending=whisperWorkerPending.get(data.id);
+          if(pending){
+            whisperWorkerPending.delete(data.id);
+            if(data.type==='error') pending.reject(new Error(data.message||'Transcription failed.'));
+            else pending.resolve(data.text||'');
+          }
+        }
+      };
+      whisperWorker.addEventListener('message',onMessage);
+      whisperWorker.addEventListener('error',event=>{
+        whisperWorkerReady=null;
+        reject(new Error(event.message||'Whisper worker crashed.'));
+      },{once:true});
+      whisperWorker.postMessage({type:'init'});
+    });
+    return whisperWorkerReady;
+  }
+  function transcribeWhisper(audio){
+    return new Promise((resolve,reject)=>{
+      const id=++whisperWorkerRequest;
+      whisperWorkerPending.set(id,{resolve,reject});
+      // Transfer the audio buffer to the worker instead of copying it.
+      const buffer=audio.buffer.slice(audio.byteOffset,audio.byteOffset+audio.byteLength);
+      whisperWorker.postMessage({type:'transcribe',id,audio:buffer},[buffer]);
+    });
+  }
   async function startWhisperListening(){
     if(whisperRecording || moonshineStarting || listening) return;
     moonshineStarting=true;
     whisperRecording=true;
-    showBubble('Loading local Whisper tiny.en… first use downloads the model.',12000,false);
+    showBubble('Preparing local Whisper… first use downloads the model.',12000,false);
     let stream=null, recorder=null;
     try{
       if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('This browser does not expose microphone capture.');
       stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
       whisperStream=stream;
-      if(!whisperPipelinePromise){
-        whisperPipelinePromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2').then(async mod=>{
-          const pipe=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny.en',{
-            device:'wasm', dtype:'q8',
-            progress_callback:p=>{
-              if(p && typeof p.progress==='number') showBubble('Downloading local Whisper model… '+Math.round(p.progress)+'%',2600,false);
-              else if(p && p.status==='ready') showBubble('Whisper model ready.',1800,false);
-            }
-          });
-          return pipe;
-        }).catch(err=>{whisperPipelinePromise=null;throw err;});
-      }
-      whisperModel=await whisperPipelinePromise;
+      await ensureWhisperWorker();
       if(!moonshineEnabled) return;
       const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t=>window.MediaRecorder && MediaRecorder.isTypeSupported(t));
       recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
       whisperRecorder=recorder; whisperChunks=[];
       recorder.ondataavailable=e=>{if(e.data&&e.data.size)whisperChunks.push(e.data)};
-      showBubble('Recording 5 seconds… speak now!',5600,false);
+      showBubble('Recording 3.5 seconds… speak now!',4200,false);
       const blobPromise=new Promise((resolve,reject)=>{
         recorder.onerror=e=>reject(e.error||new Error('Microphone recording failed.'));
         recorder.onstop=()=>resolve(new Blob(whisperChunks,{type:recorder.mimeType||'audio/webm'}));
       });
       recorder.start();
       listening=true;
-      await new Promise(resolve=>setTimeout(resolve,5000));
+      await new Promise(resolve=>setTimeout(resolve,3500));
       if(recorder.state!=='inactive') recorder.stop();
       const blob=await blobPromise;
       listening=false;
       if(!blob.size) throw new Error('The microphone recording was empty. Check microphone permission.');
-      showBubble('Transcribing locally… this may lag on mobile/VR.',10000,false);
+      showBubble('Transcribing locally… game should stay responsive.',10000,false);
       const audioContext=new (window.AudioContext||window.webkitAudioContext)();
       let decoded;
-      try{decoded=await audioContext.decodeAudioData(await blob.arrayBuffer());}
+      try{decoded=await audioContext.decodeAudioData(await blob.arrayBuffer())}
       finally{try{await audioContext.close()}catch(_){}}
       const sampleRate=16000, frameCount=Math.ceil(decoded.duration*sampleRate);
       const offline=new OfflineAudioContext(1,Math.max(1,frameCount),sampleRate);
       const source=offline.createBufferSource(); source.buffer=decoded; source.connect(offline.destination); source.start(0);
       const resampled=await offline.startRendering();
-      const result=await whisperModel(resampled.getChannelData(0),{sampling_rate:sampleRate});
-      const transcript=String(result && (result.text||result[0]?.text) || '').trim();
+      const transcript=String(await transcribeWhisper(resampled.getChannelData(0))).trim();
       if(transcript){showBubble('You said: '+transcript,2600,false);setTimeout(()=>speakReply(transcript),700)}
       else showBubble("Whisper didn't catch that. Press talk and try again.",4200,false);
     }catch(err){
