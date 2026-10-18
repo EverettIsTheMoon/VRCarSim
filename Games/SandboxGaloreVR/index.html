@@ -3275,6 +3275,35 @@ window.__startSelectedGame=function(driveMode){
  }
  // Re-apply visibility after restart and explicitly place the player on the selected world's spawn.
  setSandboxWorld(mode==='sandbox');
+ // TEMPORARY speech test spawn: always run this on Play/Resume, even when the
+ // selected mode was already initialized. Find the actual cashier worker rather
+ // than relying on guessed world coordinates (the town can be offset).
+ if(RL_CASHIER_TEST_SPAWN && mode==='free'){
+  try{
+   const workers=(typeof crowd!=='undefined'?crowd:[]).filter(w=>w&&w.worker&&w.g);
+   let cashier=null,best=Infinity;
+   const tx=(typeof town!=='undefined'&&town.position?town.position.x:0)+24.2;
+   const tz=(typeof town!=='undefined'&&town.position?town.position.z:0)-1;
+   for(const w of workers){
+    w.g.updateWorldMatrix(true,false);
+    const p=new T.Vector3();w.g.getWorldPosition(p);
+    const d=Math.hypot(p.x-tx,p.z-tz);
+    if(d<best){best=d;cashier={w,p};}
+   }
+   if(cashier && best<35){
+    onFoot=true;gunOut=false;sandboxActiveCar=-1;carMesh.visible=false;cock.visible=false;
+    rig.position.set(cashier.p.x,0,cashier.p.z+1.8);
+    rig.rotation.set(0,Math.PI,0);
+    console.info('[Cashier test] Spawned beside cashier at',cashier.p.x,cashier.p.z);
+   }else{
+    // Last-resort known gas-station area if worker objects are not ready yet.
+    onFoot=true;gunOut=false;sandboxActiveCar=-1;carMesh.visible=false;cock.visible=false;
+    rig.position.set((typeof town!=='undefined'&&town.position?town.position.x:0)+21.5,0,(typeof town!=='undefined'&&town.position?town.position.z:0)-1);
+    rig.rotation.set(0,-Math.PI/2,0);
+    console.warn('[Cashier test] Cashier worker not found; using station fallback spawn.');
+   }
+  }catch(e){console.warn('[Cashier test] Spawn adjustment failed:',e);}
+ }
  if(mode==='sandbox'){
   sandboxActiveCar=-1;carP.set(13,0,-54);heading=0;onFoot=true;
   rig.position.set(13,0,-50);rig.rotation.set(0,0,0);
