@@ -182,7 +182,7 @@
     let pressed=false;
     for(const o of objs){
       try{
-        if(o.src && o.src.handedness==='left' && !o.src.hand && o.gp && o.gp.buttons && o.gp.buttons[3]?.pressed) pressed=true;
+        if(o.src && o.src.handedness==='left' && !o.src.hand && o.gp && o.gp.buttons && o.gp.buttons[5]?.pressed) pressed=true;
       }catch(_){}
     }
     // Desktop keyboard fallback; avoids adding a keyboard UI in VR.
