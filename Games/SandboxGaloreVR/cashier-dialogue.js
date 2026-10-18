@@ -155,10 +155,22 @@
     bubble.visible=true;
   }
   function matchBadWord(text){
-    const q=' '+normalise(text)+' ';
+    const cleaned=normalise(text).replace(/[^a-z0-9*]+/g,' ').trim();
+    const words=cleaned.split(/\s+/).filter(Boolean);
+    const q=' '+cleaned+' ';
     for(const entry of badWordEntries) for(const phrase of (entry.phrases||[])){
-      const p=normalise(phrase); if(p && q.includes(' '+p+' ')) return entry;
+      const p=normalise(phrase).replace(/[^a-z0-9*]+/g,' ').trim();
+      if(p && q.includes(' '+p+' ')) return entry;
     }
+    // Catch elongated or lightly misspelled common profanity without flagging
+    // harmless words that merely contain the same letters.
+    const compact=cleaned.replace(/\s+/g,'');
+    if(/\b(f+u+c+k+|f+u+k+|f+u+q+|s+h+i+t+|b+i+t+c+h+|a+s+s+h+o+l+e+|d+i+c+k+h+e+a+d+|m+o+t+h+e+r+f+u+c+k+e+r+)\b/.test(compact)){
+      return {reply:'Yo dude, what is wrong with you?!',action:'draw_pistol'};
+    }
+    const directedInsult=/\b(you|u|ur|you're|youre|ya)\b/.test(cleaned) &&
+      /\b(idiot|moron|loser|stupid|dumb|ugly|jerk|clown|freak|creep|trash|worthless|pathetic|useless|asshole|bitch|bastard|dick|prick|jackass|douche|scumbag|fucker|fuck|shit|crap|frick|freaking|annoying)\b/.test(cleaned);
+    if(directedInsult) return {reply:'Yo dude, what is wrong with you?!',action:'draw_pistol'};
     return null;
   }
   function speakReply(transcript){
