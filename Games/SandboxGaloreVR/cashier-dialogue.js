@@ -267,7 +267,7 @@
     if(!currentWorker) currentWorker=findNearestWorker();
     phraseDraft=''; phraseOpen=true;
     buildPhraseKeyboard(); makePhraseMobileInput();
-    const cam=(typeof camera!=='undefined' && camera) ? camera : (renderer && renderer.xr && renderer.xr.getCamera ? renderer.xr.getCamera() : null);
+    const cam=getPhraseCamera();
     if(cam){
       if(typeof cam.updateWorldMatrix==='function') cam.updateWorldMatrix(true,false);
       const pos=new T.Vector3(),dir=new T.Vector3(); cam.getWorldPosition(pos); cam.getWorldDirection(dir);
