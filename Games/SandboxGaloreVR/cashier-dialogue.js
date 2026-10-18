@@ -30,7 +30,7 @@
     const scriptBase = document.currentScript?.src || location.href;
     fetch(new URL('cashier-bad-words.json', scriptBase))
       .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-      .then(data => { badWordEntries = Array.isArray(data.entries) ? data.entries : []; console.info('[Cashier] Loaded '+badWordEntries.length+' bad-word rules from separate dictionary.'); })
+      .then(data => { badWordEntries = Array.isArray(data.words) ? [{ words: data.words, reply: data.reply, action: data.action }] : (Array.isArray(data.entries) ? data.entries : []); console.info('[Cashier] Loaded '+badWordEntries.reduce((n, entry) => n + (Array.isArray(entry.words) ? entry.words.length : 0), 0)+' individual bad words from separate dictionary.'); })
       .catch(err => console.warn('[Cashier] Could not load bad-word dictionary:',err));
     fetch(new URL('cashier-responses.json', scriptBase))
       .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
