@@ -211,6 +211,7 @@
     addPhraseKey('CLEAR',.25,-.52,.43,()=>{phraseDraft='';phraseDraftChanged()});
     addPhraseKey('SEND',.78,-.52,.42,submitPhrase);
     addPhraseKey('CLOSE',.83,.70,.40,closePhraseKeyboard);
+    if(typeof scene==='undefined' || !scene || typeof scene.add!=='function') throw new Error('Game scene is not ready for the cashier keyboard.');
     scene.add(phraseKeyboard);
     phraseRaycaster=new T.Raycaster();
     // XR controller select events work with the in-game 3D keys, not the headset system keyboard.
@@ -231,7 +232,7 @@
       canvas.addEventListener('pointerdown',event=>{
         if(!phraseOpen || renderer?.xr?.isPresenting) return;
         const rect=canvas.getBoundingClientRect();
-        const cam=(typeof camera!=='undefined' && camera) ? camera : (renderer && renderer.xr && renderer.xr.getCamera ? renderer.xr.getCamera() : null); const rayCam=cam && cam.isArrayCamera && cam.cameras && cam.cameras.length ? cam.cameras[0] : cam; if(!rayCam) return; phraseRaycaster.setFromCamera({x:((event.clientX-rect.left)/rect.width)*2-1,y:-((event.clientY-rect.top)/rect.height)*2+1},rayCam);
+        const cam=getPhraseCamera(); const rayCam=cam && cam.isArrayCamera && cam.cameras && cam.cameras.length ? cam.cameras[0] : cam; if(!rayCam) return; phraseRaycaster.setFromCamera({x:((event.clientX-rect.left)/rect.width)*2-1,y:-((event.clientY-rect.top)/rect.height)*2+1},rayCam);
         const hits=phraseRaycaster.intersectObjects(phraseKeys,false);
         if(hits.length){event.preventDefault();event.stopPropagation();hits[0].object.userData.phraseAction()}
       },true);
@@ -254,13 +255,21 @@
     wrap.append(phraseInput,phraseSend,phraseClose); document.body.appendChild(wrap);
     phraseInput._wrap=wrap;
   }
+  function getPhraseCamera(){
+    // The game names its main camera `cam`, not `camera`. Prefer that stable camera;
+    // only use the XR camera as a fallback when the main camera is unavailable.
+    try { if(typeof cam!=='undefined' && cam) return cam; } catch(_){}
+    try { if(typeof camera!=='undefined' && camera) return camera; } catch(_){}
+    try { if(typeof renderer!=='undefined' && renderer && renderer.xr && renderer.xr.getCamera){ const xrCam=renderer.xr.getCamera(); if(xrCam) return xrCam; } } catch(_){}
+    return null;
+  }
   function openPhraseKeyboard(){
     if(!currentWorker) currentWorker=findNearestWorker();
     phraseDraft=''; phraseOpen=true;
     buildPhraseKeyboard(); makePhraseMobileInput();
     const cam=(typeof camera!=='undefined' && camera) ? camera : (renderer && renderer.xr && renderer.xr.getCamera ? renderer.xr.getCamera() : null);
     if(cam){
-      cam.updateWorldMatrix(true,false);
+      if(typeof cam.updateWorldMatrix==='function') cam.updateWorldMatrix(true,false);
       const pos=new T.Vector3(),dir=new T.Vector3(); cam.getWorldPosition(pos); cam.getWorldDirection(dir);
       phraseKeyboard.position.copy(pos).addScaledVector(dir,1.35);
       phraseKeyboard.position.y-=.12;
