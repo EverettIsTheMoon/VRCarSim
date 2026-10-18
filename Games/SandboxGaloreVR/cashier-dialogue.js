@@ -387,7 +387,7 @@
   }
   function setMoonshineEnabled(enabled){
     moonshineEnabled=!!enabled;
-    if(!moonshineEnabled) stopMoonshineListening();
+    if(!moonshineEnabled){ stopWhisperListening(); stopMoonshineListening(); }
     updateSpeechModeLabel();
     showBubble(moonshineEnabled
       ? 'Local Whisper tiny.en selected — runs in browser, first use downloads model'
