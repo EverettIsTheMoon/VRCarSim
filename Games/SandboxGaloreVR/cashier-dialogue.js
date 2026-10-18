@@ -150,7 +150,23 @@
     if(!transcript || !transcript.trim()) return;
     const answer=chooseResponse(transcript);
     showBubble(answer,5200,false);
-    // Intentionally no speech synthesis: replies are text bubbles only.
+    // Lightweight device TTS: no downloaded neural model or cloud API.
+    // Prefer an installed local English voice; pitch/rate give it a robotic character.
+    try{
+      if('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window){
+        window.speechSynthesis.cancel();
+        const utterance=new SpeechSynthesisUtterance(answer);
+        utterance.lang='en-US';
+        utterance.rate=1.04;
+        utterance.pitch=0.58;
+        utterance.volume=1;
+        const voices=window.speechSynthesis.getVoices()||[];
+        const english=voices.filter(v=>/^en(-|_)/i.test(v.lang||''));
+        const local=english.find(v=>v.localService) || english.find(v=>/english|us english|united states/i.test(v.name+' '+v.lang));
+        if(local) utterance.voice=local;
+        window.speechSynthesis.speak(utterance);
+      }
+    }catch(err){ console.warn('[Cashier] Device speech synthesis unavailable:',err); }
     try { window.dispatchEvent(new CustomEvent('rl-cashier-reply',{detail:{heard:transcript,reply:answer}})); } catch(_){}
   }
   function startListening(){
@@ -205,7 +221,7 @@
   async function startMoonshineListening(){
     if(moonshineStarting || listening) return;
     moonshineStarting=true;
-    showBubble('Starting Moonshine Voice… first use downloads the small local model.',10000,false);
+    showBubble('Preparing Moonshine… first use downloads the local model.',12000,false);
     try{
       if(!moonshineModulePromise){
         moonshineModulePromise=import('https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm/dist/index.js');
@@ -215,39 +231,53 @@
         moonshineMic=new MicTranscriber()
           .language('en')
           .modelArch(ModelArch.TinyStreaming)
+          .onProgress(fraction=>{
+            const pct=Math.max(0,Math.min(100,Math.round(fraction*100)));
+            showBubble('Loading Moonshine speech model… '+pct+'%',2500,false);
+          })
           .onText(text=>{
-            if(moonshineEnabled && listening && text && String(text).trim()){
-              showBubble('Listening: '+String(text).trim(),3500,false);
+            const partial=String(text||'').trim();
+            if(moonshineEnabled && listening && partial){
+              showBubble('I hear: '+partial,1800,false);
             }
           })
           .onLine(line=>{
             const transcript=String(line && line.text || '').trim();
-            if(!moonshineEnabled || !listening || moonshineFinalizing || !line || !line.isComplete || !transcript) return;
+            // onLine is documented as a completed-line callback; don't rely on extra flags.
+            if(!moonshineEnabled || !listening || moonshineFinalizing || !transcript) return;
             moonshineFinalizing=true;
             listening=false;
-            showBubble('You said: '+transcript,2200,false);
+            showBubble('You said: '+transcript,2600,false);
             Promise.resolve(moonshineMic.stop()).catch(()=>{}).finally(()=>{
-              setTimeout(()=>speakReply(transcript),850);
+              setTimeout(()=>speakReply(transcript),700);
               moonshineFinalizing=false;
             });
           })
           .onError(err=>{
             listening=false;
-            const detail=String(err && err.message || err || 'unknown error').slice(0,110);
-            showBubble('Moonshine microphone error: '+detail,7000,false);
+            const detail=String(err && err.message || err || 'unknown error').slice(0,140);
+            showBubble('Moonshine error: '+detail,7000,false);
+            console.warn('[Cashier] Moonshine callback error:',err);
           });
       }
+      // Explicit load lets us show model-download progress before opening the mic.
+      if(typeof moonshineMic.load==='function') await moonshineMic.load();
+      if(!moonshineEnabled) return;
+      // Set this before start(): microphone callbacks may begin before start() resolves.
+      listening=true;
+      showBubble('Microphone starting…',3000,false);
       await moonshineMic.start();
       if(!moonshineEnabled){ await stopMoonshineListening(); return; }
-      listening=true;
-      showBubble('Moonshine is listening. Say something!',8000,false);
+      showBubble('Listening… speak now.',1800,false);
     }catch(err){
       listening=false;
+      // Allow retry after a failed model load or microphone initialization.
+      moonshineMic=null;
       const detail=String(err && err.message || err || 'unknown error').slice(0,150);
       const isolationHint=(!window.crossOriginIsolated || typeof SharedArrayBuffer==='undefined')
         ? ' This site may need cross-origin isolation for Moonshine WASM.'
         : '';
-      showBubble('Moonshine test failed: '+detail+isolationHint+' Tap the speech-mode toggle to try the browser fallback.',9000,false);
+      showBubble('Moonshine failed: '+detail+isolationHint+' Press Talk to retry, or switch speech mode.',9000,false);
       console.warn('[Cashier] Moonshine Voice failed:',err);
     }finally{
       moonshineStarting=false;
@@ -351,7 +381,9 @@
       handleTalkButton();
       if(nearWorker && onFoot && !menuOpen && !dead){
         currentWorker=nearWorker;
-        if(!bubble || bubbleMode==='prompt' || now>bubbleUntil){
+        if(listening || moonshineStarting){
+          if(!bubble || now>bubbleUntil) showBubble('Listening… speak now.',1800,false);
+        } else if(!bubble || bubbleMode==='prompt' || now>bubbleUntil){
           if(now-lastPrompt>1300){
             lastPrompt=now;
             showBubble('PRESS LEFT Y TO TALK',1500,true);
