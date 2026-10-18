@@ -609,7 +609,8 @@
         nearWorker=(onFoot && !menuOpen && !dead) ? findNearestWorker() : null;
       }
       handleTalkButton();
-      if(phraseInput && renderer && renderer.xr && renderer.xr.isPresenting && phraseInput._wrap.style.display!=='none'){ phraseInput.blur(); phraseInput._wrap.style.display='none'; }\n      if(phraseKeyboard && phraseOpen && !phraseKeyboard.visible) phraseKeyboard.visible=true;\n      if(nearWorker && onFoot && !menuOpen && !dead){
+      if(phraseInput && renderer && renderer.xr && renderer.xr.isPresenting && phraseInput._wrap.style.display!=='none'){ phraseInput.blur(); phraseInput._wrap.style.display='none'; }
+      if(phraseKeyboard && phraseOpen && !phraseKeyboard.visible) phraseKeyboard.visible=true;\n      if(nearWorker && onFoot && !menuOpen && !dead){
         currentWorker=nearWorker;
         if(listening || moonshineStarting){
           if(!bubble || now>bubbleUntil) showBubble('Listening… speak now.',1800,false);
