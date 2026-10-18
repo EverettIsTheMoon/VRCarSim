@@ -49,7 +49,7 @@ const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,
 // Quest 1 performance mode: use built-in low-poly meshes and lower render resolution.
 const RL_QUEST1_AUTO=/\bQuest 1\b|Oculus Quest\)/i.test(navigator.userAgent||'');let RL_QUEST1_LOW=RL_QUEST1_AUTO;window.RL_QUEST1_LOW=RL_QUEST1_LOW;window.__mainMenuOpen=true;let selectedPlayType='single',selectedDriveMode='free';
 // TEMPORARY CASHIER SPEECH TEST: set false to restore the normal spawn after testing.
-const RL_CASHIER_TEST_SPAWN=true;
+const RL_CASHIER_TEST_SPAWN=false;
 /* Optional GLB model overrides. Files live beside index.html in ./Models/.
    If a file is missing, fails to load, or GLTFLoader is unavailable, the original HTML-built model stays visible. */
 const RL_MODEL_FILES={
