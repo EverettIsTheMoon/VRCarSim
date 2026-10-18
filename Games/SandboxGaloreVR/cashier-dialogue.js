@@ -238,6 +238,7 @@
           });
       }
       await moonshineMic.start();
+      if(!moonshineEnabled){ await stopMoonshineListening(); return; }
       listening=true;
       showBubble('Moonshine is listening. Say something!',8000,false);
     }catch(err){
