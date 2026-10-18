@@ -9,8 +9,9 @@
     .trim()
     .replace(/\s+/g, ' ');
   let library = null, recognition = null, listening = false, lastTriggerAt = 0;
-  // Temporary Moonshine Voice experiment. Toggle in the on-screen test controls to fall back.
+  // Experimental local Whisper tiny.en model. Audio is processed in this browser; no speech API is used.
   let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false, moonshineSawText = false;
+  let whisperPipelinePromise = null, whisperRecording = false, whisperStream = null, whisperRecorder = null, whisperChunks = [], whisperModel = null;
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
@@ -172,7 +173,7 @@
   function startListening(){
     if(listening || moonshineStarting || performance.now()-lastTriggerAt<900) return;
     lastTriggerAt=performance.now();
-    if(moonshineEnabled){ startMoonshineListening(); return; }
+    if(moonshineEnabled){ startWhisperListening(); return; }
     const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SR){
       fallbackMenu = true;
@@ -214,6 +215,81 @@
       showBubble('Could not start voice recognition. Try pressing Y again.',5000,false);
       console.warn('[Cashier] start failed:',e);
     }
+  }
+
+  // Experimental local Whisper Tiny English model via Transformers.js (WASM/CPU).
+  // First run downloads and caches the model; expect a large download and slow first inference.
+  async function startWhisperListening(){
+    if(whisperRecording || moonshineStarting || listening) return;
+    moonshineStarting=true;
+    whisperRecording=true;
+    showBubble('Loading local Whisper tiny.en… first use downloads the model.',12000,false);
+    let stream=null, recorder=null;
+    try{
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('This browser does not expose microphone capture.');
+      stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+      whisperStream=stream;
+      if(!whisperPipelinePromise){
+        whisperPipelinePromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2').then(async mod=>{
+          const pipe=await mod.pipeline('automatic-speech-recognition','onnx-community/whisper-tiny.en',{
+            device:'wasm', dtype:'q8',
+            progress_callback:p=>{
+              if(p && typeof p.progress==='number') showBubble('Downloading local Whisper model… '+Math.round(p.progress)+'%',2600,false);
+              else if(p && p.status==='ready') showBubble('Whisper model ready.',1800,false);
+            }
+          });
+          return pipe;
+        }).catch(err=>{whisperPipelinePromise=null;throw err;});
+      }
+      whisperModel=await whisperPipelinePromise;
+      if(!moonshineEnabled) return;
+      const mime=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t=>window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+      recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+      whisperRecorder=recorder; whisperChunks=[];
+      recorder.ondataavailable=e=>{if(e.data&&e.data.size)whisperChunks.push(e.data)};
+      showBubble('Recording 5 seconds… speak now!',5600,false);
+      const blobPromise=new Promise((resolve,reject)=>{
+        recorder.onerror=e=>reject(e.error||new Error('Microphone recording failed.'));
+        recorder.onstop=()=>resolve(new Blob(whisperChunks,{type:recorder.mimeType||'audio/webm'}));
+      });
+      recorder.start();
+      listening=true;
+      await new Promise(resolve=>setTimeout(resolve,5000));
+      if(recorder.state!=='inactive') recorder.stop();
+      const blob=await blobPromise;
+      listening=false;
+      if(!blob.size) throw new Error('The microphone recording was empty. Check microphone permission.');
+      showBubble('Transcribing locally… this may lag on mobile/VR.',10000,false);
+      const audioContext=new (window.AudioContext||window.webkitAudioContext)();
+      let decoded;
+      try{decoded=await audioContext.decodeAudioData(await blob.arrayBuffer());}
+      finally{try{await audioContext.close()}catch(_){}}
+      const sampleRate=16000, frameCount=Math.ceil(decoded.duration*sampleRate);
+      const offline=new OfflineAudioContext(1,Math.max(1,frameCount),sampleRate);
+      const source=offline.createBufferSource(); source.buffer=decoded; source.connect(offline.destination); source.start(0);
+      const resampled=await offline.startRendering();
+      const result=await whisperModel(resampled.getChannelData(0),{sampling_rate:sampleRate});
+      const transcript=String(result && (result.text||result[0]?.text) || '').trim();
+      if(transcript){showBubble('You said: '+transcript,2600,false);setTimeout(()=>speakReply(transcript),700)}
+      else showBubble("Whisper didn't catch that. Press talk and try again.",4200,false);
+    }catch(err){
+      listening=false;
+      const detail=String(err && (err.message||err) || 'unknown error').slice(0,150);
+      showBubble('Local Whisper failed: '+detail,7000,false);
+      console.warn('[Cashier] Local Whisper failed:',err);
+    }finally{
+      listening=false; whisperRecording=false; moonshineStarting=false;
+      if(whisperRecorder && whisperRecorder.state!=='inactive'){try{whisperRecorder.stop()}catch(_){}}
+      whisperRecorder=null; whisperChunks=[];
+      if(stream){try{stream.getTracks().forEach(t=>t.stop())}catch(_){}}
+      whisperStream=null;
+    }
+  }
+  async function stopWhisperListening(){
+    listening=false;
+    try{if(whisperRecorder && whisperRecorder.state!=='inactive')whisperRecorder.stop()}catch(_){}
+    try{if(whisperStream)whisperStream.getTracks().forEach(t=>t.stop())}catch(_){}
+    whisperStream=null;
   }
 
   // Moonshine Voice runs locally in WebAssembly. Model files are downloaded once
@@ -314,13 +390,13 @@
     if(!moonshineEnabled) stopMoonshineListening();
     updateSpeechModeLabel();
     showBubble(moonshineEnabled
-      ? 'Moonshine test ON — local Tiny Streaming model'
+      ? 'Local Whisper tiny.en selected — runs in browser, first use downloads model'
       : 'Browser speech fallback selected',3200,false);
   }
   let speechModeButton=null;
   function updateSpeechModeLabel(){
     if(speechModeButton){
-      speechModeButton.textContent=moonshineEnabled?'🧪 Speech: Moonshine ON':'↩ Speech: Browser fallback';
+      speechModeButton.textContent=moonshineEnabled?'🧪 Local Whisper tiny.en ON':'↩ Speech: Browser fallback';
       speechModeButton.setAttribute('aria-pressed',moonshineEnabled?'true':'false');
     }
   }
@@ -424,7 +500,7 @@
   function addDesktopButton(){
     speechModeButton=document.createElement('button');
     speechModeButton.type='button';
-    speechModeButton.textContent='🧪 Speech: Moonshine ON';
+    speechModeButton.textContent='🧪 Local Whisper tiny.en ON';
     speechModeButton.setAttribute('aria-label','Toggle experimental Moonshine local speech recognition');
     Object.assign(speechModeButton.style,{position:'fixed',right:'14px',bottom:'70px',zIndex:'10000',display:'none',padding:'10px 12px',border:'1px solid #fff8',borderRadius:'12px',background:'#26313d',color:'#fff',font:'bold 13px system-ui',cursor:'pointer',pointerEvents:'auto',maxWidth:'calc(100vw - 28px)'});
     speechModeButton.addEventListener('click',()=>setMoonshineEnabled(!moonshineEnabled));
@@ -448,7 +524,7 @@
     closePhrasePicker(){fallbackMenu=false;},
     setMoonshineEnabled,
     get moonshineEnabled(){return moonshineEnabled;},
-    stopListening: stopMoonshineListening
+    stopListening: stopWhisperListening
   };
   loadLibrary();
   const waitForScene=setInterval(()=>{
