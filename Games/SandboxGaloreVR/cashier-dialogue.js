@@ -171,51 +171,126 @@
     }catch(err){ console.warn('[Cashier] Device speech synthesis unavailable:',err); }
     try { window.dispatchEvent(new CustomEvent('rl-cashier-reply',{detail:{heard:transcript,reply:answer}})); } catch(_){}
   }
+  // Low-cost phrase keyboard: no neural speech models, WASM, or microphone processing.
+  let phraseKeyboard=null, phraseKeys=[], phraseDraft='', phraseOpen=false, phraseRaycaster=null;
+  let phraseInput=null, phraseSend=null, phraseClose=null, phraseControllerHooks=[];
+  const phraseMobile = () => matchMedia('(pointer: coarse), (max-width: 800px)').matches;
+  function phraseDraftChanged(){
+    if(phraseInput && phraseInput.value!==phraseDraft) phraseInput.value=phraseDraft;
+    if(currentWorker) showBubble(phraseDraft ? 'You: '+phraseDraft : 'Type a message using the floating keyboard',60000,false);
+  }
+  function phraseKeyTexture(label){
+    const cv=document.createElement('canvas'); cv.width=256; cv.height=160;
+    const cx=cv.getContext('2d');
+    cx.fillStyle='#202a36'; cx.fillRect(0,0,256,160);
+    cx.strokeStyle='#c6d5e6'; cx.lineWidth=7; cx.strokeRect(4,4,248,152);
+    cx.fillStyle='#fff'; cx.font='bold 58px system-ui'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText(label,128,80,225);
+    const tex=new T.CanvasTexture(cv); tex.minFilter=T.LinearFilter;
+    return tex;
+  }
+  function addPhraseKey(label,x,y,w,action){
+    const mesh=new T.Mesh(new T.PlaneGeometry(w,.27),new T.MeshBasicMaterial({map:phraseKeyTexture(label),transparent:false,side:T.DoubleSide}));
+    mesh.position.set(x,y,.025); mesh.userData.phraseAction=action; phraseKeyboard.add(mesh); phraseKeys.push(mesh);
+  }
+  function buildPhraseKeyboard(){
+    if(phraseKeyboard) return;
+    phraseKeyboard=new T.Group(); phraseKeyboard.name='CashierFloatingPhraseKeyboard';
+    const bg=new T.Mesh(new T.PlaneGeometry(2.25,1.62),new T.MeshBasicMaterial({color:0x101820,transparent:true,opacity:.97,side:T.DoubleSide}));
+    bg.position.z=-.01; phraseKeyboard.add(bg);
+    const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
+    rows.forEach((row,ri)=>{
+      const keyW=.19, gap=.025, total=row.length*(keyW+gap)-gap, offset=-total/2+keyW/2;
+      for(let i=0;i<row.length;i++){
+        const label=row[i],x=offset+i*(keyW+gap),y=.48-ri*.32;
+        addPhraseKey(label,x,y,keyW,()=>{phraseDraft+=label.toLowerCase();phraseDraftChanged()});
+      }
+    });
+    addPhraseKey('SPACE',-.63,-.52,.62,()=>{phraseDraft+=' ';phraseDraftChanged()});
+    addPhraseKey('⌫',-.12,-.52,.3,()=>{phraseDraft=phraseDraft.slice(0,-1);phraseDraftChanged()});
+    addPhraseKey('CLEAR',.25,-.52,.43,()=>{phraseDraft='';phraseDraftChanged()});
+    addPhraseKey('SEND',.78,-.52,.42,submitPhrase);
+    addPhraseKey('CLOSE',.83,.70,.40,closePhraseKeyboard);
+    scene.add(phraseKeyboard);
+    phraseRaycaster=new T.Raycaster();
+    // XR controller select events work with the in-game 3D keys, not the headset system keyboard.
+    try{
+      if(renderer && renderer.xr && renderer.xr.getController){
+        for(let i=0;i<2;i++){
+          const controller=renderer.xr.getController(i);
+          const handler=()=>{ if(!phraseOpen)return; phraseRaycaster.setFromCamera({x:0,y:0},renderer.xr.getCamera(camera||renderer.camera)); phraseRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld); phraseRaycaster.ray.direction.set(0,0,-1).transformDirection(controller.matrixWorld); const hits=phraseRaycaster.intersectObjects(phraseKeys,false); if(hits.length) hits[0].object.userData.phraseAction(); };
+          controller.addEventListener('selectstart',handler);
+          phraseControllerHooks.push([controller,handler]);
+        }
+      }
+    }catch(e){console.warn('[Cashier] Could not attach keyboard controller input:',e)}
+    // Mouse/touch raycasting lets the same 3D keyboard be tested outside VR.
+    const canvas=renderer && renderer.domElement;
+    if(canvas && !canvas.dataset.phraseKeyboardClick){
+      canvas.dataset.phraseKeyboardClick='1';
+      canvas.addEventListener('pointerdown',event=>{
+        if(!phraseOpen || renderer?.xr?.isPresenting) return;
+        const rect=canvas.getBoundingClientRect();
+        phraseRaycaster.setFromCamera({x:((event.clientX-rect.left)/rect.width)*2-1,y:-((event.clientY-rect.top)/rect.height)*2+1},camera);
+        const hits=phraseRaycaster.intersectObjects(phraseKeys,false);
+        if(hits.length){event.preventDefault();event.stopPropagation();hits[0].object.userData.phraseAction()}
+      },true);
+    }
+  }
+  function makePhraseMobileInput(){
+    if(phraseInput) return;
+    const wrap=document.createElement('div');
+    Object.assign(wrap.style,{position:'fixed',left:'10px',right:'10px',bottom:'12px',zIndex:'10020',display:'none',gap:'7px',alignItems:'center',pointerEvents:'auto'});
+    phraseInput=document.createElement('input'); phraseInput.type='text'; phraseInput.autocomplete='off'; phraseInput.autocapitalize='sentences'; phraseInput.placeholder='Type to cashier…';
+    Object.assign(phraseInput.style,{flex:'1',minWidth:'0',padding:'13px',font:'16px system-ui',borderRadius:'10px',border:'2px solid #b9c9dc',background:'#f7f9fc',color:'#111'});
+    phraseInput.addEventListener('input',()=>{phraseDraft=phraseInput.value;phraseDraftChanged()});
+    phraseInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitPhrase()}});
+    phraseSend=document.createElement('button'); phraseSend.textContent='Send';
+    Object.assign(phraseSend.style,{padding:'13px 14px',borderRadius:'10px',border:'0',background:'#286bd6',color:'#fff',font:'bold 15px system-ui'});
+    phraseSend.addEventListener('click',submitPhrase);
+    phraseClose=document.createElement('button'); phraseClose.textContent='×';
+    Object.assign(phraseClose.style,{padding:'10px 13px',borderRadius:'10px',border:'0',background:'#303b49',color:'#fff',font:'bold 20px system-ui'});
+    phraseClose.addEventListener('click',closePhraseKeyboard);
+    wrap.append(phraseInput,phraseSend,phraseClose); document.body.appendChild(wrap);
+    phraseInput._wrap=wrap;
+  }
+  function openPhraseKeyboard(){
+    if(!currentWorker) currentWorker=findNearestWorker();
+    phraseDraft=''; phraseOpen=true;
+    buildPhraseKeyboard(); makePhraseMobileInput();
+    const cam=(typeof camera!=='undefined' && camera) ? camera : (renderer && renderer.xr && renderer.xr.getCamera ? renderer.xr.getCamera() : null);
+    if(cam){
+      cam.updateWorldMatrix(true,false);
+      const pos=new T.Vector3(),dir=new T.Vector3(); cam.getWorldPosition(pos); cam.getWorldDirection(dir);
+      phraseKeyboard.position.copy(pos).addScaledVector(dir,1.35);
+      phraseKeyboard.position.y-=.12;
+      const face=pos.clone(); phraseKeyboard.lookAt(face);
+    } else phraseKeyboard.position.set(0,1.5,-1.4);
+    phraseKeyboard.visible=true;
+    if(phraseInput && phraseMobile() && !(renderer && renderer.xr && renderer.xr.isPresenting)){
+      phraseInput._wrap.style.display='flex';
+      // Focus only on phones; the native mobile keyboard is deliberately not opened in VR.
+      setTimeout(()=>{if(phraseOpen && !(renderer && renderer.xr && renderer.xr.isPresenting))phraseInput.focus({preventScroll:true})},80);
+    } else if(phraseInput) phraseInput._wrap.style.display='none';
+    phraseDraftChanged();
+  }
+  function closePhraseKeyboard(){
+    phraseOpen=false;
+    if(phraseKeyboard) phraseKeyboard.visible=false;
+    if(phraseInput){phraseInput.blur();phraseInput._wrap.style.display='none'}
+  }
+  function submitPhrase(){
+    const phrase=phraseDraft.trim();
+    closePhraseKeyboard();
+    if(phrase) speakReply(phrase);
+    else showBubble('Tap the floating letter keys to type a phrase.',3500,false);
+  }
   function startListening(){
     if(listening || moonshineStarting || performance.now()-lastTriggerAt<900) return;
     lastTriggerAt=performance.now();
-    if(moonshineEnabled){ startWhisperListening(); return; }
-    const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SR){
-      fallbackMenu = true;
-      fallbackIndex = Math.max(0, flatTriggers.findIndex(x => x.phrase === 'hello'));
-      showFallbackPrompt();
-      console.warn('[Cashier] SpeechRecognition unavailable; controller phrase-picker enabled.');
-      return;
-    }
-    try{
-      if(!recognition){
-        recognition=new SR();
-        recognition.lang='en-US';
-        recognition.continuous=false;
-        recognition.interimResults=false;
-        recognition.maxAlternatives=1;
-        recognition.onstart=()=>{listening=true;showBubble('Listening… say something!',8000,false);};
-        recognition.onresult=e=>{
-          const result=e.results && e.results[0] && e.results[0][0];
-          const transcript=result && result.transcript ? result.transcript.trim() : '';
-          listening=false;
-          if(transcript){
-            showBubble('You said: '+transcript,2100,false);
-            setTimeout(()=>speakReply(transcript),1150);
-          } else showBubble("I didn't catch that. Press Y and try again.",3800,false);
-        };
-        recognition.onerror=e=>{
-          listening=false;
-          let msg='Microphone problem. Check browser permissions and try again.';
-          if(e.error==='not-allowed'||e.error==='service-not-allowed') msg='Microphone access was blocked. Allow it in the browser settings.';
-          else if(e.error==='network') msg='Voice recognition needs a working internet connection in this browser.';
-          else if(e.error==='no-speech') msg="I didn't hear anything. Press Y and try again.";
-          showBubble(msg,6500,false);
-        };
-        recognition.onend=()=>{listening=false;};
-      }
-      recognition.start();
-    }catch(e){
-      listening=false;
-      showBubble('Could not start voice recognition. Try pressing Y again.',5000,false);
-      console.warn('[Cashier] start failed:',e);
-    }
+    const worker=findNearestWorker();
+    if(worker && onFoot && !menuOpen && !dead){currentWorker=worker;openPhraseKeyboard();}
+    else openPhraseKeyboard();
   }
 
   // Run Whisper inside a Web Worker so WASM inference doesn't block the game's render loop.
@@ -534,7 +609,7 @@
         nearWorker=(onFoot && !menuOpen && !dead) ? findNearestWorker() : null;
       }
       handleTalkButton();
-      if(nearWorker && onFoot && !menuOpen && !dead){
+      if(phraseInput && renderer && renderer.xr && renderer.xr.isPresenting && phraseInput._wrap.style.display!=='none'){ phraseInput.blur(); phraseInput._wrap.style.display='none'; }\n      if(phraseKeyboard && phraseOpen && !phraseKeyboard.visible) phraseKeyboard.visible=true;\n      if(nearWorker && onFoot && !menuOpen && !dead){
         currentWorker=nearWorker;
         if(listening || moonshineStarting){
           if(!bubble || now>bubbleUntil) showBubble('Listening… speak now.',1800,false);
@@ -589,7 +664,7 @@
       if(window.THREE && typeof scene!=='undefined' && typeof crowd!=='undefined' && typeof rig!=='undefined'){
         clearInterval(waitForScene);
         makeBubble();
-        addDesktopButton();
+        addDesktopButton();\n        makePhraseMobileInput();
         tick();
       }
     }catch(_){}
