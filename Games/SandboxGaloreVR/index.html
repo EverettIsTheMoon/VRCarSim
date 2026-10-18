@@ -1397,11 +1397,12 @@ function setSandboxWorld(active){
  // The standard map has scenery outside the town group too, so explicitly hide all of it.
  const worldRoots=[road,ground,house,town,NAT.natRoot,uBox,uTrunk,uCone,uRock,window.__roadlineCrossStreetGroup,...mapBoundaryWalls,...branchRoadMeshes,...ramps.map(r=>r.m)];
  for(const o of worldRoots)if(o)o.visible=!sandbox;
- for(const p of side)if(p)p.visible=!sandbox;
- // Sandbox has its own pedestrians; hide the regular road/town population while it is active.
- for(const n of npcs)if(n&&n.g)n.g.visible=!sandbox;
- for(const e of peds)if(e&&e.g)e.g.visible=!sandbox;
- for(const e of crowd)if(e&&e.g)e.g.visible=!sandbox;
+ for(const p of side)if(p){
+  if(sandbox){if(p.userData.sandboxWasVisible===undefined)p.userData.sandboxWasVisible=p.visible;p.visible=false;}
+  else if(p.userData.sandboxWasVisible!==undefined){p.visible=p.userData.sandboxWasVisible;delete p.userData.sandboxWasVisible;}
+ }
+ // Sandbox has its own pedestrians; hide standard map actors only while Sandbox is active.
+ if(sandbox){for(const n of npcs)if(n&&n.g)n.g.visible=false;for(const e of peds)if(e&&e.g)e.g.visible=false;for(const e of crowd)if(e&&e.g)e.g.visible=false;}
  if(sandbox&&window.WX){window.WX.mode=2;window.WX.autoT=Math.max(window.WX.autoT,35)}
 }
 
