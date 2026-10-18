@@ -284,10 +284,13 @@ function roadGrade(z){return (roadHeight(z+.5)-roadHeight(z-.5))}
 function mtn(x,z){const d=Math.max(0,Math.abs(x)-60),r=Math.min(1,d/220),sm=r*r*(3-2*r),sg=x<0?0:2.1,rd=.62+.18*Math.sin(z/180+sg)+.12*Math.sin(z/82+sg*2)+.05*Math.sin(z/43+x/60);return sm*28*Math.max(.25,rd)+sm*sm*(3.2*Math.abs(Math.sin(x/75+Math.sin(z/95)*1.4))+1.0*Math.sin(x/48+z/66))}
 /* Building plots flatten the actual ground below each building footprint. The extra fade margin
    blends the flat plot into nearby hills instead of letting terrain poke through walls. */
-const terrainPads=[];
+const terrainPads=[];let mountainCollisionPeaks=[];
 function terrainBaseHeight(x,z,segs){const d=Math.max(0,Math.abs(x)-5.5),t=Math.min(1,d/9),sm=t*t*(3-2*t);let h=roadHeight(z)-.10-.55*sm;
  const L=segs||branchSegments;let bd=1e9;for(let i=0;i<L.length;i++){const q=L[i];if(z<Math.min(q.az,q.bz)-14||z>Math.max(q.az,q.bz)+14)continue;const dx=q.bx-q.ax,dz=q.bz-q.az,ll=dx*dx+dz*dz||1,u=C(((x-q.ax)*dx+(z-q.az)*dz)/ll,0,1),ex=q.ax+dx*u-x,ez=q.az+dz*u-z,e2=ex*ex+ez*ez;if(e2<bd)bd=e2}
- if(bd<1e8){const db=Math.max(0,Math.sqrt(bd)-3.5),tb=Math.min(1,db/9),sb=tb*tb*(3-2*tb);h=Math.max(h,roadHeight(z)-.10-.55*sb)}return h+mtn(x,z)*(bd<1e8?C((Math.sqrt(bd)-4)/12,0,1):1)}
+ if(bd<1e8){const db=Math.max(0,Math.sqrt(bd)-3.5),tb=Math.min(1,db/9),sb=tb*tb*(3-2*tb);h=Math.max(h,roadHeight(z)-.10-.55*sb)}
+ const base=h+mtn(x,z)*(bd<1e8?C((Math.sqrt(bd)-4)/12,0,1):1);let mountainTop=base;
+ for(const p of mountainCollisionPeaks){const mz=p.z0+TL*Math.round((z-p.z0)/TL),dx=x-p.x,dz=z-mz,nr=Math.hypot(dx,dz)/(p.Wd||1);if(nr<1){const mb=roadHeight(mz)+mtn(p.x,mz)-9;mountainTop=Math.max(mountainTop,mb+p.H*Math.pow(1-nr,.9))}}
+ return mountainTop}
 function terrainHeight(x,z,segs){let h=terrainBaseHeight(x,z,segs),best=0,target=h;
  for(let i=0;i<terrainPads.length;i++){const p=terrainPads[i],dx=Math.abs(x-p.x)-p.w*.5,dz=Math.abs(z-p.z)-p.d*.5,out=Math.max(dx,dz);if(out>=p.fade||dx>p.fade||dz>p.fade)continue;
   const u=out<=0?0:C(out/p.fade,0,1),smooth=u*u*(3-2*u),weight=1-smooth;if(weight>best){best=weight;target=p.y}}
@@ -553,7 +556,7 @@ const peakN=Math.round(52*Q+4),peakG=(()=>{const B=gB();function peak(ox,oz,R,H,
  const ap=[ox+R*.04,H,oz];const colOf=(y,f)=>{const h=y/H;let c;if(h<.22)c=mix([.27,.31,.2],[.4,.38,.34],h/.22);else if(h<.6)c=mix([.42,.4,.37],[.55,.53,.5],(h-.22)/.38);else if(h<.74)c=mix([.55,.53,.5],[.93,.94,.97],(h-.6)/.14);else c=[.94,.95,.98];return c.map(q=>q*f)};
  for(let j=0;j<rings;j++)for(let i=0;i<seg;i++){const a=rowsP[j][i],b=rowsP[j][(i+1)%seg],c=rowsP[j+1][i],d=rowsP[j+1][(i+1)%seg],f=.78+.4*rnd();if(j===rings-1){tri(B,a,b,ap,colOf(a[1],f),colOf(b[1],f),colOf(H,f))}else{tri(B,a,b,c,colOf(a[1],f),colOf(b[1],f),colOf(c[1],f));const f2=.78+.4*rnd();tri(B,b,d,c,colOf(b[1],f2),colOf(d[1],f2),colOf(c[1],f2))}}}
  peak(0,0,1,1,1);peak(.62,.2,.5,.6,2);peak(-.55,-.35,.45,.5,3);return geo(B)})();
-const peakIM=mkInst(peakG,rockMat,peakN),pk=[];for(let i=0;i<peakN;i++){const side=i%2?1:-1,H=rr(55,125);pk.push({i,x:side*rr(150,285),z0:((i/peakN)*TL*2+rr(-20,20))%TL,H,Wd:H*rr(.55,.85),ry:rnd()*6.28,cz:1e9});peakIM.setColorAt(i,new T.Color(.85+rnd()*.25,.85+rnd()*.25,.85+rnd()*.25))}peakIM.instanceColor.needsUpdate=true;
+const peakIM=mkInst(peakG,rockMat,peakN),pk=[];for(let i=0;i<peakN;i++){const side=i%2?1:-1,H=rr(55,125);pk.push({i,x:side*rr(150,285),z0:((i/peakN)*TL*2+rr(-20,20))%TL,H,Wd:H*rr(.55,.85),ry:rnd()*6.28,cz:1e9});peakIM.setColorAt(i,new T.Color(.85+rnd()*.25,.85+rnd()*.25,.85+rnd()*.25))}peakIM.instanceColor.needsUpdate=true;mountainCollisionPeaks=pk;
 /* ================= CLOUDS ================= */
 const cloudN=Math.round(22*Q+6),cloudG=(()=>{const B=gB(),ig=new T.IcosahedronGeometry(1,0),pa=ig.attributes.position.array;for(let b=0;b<6;b++){const cx=rr(-1.3,1.3),cy=rr(-.1,.25),cz=rr(-.55,.55),r=rr(.5,.9);for(let i=0;i<pa.length;i+=9){const v=[];for(let k=0;k<3;k++)v.push([cx+pa[i+k*3]*r*(.85+.3*jit(b,i,k)),cy+pa[i+k*3+1]*r*.6,cz+pa[i+k*3+2]*r*.8]);const col=p=>{const t=C(p[1]*.9+.5,0,1);return mix([.62,.66,.74],[1,1,1],t)};tri(B,v[0],v[1],v[2],col(v[0]),col(v[1]),col(v[2]))}}ig.dispose();return geo(B)})();
 const cloudIM=mkInst(cloudG,cloudMat,cloudN),cl=[];cloudIM.renderOrder=-1;for(let i=0;i<cloudN;i++)cl.push({ux:rnd()*1100,uz:rnd()*1100,y:rr(140,250),s:rr(70,190),sp:rr(2,5)});
@@ -1379,7 +1382,7 @@ makeSandboxRamp(-43,30,65,36,13,0xff8b22);makeSandboxRamp(0,49,83,51,15,0x29a7df
 const sbLampMat=M(0x30363b,.7,.2),sbLampGlow=new T.MeshStandardMaterial({color:0xffe5a3,emissive:0xffc766,emissiveIntensity:1.2});for(const x of [-47,48]){sbMesh(new T.CylinderGeometry(.12,.16,6,8),sbLampMat,x,3,-55);sbMesh(new T.SphereGeometry(.28,8,6),sbLampGlow,x,6.15,-55)}
 const sandboxPeds=[];for(let i=0;i<7;i++){const p=mkPerson(pcol[i%pcol.length],pantsCol[i%pantsCol.length]);p.g.position.set(-24+(i%4)*5,0,-62+Math.floor(i/4)*9);p.g.rotation.y=i%2?Math.PI:0;sandboxRoot.add(p.g);sandboxPeds.push({p,originX:p.g.position.x,originZ:p.g.position.z,phase:i*.83,range:2.4+(i%3),speed:.35+(i%3)*.12})}
 function stepSandboxPeds(dt){if(mode!=='sandbox')return;for(const e of sandboxPeds){const t=performance.now()/1000*e.speed+e.phase,g=e.p.g;g.position.x=e.originX+Math.sin(t)*e.range;g.position.z=e.originZ+Math.cos(t*.7)*1.2;g.rotation.y=Math.atan2(Math.cos(t)*e.range,-Math.sin(t*.7)*.84);try{rlAnimateNpcModel(e.p,dt,true)}catch(_){}}}
-function setSandboxWorld(active){sandboxRoot.visible=!!active;road.visible=!active;ground.visible=!active;town.visible=!active;natRoot.visible=!active;for(const r of ramps)r.m.visible=!active;if(typeof peakMesh!=='undefined'&&peakMesh)peakMesh.visible=!active;if(active&&window.WX){window.WX.mode=2;window.WX.autoT=Math.max(window.WX.autoT,35)}}
+function setSandboxWorld(active){sandboxRoot.visible=!!active;road.visible=!active;ground.visible=!active;town.visible=!active;natRoot.visible=!active;for(const r of ramps)r.m.visible=!active;peakIM.visible=!active;if(active&&window.WX){window.WX.mode=2;window.WX.autoT=Math.max(window.WX.autoT,35)}}
 
 function surfSlope(){const f=-Math.sin(heading),g=-Math.cos(heading);return (surfaceHeightAt(carP.x+f*1.5,carP.z+g*1.5)-surfaceHeightAt(carP.x-f*1.5,carP.z-g*1.5))/3}
 function latSlope(){const r=Math.cos(heading),q=-Math.sin(heading);return (surfaceHeightAt(carP.x+r,carP.z+q)-surfaceHeightAt(carP.x-r,carP.z-q))/2}
