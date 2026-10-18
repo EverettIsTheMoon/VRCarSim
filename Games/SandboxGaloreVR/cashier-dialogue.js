@@ -8,7 +8,7 @@
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
-  let library = null, recognition = null, listening = false, lastTriggerAt = 0;
+  let library = null, recognition = null, listening = false, lastTriggerAt = 0, badWordEntries = [];
   // Experimental local Whisper tiny.en model. Audio is processed in this browser; no speech API is used.
   let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false, moonshineSawText = false;
   let whisperWorker = null, whisperWorkerUrl = null, whisperWorkerReady = null, whisperWorkerRequest = 0, whisperWorkerPending = new Map();
@@ -27,7 +27,12 @@
     "I'm a cashier, not a mind reader."
   ];
   function loadLibrary(){
-    fetch(new URL('cashier-responses.json', document.currentScript?.src || location.href))
+    const scriptBase = document.currentScript?.src || location.href;
+    fetch(new URL('cashier-bad-words.json', scriptBase))
+      .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(data => { badWordEntries = Array.isArray(data.entries) ? data.entries : []; console.info('[Cashier] Loaded '+badWordEntries.length+' bad-word rules from separate dictionary.'); })
+      .catch(err => console.warn('[Cashier] Could not load bad-word dictionary:',err));
+    fetch(new URL('cashier-responses.json', scriptBase))
       .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(data => {
         library = data;
@@ -145,17 +150,30 @@
     if(!bubble || !worker){ if(bubble) bubble.visible=false; return; }
     const p=worldPosition(worker);
     p.y += 2.15;
+    if(phraseOpen && phraseKeyboard){p.copy(phraseKeyboard.position);p.y+=1.18;}
     bubble.position.copy(p);
     bubble.visible=true;
   }
+  function matchBadWord(text){
+    const q=' '+normalise(text)+' ';
+    for(const entry of badWordEntries) for(const phrase of (entry.phrases||[])){
+      const p=normalise(phrase); if(p && q.includes(' '+p+' ')) return entry;
+    }
+    return null;
+  }
   function speakReply(transcript){
     if(!transcript || !transcript.trim()) return;
-    // A robbery threat is a special game action, whether spoken or typed.
+    let answer;
     if(/\bthis is a robbery\b/i.test(normalise(transcript))){
       try { window.dispatchEvent(new CustomEvent('rl-cashier-robbery')); } catch(_){}
-      showBubble('OH NO! THE POLICE ARE COMING! GET OUT OF HERE!',5200,false);
+      answer='OH NO! THE POLICE ARE COMING! GET OUT OF HERE!';
+    } else {
+      const insult=matchBadWord(transcript);
+      if(insult){
+        answer=insult.reply || 'Yo dude, what is wrong with you?!';
+        try { window.dispatchEvent(new CustomEvent('rl-cashier-insult',{detail:{phrase:transcript,action:insult.action||'draw_pistol'}})); } catch(_){}
+      } else answer=chooseResponse(transcript);
     }
-    const answer=chooseResponse(transcript);
     showBubble(answer,5200,false);
     // Lightweight device TTS: no downloaded neural model or cloud API.
     // Prefer an installed local English voice; pitch/rate give it a robotic character.
@@ -177,7 +195,7 @@
     try { window.dispatchEvent(new CustomEvent('rl-cashier-reply',{detail:{heard:transcript,reply:answer}})); } catch(_){}
   }
   // Low-cost phrase keyboard: no neural speech models, WASM, or microphone processing.
-  let phraseKeyboard=null, phraseKeys=[], phraseDraft='', phraseOpen=false, phraseRaycaster=null;
+  let phraseKeyboard=null, phraseKeys=[], phraseDraft='', phraseOpen=false, phraseRaycaster=null, phrasePointerLine=null;
   let phraseInput=null, phraseSend=null, phraseClose=null, phraseControllerHooks=[];
   const phraseMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent||'') && !/OculusBrowser|Quest|Meta Quest/i.test(navigator.userAgent||'');
   function phraseDraftChanged(){
@@ -201,24 +219,29 @@
   function buildPhraseKeyboard(){
     if(phraseKeyboard) return;
     phraseKeyboard=new T.Group(); phraseKeyboard.name='CashierFloatingPhraseKeyboard';
-    const bg=new T.Mesh(new T.PlaneGeometry(2.25,1.62),new T.MeshBasicMaterial({color:0x101820,transparent:true,opacity:.97,side:T.DoubleSide}));
+    const bg=new T.Mesh(new T.PlaneGeometry(3.2,1.95),new T.MeshBasicMaterial({color:0x101820,transparent:true,opacity:.97,side:T.DoubleSide}));
     bg.position.z=-.01; phraseKeyboard.add(bg);
     const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
     rows.forEach((row,ri)=>{
-      const keyW=.19, gap=.025, total=row.length*(keyW+gap)-gap, offset=-total/2+keyW/2;
+      const keyW=.26, gap=.025, total=row.length*(keyW+gap)-gap, offset=-total/2+keyW/2;
       for(let i=0;i<row.length;i++){
-        const label=row[i],x=offset+i*(keyW+gap),y=.48-ri*.32;
+        const label=row[i],x=offset+i*(keyW+gap),y=.55-ri*.34;
         addPhraseKey(label,x,y,keyW,()=>{phraseDraft+=label.toLowerCase();phraseDraftChanged()});
       }
     });
-    addPhraseKey('SPACE',-.63,-.52,.62,()=>{phraseDraft+=' ';phraseDraftChanged()});
-    addPhraseKey('⌫',-.12,-.52,.3,()=>{phraseDraft=phraseDraft.slice(0,-1);phraseDraftChanged()});
-    addPhraseKey('CLEAR',.25,-.52,.43,()=>{phraseDraft='';phraseDraftChanged()});
-    addPhraseKey('SEND',.78,-.52,.42,submitPhrase);
-    addPhraseKey('CLOSE',.83,.70,.40,closePhraseKeyboard);
+    addPhraseKey('SPACE',-.77,-.67,.82,()=>{phraseDraft+=' ';phraseDraftChanged()});
+    addPhraseKey('⌫',-.16,-.67,.38,()=>{phraseDraft=phraseDraft.slice(0,-1);phraseDraftChanged()});
+    addPhraseKey('CLEAR',.30,-.67,.48,()=>{phraseDraft='';phraseDraftChanged()});
+    addPhraseKey('SEND',.87,-.67,.48,submitPhrase);
+    addPhraseKey('CLOSE',1.30,.79,.42,closePhraseKeyboard);
     if(typeof scene==='undefined' || !scene || typeof scene.add!=='function') throw new Error('Game scene is not ready for the cashier keyboard.');
     scene.add(phraseKeyboard);
     phraseRaycaster=new T.Raycaster();
+    if(!phrasePointerLine){
+      const geo=new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(0,0,-3)]);
+      phrasePointerLine=new T.Line(geo,new T.LineBasicMaterial({color:0x75d9ff,transparent:true,opacity:.95,depthTest:false}));
+      phrasePointerLine.frustumCulled=false; phrasePointerLine.renderOrder=1000; phrasePointerLine.visible=false; scene.add(phrasePointerLine);
+    }
     // XR controller select events work with the in-game 3D keys, not the headset system keyboard.
     try{
       if(renderer && renderer.xr && renderer.xr.getController){
@@ -291,6 +314,7 @@
   function closePhraseKeyboard(){
     phraseOpen=false;
     if(phraseKeyboard) phraseKeyboard.visible=false;
+    if(phrasePointerLine) phrasePointerLine.visible=false;
     if(phraseInput){phraseInput.blur();phraseInput._wrap.style.display='none'}
   }
   function submitPhrase(){
@@ -625,6 +649,13 @@
       handleTalkButton();
       if(phraseInput && renderer && renderer.xr && renderer.xr.isPresenting && phraseInput._wrap.style.display!=='none'){ phraseInput.blur(); phraseInput._wrap.style.display='none'; }
       if(phraseKeyboard && phraseOpen && !phraseKeyboard.visible) phraseKeyboard.visible=true;
+      if(phrasePointerLine){
+        phrasePointerLine.visible=!!(phraseOpen && renderer && renderer.xr && renderer.xr.isPresenting);
+        if(phrasePointerLine.visible){
+          let ctrl=null; try{ctrl=renderer.xr.getController(0)}catch(_){}
+          if(ctrl){ctrl.updateWorldMatrix(true,false);const origin=new T.Vector3().setFromMatrixPosition(ctrl.matrixWorld);const dir=new T.Vector3(0,0,-1).transformDirection(ctrl.matrixWorld);const end=origin.clone().addScaledVector(dir,3);const a=phrasePointerLine.geometry.attributes.position;a.setXYZ(0,origin.x,origin.y,origin.z);a.setXYZ(1,end.x,end.y,end.z);a.needsUpdate=true;phrasePointerLine.geometry.computeBoundingSphere();}
+        }
+      }
       if(nearWorker && onFoot && !menuOpen && !dead){
         currentWorker=nearWorker;
         if(listening || moonshineStarting){
