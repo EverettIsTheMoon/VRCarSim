@@ -174,7 +174,7 @@
   // Low-cost phrase keyboard: no neural speech models, WASM, or microphone processing.
   let phraseKeyboard=null, phraseKeys=[], phraseDraft='', phraseOpen=false, phraseRaycaster=null;
   let phraseInput=null, phraseSend=null, phraseClose=null, phraseControllerHooks=[];
-  const phraseMobile = () => matchMedia('(pointer: coarse), (max-width: 800px)').matches;
+  const phraseMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent||'') && !/OculusBrowser|Quest|Meta Quest/i.test(navigator.userAgent||'');
   function phraseDraftChanged(){
     if(phraseInput && phraseInput.value!==phraseDraft) phraseInput.value=phraseDraft;
     if(currentWorker) showBubble(phraseDraft ? 'You: '+phraseDraft : 'Type a message using the floating keyboard',60000,false);
