@@ -660,7 +660,8 @@
       if(window.THREE && typeof scene!=='undefined' && typeof crowd!=='undefined' && typeof rig!=='undefined'){
         clearInterval(waitForScene);
         makeBubble();
-        addDesktopButton();\n        makePhraseMobileInput();
+        addDesktopButton();
+        makePhraseMobileInput();
         tick();
       }
     }catch(_){}
