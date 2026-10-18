@@ -48,6 +48,8 @@ window.__rs=(function(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul
 const T=THREE,R=(a,b)=>a+(window.__rs?window.__rs():Math.random())*(b-a),C=(v,a,b)=>Math.max(a,Math.min(b,v)),$=id=>document.getElementById(id);
 // Quest 1 performance mode: use built-in low-poly meshes and lower render resolution.
 const RL_QUEST1_AUTO=/\bQuest 1\b|Oculus Quest\)/i.test(navigator.userAgent||'');let RL_QUEST1_LOW=RL_QUEST1_AUTO;window.RL_QUEST1_LOW=RL_QUEST1_LOW;window.__mainMenuOpen=true;let selectedPlayType='single',selectedDriveMode='free';
+// TEMPORARY CASHIER SPEECH TEST: set false to restore the normal spawn after testing.
+const RL_CASHIER_TEST_SPAWN=true;
 /* Optional GLB model overrides. Files live beside index.html in ./Models/.
    If a file is missing, fails to load, or GLTFLoader is unavailable, the original HTML-built model stays visible. */
 const RL_MODEL_FILES={
@@ -997,6 +999,7 @@ function restart(){rlCancelXButton();rlClearGrenades();dead=0;boomDeath=false;ai
 carMesh.children[0].material.color.setHex(0xc0261f);ramps.forEach(r=>placeRamp(r,true));repair();engineDamage=0;engineFire=0;doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});raceT=0;raceDone=0;man.visible=pool.visible=blood.visible=false;
 if(mode==='race'){carP.set(0,0,0);heading=0;onFoot=false;rig.position.set(0,0,0);rig.rotation.y=0;cock.visible=true;carMesh.visible=false}
 else if(mode==='sandbox'){sandboxActiveCar=-1;carP.set(13,0,-54);heading=0;onFoot=true;rig.position.set(13,0,-50);rig.rotation.set(0,0,0);cock.visible=false;carMesh.visible=false;sandboxCars.forEach((c,i)=>{c.visible=true;c.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);c.rotation.y=sandboxCarSpots[i].heading})}
+else if(RL_CASHIER_TEST_SPAWN){sandboxActiveCar=-1;heading=-Math.PI/2;onFoot=true;gunOut=false;carMesh.visible=false;cock.visible=false;rig.position.set(21.5,0,-1);rig.rotation.set(0,-Math.PI/2,0)}
 else{sandboxActiveCar=-1;carP.set(-15,0,-4.5);heading=-Math.PI/2;onFoot=true;rig.position.set(-15.5,0,3);rig.rotation.y=-Math.PI/2;cock.visible=false;carMesh.visible=true;carMesh.position.copy(carP);carMesh.rotation.y=heading}
 npcs.forEach(n=>place(n,1));peds.forEach(e=>respawnPed(e,true));resetItems()}
 const ROADLINE_MOBILE=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
