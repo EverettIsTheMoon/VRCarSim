@@ -150,6 +150,11 @@
   }
   function speakReply(transcript){
     if(!transcript || !transcript.trim()) return;
+    // A robbery threat is a special game action, whether spoken or typed.
+    if(/\bthis is a robbery\b/i.test(normalise(transcript))){
+      try { window.dispatchEvent(new CustomEvent('rl-cashier-robbery')); } catch(_){}
+      showBubble('OH NO! THE POLICE ARE COMING! GET OUT OF HERE!',5200,false);
+    }
     const answer=chooseResponse(transcript);
     showBubble(answer,5200,false);
     // Lightweight device TTS: no downloaded neural model or cloud API.
