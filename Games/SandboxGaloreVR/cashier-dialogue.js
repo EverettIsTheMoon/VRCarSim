@@ -231,7 +231,7 @@
       canvas.addEventListener('pointerdown',event=>{
         if(!phraseOpen || renderer?.xr?.isPresenting) return;
         const rect=canvas.getBoundingClientRect();
-        phraseRaycaster.setFromCamera({x:((event.clientX-rect.left)/rect.width)*2-1,y:-((event.clientY-rect.top)/rect.height)*2+1},camera);
+        const cam=(typeof camera!=='undefined' && camera) ? camera : (renderer && renderer.xr && renderer.xr.getCamera ? renderer.xr.getCamera() : null); const rayCam=cam && cam.isArrayCamera && cam.cameras && cam.cameras.length ? cam.cameras[0] : cam; if(!rayCam) return; phraseRaycaster.setFromCamera({x:((event.clientX-rect.left)/rect.width)*2-1,y:-((event.clientY-rect.top)/rect.height)*2+1},rayCam);
         const hits=phraseRaycaster.intersectObjects(phraseKeys,false);
         if(hits.length){event.preventDefault();event.stopPropagation();hits[0].object.userData.phraseAction()}
       },true);
