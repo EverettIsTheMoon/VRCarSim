@@ -10,7 +10,7 @@
     .replace(/\s+/g, ' ');
   let library = null, recognition = null, listening = false, lastTriggerAt = 0;
   // Temporary Moonshine Voice experiment. Toggle in the on-screen test controls to fall back.
-  let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineStarting = false, moonshineFinalizing = false;
+  let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false;
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
@@ -224,7 +224,7 @@
     showBubble('Preparing Moonshine… first use downloads the local model.',12000,false);
     try{
       if(!moonshineModulePromise){
-        moonshineModulePromise=import('https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm/dist/index.js');
+        moonshineModulePromise=import('https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm/dist/index.js').catch(err=>{moonshineModulePromise=null;throw err;});
       }
       const {MicTranscriber,ModelArch}=await moonshineModulePromise;
       if(!moonshineMic){
@@ -261,7 +261,10 @@
           });
       }
       // Explicit load lets us show model-download progress before opening the mic.
-      if(typeof moonshineMic.load==='function') await moonshineMic.load();
+      if(!moonshineLoaded && typeof moonshineMic.load==='function'){
+        await moonshineMic.load();
+        moonshineLoaded=true;
+      }
       if(!moonshineEnabled) return;
       // Set this before start(): microphone callbacks may begin before start() resolves.
       listening=true;
@@ -273,6 +276,7 @@
       listening=false;
       // Allow retry after a failed model load or microphone initialization.
       moonshineMic=null;
+      moonshineLoaded=false;
       const detail=String(err && err.message || err || 'unknown error').slice(0,150);
       const isolationHint=(!window.crossOriginIsolated || typeof SharedArrayBuffer==='undefined')
         ? ' This site may need cross-origin isolation for Moonshine WASM.'
