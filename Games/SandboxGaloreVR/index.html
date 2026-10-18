@@ -31,7 +31,7 @@
 <div class="choiceRow"><button id="singleChoice" class="selected" data-play="single" style="flex:1">Singleplayer</button><button id="multiChoice" data-play="multi" style="flex:1">Multiplayer</button></div>
 <div class="choiceRow" style="align-items:center"><label for="sDriveMode" style="color:#999;flex:1">Driving mode</label><select id="sDriveMode" style="flex:1;padding:10px;background:#111;color:#eee;border:1px solid #333;border-radius:8px"><option value="free">Free Ride</option><option value="race">Race (2.5 km)</option><option value="sandbox">Sandbox (Baseplate)</option></select></div>
 <button id="playGame">PLAY</button><button id="settingsToggle">SETTINGS ▾</button>
-<div class="set" id="settingsPanel"><label>Active controller (works with one controller) <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Street encounters <select id="sMuggerFrequency"><option value="0">Off</option><option value="0.35">Occasional</option><option value="0.72" selected>Normal</option><option value="1">Frequent</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label><label>Quest 1 low graphics <input type="checkbox" id="questLowGraphics"></label></div>
+<div class="set" id="settingsPanel"><label>Active controller (works with one controller) <select id="sHand"><option value="left">Left</option><option value="right">Right</option></select></label><label>Street encounters <select id="sMuggerFrequency"><option value="0">Off</option><option value="0.35">Occasional</option><option value="0.72" selected>Normal</option><option value="1">Frequent</option></select></label><label>Gas on <select id="sGas"><option value="0">Trigger</option><option value="1">Grip</option></select></label><label>Grab on <select id="sGrab"><option value="1">Grip</option><option value="0">Trigger</option></select></label><label>Walking camera <select id="sPlayerView"><option value="first" selected>First person</option><option value="third">Third person</option></select></label><label>Music file <input type="file" id="mf" accept="audio/*"></label><label>Volume <input type="range" id="mv" min="0" max="1" step=".05" value=".5"></label><label>Quest 1 low graphics <input type="checkbox" id="questLowGraphics"></label></div>
 <details id="modelFiles"><summary>MODELS FOLDER · EXPECTED GLB FILES</summary><div id="modelFileList"></div></details><div id="menuStatus" style="color:#77808a;font:12px monospace;min-height:16px;text-align:center">Food delivery jobs · Singleplayer</div></div>
 <div id="ui"><div id="mp"><span id="mpSt"></span></div><button id="vr">Checking VR…</button><div id="help"><b>Driving (VR):</b> grab the wheel (grip near it) and rotate your hand around it · lever beside the wheel: push forward = Drive, back = Reverse · trigger = gas · stick back = brake · handbrake on the right console (pull back) · red button = boost · Y = repair (hold 1s = menu) · tap X = get out / in · hold A (right) = weapons / tap A = pistol; left-only controller keeps X fallback<br><b>On foot:</b> stick = walk · click either stick = sprint · other stick = snap turn · X near car = get in, X away from car = pistol out/away · trigger = shoot · grip = pick up / throw items (gas station counter items can only be thrown, at the worker) · Y near bed = sleep (day/night) · Y near TV = TV on/off<br><b>Hand tracking:</b> make a fist OR pinch middle finger = grab · pinch index = gas / shoot · pinch ring = brake · pinch pinky = X<br><b>Single-controller VR:</b> choose Left or Right in Settings; that controller handles movement and interactions. With one controller, use a fist to move forward or drive.<br><b>New:</b> aim your pistol at people and they freeze, back away, then run · aim at the bank teller for 2s to rob it, grab the cash bags · police chase, wanted stars + health/ammo/cash on your LEFT WRIST<br><b>Keyboard:</b> 1/2/3 radio · W gas / walk · Shift sprint · S brake · A/D steer (turn on foot) · R reverse lever · X near car = enter (otherwise repair) · E car/pistol · F shoot · G sleep/TV · Space handbrake · B boost</div></div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -856,7 +856,7 @@ addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.c
 if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)window.__roadlineOpenMainMenu?.();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
 const ctrls={};
 [0,1].forEach(i=>{const c=renderer.xr.getController(i);rig.add(c);rig.add(renderer.xr.getHand(i));c.addEventListener('connected',e=>{ctrls[i]={c,src:e.data,i};bind()});c.addEventListener('disconnected',()=>{delete ctrls[i];bind()})});
-function repair(){damage=0;engineDamage=0;engineFire=0;steeringDamage=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});try{resetCrashGeometry()}catch(_){}}
+function repair(){damage=0;engineDamage=0;engineFire=0;steeringDamage=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});try{resetCrashGeometry(carMesh);const active=crashVehicleRoot();if(active!==carMesh)resetCrashGeometry(active)}catch(_){}}
 function recenter(){if(renderer.xr.isPresenting)cock.position.copy(cam.position)}
 function buzz(i,o){try{(o||left).src.gamepad.hapticActuators[0].pulse(Math.min(1,i),60)}catch(e){}}
 function hurtHood(imp,x,dir){dent(hood,[C(x,-.7,.7),0,-.4],dir,C(.12+imp*.06,.12,.72),1.05);try{dent(cbp,[C(x,-.72,.72),C(-.25,.25,.25),-1.85],[0,-.15,.9],C(.1+imp*.045,.1,.58),.86)}catch(_){}}
@@ -930,8 +930,8 @@ const tailMat=new T.MeshStandardMaterial({color:0xd51e18,emissive:0x3b0503,rough
 /* Hinged driver/passenger doors with grabbable glowing handles */
 for(const sideSign of [-1,1]){
  /* Door hinges sit on the forward edge; panels are thin and aligned to the car's sides. */
- const hinge=new T.Group();hinge.position.set(sideSign*.86,.68,-.72);carMesh.add(hinge);
- const panel=new T.Mesh(new T.BoxGeometry(.065,.75,1.42,1,4,14),M(0xb3221c,.48,.28));panel.position.set(sideSign*.035,0,.70);hinge.add(panel);
+ const hinge=new T.Group();hinge.name='carDoorHinge_'+sideSign;hinge.position.set(sideSign*.86,.68,-.72);carMesh.add(hinge);
+ const panel=new T.Mesh(new T.BoxGeometry(.065,.75,1.42,1,4,14),M(0xb3221c,.48,.28));panel.name='carDoorPanel_'+sideSign;panel.position.set(sideSign*.035,0,.70);hinge.add(panel);
  const win=box(.052,.27,1.34,new T.MeshStandardMaterial({color:0x426070,roughness:.18,metalness:.18,transparent:true,opacity:.16,depthWrite:false,side:T.DoubleSide}),sideSign*.031,.515,.70,hinge);
  const hm2=new T.MeshStandardMaterial({color:0xbfc7cf,emissive:0x000000,roughness:.3,metalness:.65});
  const handle=box(.025,.035,.15,hm2,sideSign*.073,.08,.92,hinge);
@@ -944,7 +944,26 @@ carMesh.add(carInterior);
 scene.add(carMesh)}
 const carBodyBase=carMesh.children[0].geometry.attributes.position.array.slice();
 const carDoorBases=doors.map(d=>d.panel.geometry.attributes.position.array.slice());
-function resetCrashGeometry(){const body=carMesh.children[0],pa=body.geometry.attributes.position;pa.array.set(carBodyBase);pa.needsUpdate=true;body.geometry.computeVertexNormals();body.material.color.setHex(0xc0261f);doors.forEach((d,i)=>{const a=d.panel.geometry.attributes.position;a.array.set(carDoorBases[i]);a.needsUpdate=true;d.panel.geometry.computeVertexNormals();d.panel.material.color.setHex(0xb3221c)})}
+function crashVehicleRoot(){return mode==='sandbox'&&typeof sandboxActiveCar==='number'&&sandboxActiveCar>=0&&sandboxCars[sandboxActiveCar]?sandboxCars[sandboxActiveCar]:carMesh}
+function crashDoorFor(root,side){
+ if(root===carMesh)return doors.find(d=>d.side===side)||null;
+ const hinge=root&&root.getObjectByName('carDoorHinge_'+side),panel=hinge&&hinge.getObjectByName('carDoorPanel_'+side);
+ return hinge&&panel?{hinge,panel,side,open:0,mat:panel.material}:null;
+}
+function resetCrashGeometry(root=carMesh){
+ if(!root)return;const body=root.children[0],pa=body&&body.geometry&&body.geometry.attributes&&body.geometry.attributes.position;if(!pa)return;
+ const bodyBase=root===carMesh?carBodyBase:root.userData.rlCrashBodyBase;
+ if(bodyBase&&bodyBase.length===pa.array.length){pa.array.set(bodyBase);pa.needsUpdate=true;body.geometry.computeVertexNormals()}
+ if(root===carMesh)body.material.color.setHex(0xc0261f);
+ for(const side of[-1,1]){
+  const d=crashDoorFor(root,side);if(!d)continue;
+  const idx=doors.findIndex(q=>q.side===side);
+  const base=root===carMesh?carDoorBases[idx]:root.userData.rlCrashDoorBases&&root.userData.rlCrashDoorBases[String(side)];
+  if(base&&base.length===d.panel.geometry.attributes.position.array.length){const a=d.panel.geometry.attributes.position;a.array.set(base);a.needsUpdate=true;d.panel.geometry.computeVertexNormals()}
+  d.hinge.rotation.y=0;
+  if(root===carMesh&&d.panel.material)d.panel.material.color.setHex(0xb3221c);
+ }
+}
 /* Simple capsule-vs-hinged-door collision. Uses each animated panel's current world transform. */
 const _doorWorld=new T.Vector3(),_doorLocal=new T.Vector3();
 function resolveDoorCollision(){
@@ -983,7 +1002,7 @@ npcs.forEach(n=>place(n,1));peds.forEach(e=>respawnPed(e,true));resetItems()}
 const ROADLINE_MOBILE=!!(window.matchMedia&&matchMedia('(hover:none) and (pointer:coarse)').matches);
 let carView='first',carEnterAnim=null;
 function setCarView(v){carView=v==='third'?'third':'first';const b=document.getElementById('viewToggle');if(b)b.textContent=carView==='first'?'THIRD PERSON':'FIRST PERSON';}
-function setPlayerView(v){playerView=v==='third'?'third':'first';const b=document.getElementById('viewToggle');if(b)b.textContent=playerView==='first'?'THIRD PERSON':'FIRST PERSON';if(playerView==='first'){playerAvatar.visible=false;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);}}
+function setPlayerView(v){playerView=v==='third'?'third':'first';const b=document.getElementById('viewToggle');if(b)b.textContent=playerView==='first'?'THIRD PERSON':'FIRST PERSON';const s=document.getElementById('sPlayerView');if(s)s.value=playerView;if(playerView==='first'){playerAvatar.visible=false;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);}}
 function toggleCar(){
  if(dead||menuOpen||sleepT>0||carEnterAnim)return;
  if(mode==='sandbox'){
@@ -991,7 +1010,7 @@ function toggleCar(){
    if(bi<0){say('Walk closer to one of the three parked cars to drive it','#ffd27d');return}
    sandboxActiveCar=bi;const spot=sandboxCarSpots[bi];carP.set(spot.x,0,spot.z);heading=spot.heading;vel.set(0,0,0);speed=0;onFoot=false;gunOut=false;sandboxCars[bi].visible=false;carMesh.visible=false;cock.visible=true;rig.rotation.y=heading;return;
   }
-  onFoot=true;gunOut=false;const c=Math.cos(heading),ss=Math.sin(heading);rig.position.set(carP.x-2*c,0,carP.z+2*ss);rig.rotation.set(0,0,0);cock.visible=false;carMesh.visible=false;if(sandboxActiveCar>=0){const spot=sandboxCarSpots[sandboxActiveCar];spot.x=carP.x;spot.z=carP.z;spot.heading=heading;sandboxCars[sandboxActiveCar].position.set(carP.x,0,carP.z);sandboxCars[sandboxActiveCar].rotation.y=heading;sandboxCars[sandboxActiveCar].visible=true;sandboxActiveCar=-1}return;
+  onFoot=true;gunOut=false;const c=Math.cos(heading),ss=Math.sin(heading);rig.position.set(carP.x-2*c,0,carP.z+2*ss);rig.rotation.set(0,0,0);cock.visible=false;carMesh.visible=false;if(sandboxActiveCar>=0){const spot=sandboxCarSpots[sandboxActiveCar];spot.x=carP.x;spot.z=carP.z;spot.heading=heading;sandboxCars[sandboxActiveCar].position.copy(carP);sandboxCars[sandboxActiveCar].rotation.order='YXZ';sandboxCars[sandboxActiveCar].rotation.set(carPitch,heading,carRoll);sandboxCars[sandboxActiveCar].visible=true;sandboxActiveCar=-1}return;
  }
  if(!onFoot){onFoot=true;gunOut=false;const c=Math.cos(heading),s=Math.sin(heading);rig.position.set(carP.x-2*c,0,carP.z+2*s);rig.rotation.set(0,0,0);cock.visible=false;carMesh.visible=true;if(!renderer.xr.isPresenting){cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);cam.quaternion.identity()}}
  else if(Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6){if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){const side=heading===0?1:(Math.sin(heading)>=0?1:-1);carEnterAnim={t:0,duration:2.15,start:cam.position.clone(),startRot:cam.quaternion.clone(),side};gunOut=false;doors.forEach(d=>{if(d.side===side)d.open=1});setCarView('first')}else{onFoot=false;gunOut=false;doors.forEach(d=>d.open=0);cock.visible=true;carMesh.visible=false;rig.rotation.y=heading}}else gunOut=!gunOut
@@ -1420,7 +1439,7 @@ sbMesh(new T.PlaneGeometry(9,2.25),new T.MeshBasicMaterial({map:new T.CanvasText
 for(const x of [-2.7,2.7]){const arch=sbMesh(new T.TorusGeometry(1.1,.22,8,18,Math.PI),sbGold,x,2.25,6.4,sbMcD);arch.rotation.z=Math.PI}
 sbMesh(new T.BoxGeometry(18,.28,2.2),sbRed,0,3.6,6.3,sbMcD);for(let x=-8;x<=8;x+=2)sbMesh(new T.BoxGeometry(.08,.35,2.25),sbGold,x,3.6,6.32,sbMcD);
 const sandboxCars=[];
-for(let i=0;i<sandboxCarSpots.length;i++){const clone=carMesh.clone(true);clone.name='SandboxDrivableCar_'+(i+1);clone.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);clone.rotation.y=sandboxCarSpots[i].heading;clone.visible=true;clone.traverse(o=>{if(o.isMesh){if(o.geometry)o.geometry=o.geometry.clone();if(Array.isArray(o.material))o.material=o.material.map(m=>m.clone());else if(o.material)o.material=o.material.clone()}});try{clone.children[0].material.color.setHex(sandboxCarSpots[i].color)}catch(_){}sandboxRoot.add(clone);sandboxCars.push(clone)}
+for(let i=0;i<sandboxCarSpots.length;i++){const clone=carMesh.clone(true);clone.name='SandboxDrivableCar_'+(i+1);clone.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);clone.rotation.y=sandboxCarSpots[i].heading;clone.visible=true;clone.traverse(o=>{if(o.isMesh){if(o.geometry)o.geometry=o.geometry.clone();if(Array.isArray(o.material))o.material=o.material.map(m=>m.clone());else if(o.material)o.material=o.material.clone()}});clone.userData.rlCrashBodyBase=clone.children[0].geometry.attributes.position.array.slice();clone.userData.rlCrashDoorBases={};for(const side of[-1,1]){const h=clone.getObjectByName('carDoorHinge_'+side),p=h&&h.getObjectByName('carDoorPanel_'+side);if(p)clone.userData.rlCrashDoorBases[String(side)]=p.geometry.attributes.position.array.slice()}try{clone.children[0].material.color.setHex(sandboxCarSpots[i].color)}catch(_){}sandboxRoot.add(clone);sandboxCars.push(clone)}
 function makeSandboxRamp(x,topZ,len,height,width,color){
  const r={x,z:topZ,l:len,h:height,w:width};sandboxRamps.push(r);
  const g=new T.BufferGeometry(),A=[-width/2,0,len],B=[width/2,0,len],C0=[width/2,height,0],D=[-width/2,height,0],E=[-width/2,0,0],F=[width/2,0,0];
@@ -1454,53 +1473,67 @@ function latSlope(){const r=Math.cos(heading),q=-Math.sin(heading);return (surfa
 function wallDent(imp,wx,wz,nx,nz){
  const c=Math.cos(heading),s=Math.sin(heading),dx=wx-carP.x,dz=wz-carP.z;
  const lx=dx*c-dz*s,lz=dx*s+dz*c,lnx=nx*c-nz*s,lnz=nx*s+nz*c;
- const body=carMesh.children[0],severity=C((imp-.6)/8,0,1),x=C(lx,-.86,.86),z=C(lz,-2.02,2.02),dir=[lnx,0,lnz];
- const amt=.14+severity*.91;
- // Local multi-point crushing imitates the visible crumple zones of a soft-body crash simulator.
- dent(body,[x,0,z],dir,amt,1.02+severity*.62);
+ const root=crashVehicleRoot(),body=root.children[0],severity=C((imp-.6)/8,0,1),x=C(lx,-.86,.86),z=C(lz,-2.02,2.02),dir=[lnx,0,lnz];
+ const amt=.2+severity*1.08;
+ // Broad overlapping crush zones make collisions visible even at modest speeds.
+ dent(body,[x,0,z],dir,amt,1.12+severity*.78);
  if(Math.abs(lnz)>.55){
-  for(const ox of[-.48,.48])dent(body,[C(x+ox,-.86,.86),.03,z],[lnx*.8,-.08,lnz],amt*.62,1.05);
-  for(const ox of[-.70,.70])dent(body,[C(x+ox,-.86,.86),-.18,C(z+Math.sign(lnz)*.18,-2.02,2.02)],[lnx*.7,-.15,lnz],amt*.38,.82);
-  if(lz< -1.0)hurtHood(imp,C(lx,-.7,.7),[0,-.18,1]);
+  for(const ox of[-.58,-.28,.28,.58])dent(body,[C(x+ox,-.86,.86),.02,z],[lnx*.82,-.2,lnz],amt*.68,1.05);
+  for(const ox of[-.7,0,.7])dent(body,[C(x+ox,-.86,.86),-.2,C(z+Math.sign(lnz)*.22,-2.02,2.02)],[lnx*.7,-.35,lnz],amt*.48,.9);
+  if(lz< -1.0){
+   if(root===carMesh)hurtHood(imp,C(lx,-.7,.7),[0,-.24,1]);
+   else{dent(body,[x,.32,-1.66],[lnx*.2,-.9,1],.24+severity*.86,1.12);dent(body,[C(x*.7,-.8,.8),.1,-1.9],[lnx*.15,-.5,1],.18+severity*.7,.78)}
+  }
  }else{
-  for(const oz of[-.72,-.24,.28,.72])dent(body,[x,0,C(z+oz,-2.02,2.02)],[lnx,0,lnz*.7],amt*.44,.84);
-  const sideSign=Math.sign(lx)||Math.sign(lnx)||1,door=doors.find(d=>d.side===sideSign);
+  for(const oz of[-.78,-.42,-.08,.28,.62,.86])dent(body,[x,0,C(z+oz,-2.02,2.02)],[lnx,0,lnz*.7],amt*.5,.92);
+  const sideSign=Math.sign(lx)||Math.sign(lnx)||1,door=crashDoorFor(root,sideSign);
   if(door){
-   dent(door.panel,[0,0,C(lz-.70,-.66,.66)],[sideSign,0,0],amt*.68,.72);
-   if(severity>.24)door.open=Math.max(door.open,.08+severity*.28);
+   dent(door.panel,[0,0,C(lz-.70,-.66,.66)],[sideSign,0,0],amt*.82,.82);
+   if(severity>.2){if(root===carMesh)door.open=Math.max(door.open,.08+severity*.34);else door.hinge.rotation.y=sideSign*(.08+severity*.34)}
   }
  }
  if(lz< -1.05&&imp>3.5){engineDamage=Math.min(1,engineDamage+.06+severity*.34);if(engineDamage>.52)engineFire=Math.min(1,engineFire+severity*.09)}
- if(severity>.66&&imp>10){for(const d of doors)if(Math.abs(lx)>.38)d.open=Math.max(d.open,.12+severity*.2)}
- try{if(cbp&&cbp.geometry)cbp.geometry.computeVertexNormals()}catch(_){}
+ if(severity>.62&&imp>8)for(const side of[-1,1]){const d=crashDoorFor(root,side);if(d){if(root===carMesh)d.open=Math.max(d.open,.12+severity*.2);else d.hinge.rotation.y=side*(.12+severity*.2)}}
+ try{body.geometry.computeVertexNormals();if(root===carMesh&&cbp&&cbp.geometry)cbp.geometry.computeVertexNormals()}catch(_){}
 }
 function landingCrash(imp){
- if(imp<2.8||boostT>0||bGrace>0)return;
- const severity=C((imp-2)/7.5,0,1),body=carMesh.children[0];
- damage=Math.min(.98,damage+rlDamage(.045+severity*.55));
- steeringDamage=Math.min(.9,steeringDamage+Math.max(0,imp-3)*.024);
- engineDamage=Math.min(1,engineDamage+Math.max(0,imp-5)*.028);
- if(imp>8)engineFire=Math.min(1,engineFire+severity*.06);
- // Even a moderately rough landing leaves visible creases; harder landings buckle all four corners.
- for(const x of[-.67,.67])for(const z of[-1.56,1.56]){
-  dent(body,[x,-.24,z],[-x*.25,-1,Math.sign(z)*.22],.14+severity*.72,.82+severity*.42);
-  dent(body,[x*.72,.12,z*.86],[-x*.18,-.72,Math.sign(z)*.3],.09+severity*.48,.9);
+ if(imp<1.8)return;
+ const root=crashVehicleRoot(),body=root.children[0],severity=C((imp-1.2)/5.5,0,1);
+ damage=Math.min(.99,damage+rlDamage(.075+severity*.68));
+ steeringDamage=Math.min(.95,steeringDamage+Math.max(0,imp-2)*.03);
+ engineDamage=Math.min(1,engineDamage+Math.max(0,imp-3.5)*.045);
+ if(imp>6)engineFire=Math.min(1,engineFire+severity*.07);
+ // Landing crushes the hood, roofline, trunk, sills and side panels instead of one tiny spot.
+ const xs=[-.72,-.36,0,.36,.72],zs=[-1.86,-1.43,-.96,-.42,.18,.72,1.22,1.68,1.9];
+ for(let ix=0;ix<xs.length;ix++)for(let iz=0;iz<zs.length;iz++){
+  const x=xs[ix],z=zs[iz],edge=(Math.abs(x)>.5||Math.abs(z)>1.45)?1.18:.86;
+  const amt=(.16+severity*.94)*edge*(.74+((ix*7+iz*3)%5)*.085);
+  dent(body,[x,.31,z],[x*.18,-1,Math.sign(z)*.2],amt,.56+severity*.32);
  }
- dent(body,[0,.26,-1.62],[0,-1,.18],.08+severity*.56,1.08);
- dent(body,[0,.18,1.7],[0,-.8,-.12],.08+severity*.44,.98);
- for(const d of doors)if(severity>.14)dent(d.panel,[0,-.12,0],[d.side*.25,-.9,0],.08+severity*.3,.72);
+ for(const side of[-1,1])for(const z of[-1.72,-1.18,-.56,.05,.66,1.22,1.72]){
+  dent(body,[side*.78,.02,z],[-side*.95,-.22,Math.sign(z)*.2],.2+severity*.82,.66+severity*.28);
+  dent(body,[side*.7,-.22,z*.88],[-side*.8,-.5,Math.sign(z)*.16],.14+severity*.62,.58+severity*.25);
+ }
+ for(const z of[-1.92,-1.55,1.5,1.9])for(const x of[-.48,0,.48]){
+  dent(body,[x,.16,z],[x*.2,-.4,z<0?1:-1],.22+severity*.82,.72+severity*.28);
+ }
+ for(const side of[-1,1]){
+  const d=crashDoorFor(root,side);if(!d)continue;
+  dent(d.panel,[0,-.08,0],[side*.75,-.7,0],.22+severity*.72,.94);
+  if(severity>.38){if(root===carMesh)d.open=Math.max(d.open,.1+severity*.3);else d.hinge.rotation.y=side*(.1+severity*.3)}
+ }
  try{window.V5?.landingShock?.(imp,vel.x,vel.z,heading)}catch(_){}
- vel.multiplyScalar(C(1-severity*.2,.7,.98));
- sparks(new T.Vector3(carP.x,.55,carP.z),imp);shed(carP,C(Math.floor(3+severity*9),3,12));thud(C(imp/14,.3,1));buzz(C(imp/14,.3,1));
- if(severity>.65&&engineDamage>.75)engineFire=Math.min(1,engineFire+.08);
- try{if(window.V5)window.V5.say(severity>.55?'HARD LANDING · VEHICLE DAMAGED':'Hard landing · suspension stress',severity>.55?'#ff6a5a':'#ffd27d')}catch(_){}
+ vel.multiplyScalar(C(1-severity*.28,.58,.96));
+ sparks(new T.Vector3(carP.x,.55,carP.z),imp);shed(carP,C(Math.floor(5+severity*15),4,18));thud(C(imp/10,.35,1));buzz(C(imp/10,.35,1));
+ if(severity>.42&&engineDamage>.55)engineFire=Math.min(1,engineFire+.08+severity*.08);
+ try{if(window.V5)window.V5.say(severity>.48?'MAJOR LANDING DAMAGE · BODY CRUSHED':'Landing impact · body dented',severity>.48?'#ff6a5a':'#ffd27d')}catch(_){}
 }
 function splashDamage(imp){landingCrash(imp)}
 function airStep(dt){if(mode!=='sandbox')for(const r of ramps)if(r.z>rig.position.z+40||r.z<rig.position.z-2500)placeRamp(r);if(dead||onFoot)return;let gy=carGroundHeight(carP.x,carP.z,heading),rampPitchNow=0,onRamp=false;
-if(mode!=='sandbox')for(const r of ramps){const dx=Math.abs(carP.x-r.x),dz=r.z-carP.z;if(dx<r.w/2&&dz>0&&dz<r.l){gy=Math.max(gy,dz/r.l*r.h);rampPitchNow=Math.atan(-Math.sign(vel.z||-1)*r.h/r.l);onRamp=true}}
+if(mode!=='sandbox')for(const r of ramps){const dx=Math.abs(carP.x-r.x),dz=r.z-carP.z;if(dx<r.w/2&&dz>0&&dz<r.l){gy=Math.max(gy,dz/r.l*r.h);rampPitchNow=Math.atan(-Math.sign(vel.z||-1)*r.h/r.l);onRamp=true}}else for(const r of sandboxRamps){const dx=Math.abs(carP.x-r.x),dz=carP.z-r.z;if(dx<r.w/2&&dz>=0&&dz<r.l){gy=Math.max(gy,(r.l-dz)/r.l*r.h);rampPitchNow=Math.atan(-Math.sign(vel.z||-1)*r.h/r.l);onRamp=true}}
 if(onRamp)lastRampPitch=rampPitchNow;
 if(!air){if(gy<carP.y-.1-Math.hypot(vel.x,vel.z)*dt*.75){air=true;const launch=Math.hypot(vel.x,vel.z)*Math.sin(lastRampPitch);vyc=C(Math.max(lastVy,launch),-5,14)}else{lastVy=(gy-carP.y)/Math.max(dt,.001);carP.y=gy}}
-if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>2.6){splashDamage(imp)}}}
+if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>1.8){splashDamage(imp)}}}
 const roadPitch=Math.atan(surfSlope());const targetPitch=air?C(Math.atan2(vyc,Math.max(5,Math.hypot(vel.x,vel.z))),-.52,.52):(onRamp?rampPitchNow:roadPitch);
 carPitch+=(targetPitch-carPitch)*Math.min(1,dt*(air?3.5:7));
 carRoll+=(-C(yaw*Math.abs(speed)*.012,-.22,.22)+(air?0:C(Math.atan(latSlope()),-.5,.5))-carRoll)*Math.min(1,dt*4);
@@ -1679,7 +1712,7 @@ $('mv').oninput=e=>{vol=+e.target.value;if(bgm)bgm.volume=vol};
 function paintMenuChoices(){for(const [id,on] of [['singleChoice',selectedPlayType==='single'],['multiChoice',selectedPlayType==='multi']])$(id).classList.toggle('selected',on);$('menuStatus').textContent='Food delivery jobs · '+(selectedPlayType==='multi'?'Multiplayer · room1':'Singleplayer');}
 document.querySelectorAll('[data-play]').forEach(b=>b.addEventListener('click',()=>{selectedPlayType=b.dataset.play;paintMenuChoices()}));
 $('settingsToggle').onclick=()=>{$('settingsPanel').classList.toggle('open');$('settingsToggle').textContent=$('settingsPanel').classList.contains('open')?'SETTINGS ▴':'SETTINGS ▾'};
-$('sDriveMode').onchange=()=>{selectedDriveMode=$('sDriveMode').value};$('playGame').onclick=()=>window.__startSelectedGame&&window.__startSelectedGame($('sDriveMode').value);
+$('sDriveMode').onchange=()=>{selectedDriveMode=$('sDriveMode').value};$('sPlayerView').onchange=()=>setPlayerView($('sPlayerView').value);$('playGame').onclick=()=>window.__startSelectedGame&&window.__startSelectedGame($('sDriveMode').value);
 const qLow=$('questLowGraphics');if(qLow){qLow.checked=RL_QUEST1_LOW;qLow.addEventListener('change',()=>{RL_QUEST1_LOW=!!qLow.checked;window.RL_QUEST1_LOW=RL_QUEST1_LOW;roadlineRenderScale=RL_QUEST1_LOW?.55:.8;roadlineApplyRenderScale();if(renderer.xr.setFramebufferScaleFactor)renderer.xr.setFramebufferScaleFactor(RL_QUEST1_LOW?.42:.55);$('menuStatus').textContent=RL_QUEST1_LOW?'Low graphics enabled · reload game to fully apply':'Low graphics disabled · reload game to fully apply';});}
 paintMenuChoices();
 const muggerFrequencySelect=$('sMuggerFrequency');if(muggerFrequencySelect){muggerFrequencySelect.value=String(streetEncounterChance);muggerFrequencySelect.addEventListener('change',()=>{streetEncounterChance=Number(muggerFrequencySelect.value)||0;});}
@@ -1718,7 +1751,7 @@ if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;
 wheelA+=(-kt*1.2-wheelA)*Math.min(1,dt*10);target=C(-wheelA/1.1,-1,1)}
 /* Snap turn removed as requested; head direction controls walking orientation in VR. */
 const driving=!onFoot&&!dead&&!menuOpen&&sleepT<=0;
-target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(4.5+rlUpgrade('handling')*.7));if(!driving){gas=0;brake=1;target=0}
+target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(9+rlUpgrade('handling')*1.0));if(!driving){gas=0;brake=1;target=0}
 /* ===== realistic car physics ===== */
 {const h=heading,fx=-Math.sin(h),fz=-Math.cos(h),rx2=Math.cos(h),rz2=-Math.sin(h),roadS=onRoadAt(carP.x,carP.z),mu=(roadS?1:.62)*(1-(window.WX?WX.wet:0)*.4);
 let vF=vel.x*fx+vel.z*fz,vL=vel.x*rx2+vel.z*rz2;slipV=0;refuel=0;
@@ -1736,7 +1769,7 @@ const sp=Math.hypot(vel.x,vel.z);
 if(sp>1e-4){let dec=.00036*sp*sp;if(!air){dec+=(roadS?.147:.78)+(driving&&gas<.05&&gear>0&&fuel>0?.3+rpm/6000*1.2:0)+brake*10*mu*(1+rlUpgrade('brakes')*.15)+(hbA>.3&&driving?3.5:0)}const k=Math.min(sp,dec*dt)/sp;vel.x-=vel.x*k;vel.z-=vel.z*k}
 if(!air){vF=vel.x*fx+vel.z*fz;vL=vel.x*rx2+vel.z*rz2;const hbr=hbA>.3&&driving,kG=hbr?1.6:11*(1+rlUpgrade('handling')*.12),aMax=(hbr?.35:1)*mu*9.5*(1+rlUpgrade('handling')*.12);let dv=-vL*(1-Math.exp(-kG*dt));const lim=aMax*dt;if(Math.abs(dv)>lim){dv=Math.sign(dv)*lim;slipV=Math.min(1,Math.abs(vL)/4)}else if(hbr&&Math.abs(vL)>2)slipV=.6;
 vel.x+=rx2*dv;vel.z+=rz2*dv}
-if(driving&&!air){const spf=Math.abs(vF),dMax=.5/(1+Math.pow(spf/6,2)),dl=steer*dMax;let yt=-vF*Math.tan(dl)/WB;if(hbA>.3&&spf>6)yt*=1.8;yaw+=(yt-yaw)*Math.min(1,dt*7)}else if(!air)yaw*=1-Math.min(1,dt*6);
+if(driving&&!air){const spf=Math.abs(vF),dMax=.78/(1+Math.pow(spf/9,2)),dl=steer*dMax;let yt=-vF*Math.tan(dl)/WB;if(hbA>.3&&spf>6)yt*=1.9;yaw+=(yt-yaw)*Math.min(1,dt*11)}else if(!air)yaw*=1-Math.min(1,dt*7);
 heading+=yaw*dt;
 carP.x+=vel.x*dt;carP.z+=vel.z*dt;mapClamp(carP,2.2,vel);if(!air){const targetY=carGroundHeight(carP.x,carP.z,heading);carP.y=Math.max(targetY,carP.y+(targetY-carP.y)*Math.min(1,dt*8));}speed=vel.x*fx+vel.z*fz;wallCool-=dt;
 if(!air&&driving&&Math.abs(speed)>2&&!roadS){buzz(.15+Math.abs(speed)/200)}
@@ -1769,9 +1802,11 @@ if(mode==='race'&&!dead&&!raceDone){raceT+=dt;if(-carP.z>=2500){raceDone=1;doneT
 if(sleepT>0){sleepT+=dt;const a=sleepT<1?sleepT:sleepT<1.3?1:Math.max(0,1-(sleepT-1.3));fade.material.opacity=a;fade.visible=a>.01;if(!sleptDone&&sleepT>=1){sleptDone=true;nightT=nightT>.5?0:1}if(sleepT>2.3){sleepT=0;sleptDone=false;fade.visible=false}}
 if(menuOpen)menuStep();else if(panel.visible){panel.visible=ray.visible=dot.visible=dot2.visible=false}updateFX(dt);
 if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(rig.rotation.x||rig.rotation.z)rig.rotation.set(0,rig.rotation.y,0);if(sleepT<=0&&!carEnterAnim)walk(dt);carMesh.position.set(carP.x,carP.y,carP.z);carMesh.rotation.order='YXZ';carMesh.rotation.set(0,heading,0);resolveDoorCollision()}else{rig.position.copy(carP);rig.rotation.order='YXZ';rig.rotation.set(carPitch,heading,carRoll);carMesh.position.copy(carP);carMesh.rotation.order='YXZ';carMesh.rotation.set(carPitch,heading,carRoll)}
-/* Mobile-only third-person player preview and in-car camera selector. */
-if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
- const vb=document.getElementById('viewToggle');if(vb){vb.style.display=(!dead&&!menuOpen&&!carEnterAnim)?'flex':'none';vb.textContent=onFoot?(playerView==='first'?'THIRD PERSON':'FIRST PERSON'):(carView==='first'?'THIRD PERSON':'FIRST PERSON');}
+/* Keep the active sandbox clone aligned with the real car pose so its deformations remain visible on exit. */
+if(mode==='sandbox'&&sandboxActiveCar>=0&&sandboxCars[sandboxActiveCar]){const activeSandboxCar=sandboxCars[sandboxActiveCar];activeSandboxCar.position.copy(carP);activeSandboxCar.rotation.order='YXZ';activeSandboxCar.rotation.set(carPitch,heading,carRoll)}
+/* Third-person on-foot camera works on desktop and touch; immersive VR remains head-tracked. */
+if(!renderer.xr.isPresenting){
+ const vb=document.getElementById('viewToggle');if(vb){vb.style.display=(ROADLINE_MOBILE&&!dead&&!menuOpen&&!carEnterAnim)?'flex':'none';vb.textContent=onFoot?(playerView==='first'?'THIRD PERSON':'FIRST PERSON'):(carView==='first'?'THIRD PERSON':'FIRST PERSON');}
  if(onFoot){
    playerAvatar.position.set(rig.position.x,rig.position.y+1.35,rig.position.z);playerAvatar.rotation.y=rig.rotation.y+Math.PI;
    playerAvatar.visible=playerAvatarLoaded&&playerView==='third'&&!dead;
@@ -1781,7 +1816,7 @@ if(ROADLINE_MOBILE&&!renderer.xr.isPresenting){
      if(playerAvatarAction){playerAvatarAction.paused=!playerAnimMoving;playerAvatarAction.timeScale=window.__sprint?1.75:1;if(!playerAnimMoving)playerAvatarAction.time=0;}
      if(playerAvatarMixer)playerAvatarMixer.update(dt);
      cam.position.set(0,2.25,4.6);cam.lookAt(rig.position.x,rig.position.y+0.95,rig.position.z);
-   }else if(playerView==='first'){cam.position.set(0,1.2,0);}
+   }else if(playerView==='first'){cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);}
    playerAnimLastX=rig.position.x;playerAnimLastZ=rig.position.z;
  }
  if(carEnterAnim){
@@ -3214,6 +3249,7 @@ const jobMb=[
 ];
 window.__startSelectedGame=function(driveMode){
  selectedDriveMode=driveMode||selectedDriveMode;
+ playerView=$('sPlayerView').value==='third'?'third':'first';
  S.hand=$('sHand').value;streetEncounterChance=+$('sMuggerFrequency').value;S.gas=+$('sGas').value;S.grab=+$('sGrab').value;
  if(S.gas===S.grab)S.grab=1-S.gas;
  try{bind()}catch(_){}
@@ -3763,11 +3799,31 @@ function cloneCar(col){
  const dd=[];c.traverse(o=>{if(o.isGroup&&o.userData&&o.userData.ds!==undefined){const idx=doors.findIndex(d=>d.side===o.userData.ds),pan=o.children[0];
   if(idx>=0&&pan&&pan.isMesh&&PD0[idx]&&pan.geometry.attributes.position.array.length===PD0[idx].length){pan.geometry=pan.geometry.clone();pan.geometry.attributes.position.array.set(PD0[idx]);pan.geometry.attributes.position.needsUpdate=true;pan.geometry.computeVertexNormals();pan.material=pan.material.clone();pan.material.color.setHex(col);dd[idx]={hinge:o,panel:pan,side:o.userData.ds}}}});
  return{c,body,dd};}
+function attachPeerPlayerModel(p){
+ rlGetModel('player').then(asset=>{
+  if(!p||peers.get(p.id)!==p)return;
+  const base=playerAvatar.userData.model||asset.scene,model=rlCloneModel(base);
+  model.name='MultiplayerPlayerGLB_'+p.id;model.visible=true;
+  model.traverse(o=>{o.visible=true;if(o.isMesh){o.frustumCulled=true;o.castShadow=false;o.receiveShadow=false;if(Array.isArray(o.material))o.material.forEach(m=>{if(m)m.side=T.DoubleSide});else if(o.material)o.material.side=T.DoubleSide;}});
+  model.scale.copy(base.scale||new T.Vector3(1,1,1));model.position.copy(base.position||new T.Vector3());model.rotation.copy(base.rotation||new T.Euler());
+  if(!playerAvatar.userData.model){
+   model.scale.setScalar(1);model.position.set(0,0,0);model.updateMatrixWorld(true);
+   const b=new T.Box3().setFromObject(model);if(Number.isFinite(b.min.y)&&Math.abs(b.min.y)<10000)model.position.y-=b.min.y;
+  }
+  model.position.y+=1.35;model.rotation.y+=Math.PI;
+  for(const child of p.av.g.children)if(child!==p.tag)child.visible=false;
+  p.av.g.add(model);p.av.playerGLB=model;
+  if(asset.animations&&asset.animations.length){
+   const clip=asset.animations.find(a=>/walk|run|locomotion/i.test(a.name))||asset.animations[0];
+   p.playerMixer=new T.AnimationMixer(model);p.playerAction=p.playerMixer.clipAction(clip);p.playerAction.reset();p.playerAction.setLoop(T.LoopRepeat,Infinity);p.playerAction.play();p.playerAction.paused=true;
+  }
+ }).catch(()=>{});
+}
 function addPeer(id,name){const col=carCols[hashCol(id)],av=mkPerson(col,0x2b2f3a),tag=nameTag(name),cc=cloneCar(col);
  av.g.add(tag);tag.position.set(0,2.4,0);scene.add(av.g);scene.add(cc.c);
  const p={id,name,av,tag,cc,col,H:[null,null],gunM:null,rt:now(),init:false,wt:0,lx:0,lz:0,hold:new Set(),
   t:{f:1,k:0,h:[0,1.6,0,0],g:[0,0,0],c:[0,0,0,0,0,0,0],dm:0,bo:0,go:0,de:0,dr:[0,0],hh:[0,0],hi:[-1,-1,-1]}};
- peers.set(id,p);say(name+' joined!');return p}
+ peers.set(id,p);attachPeerPlayerModel(p);say(name+' joined!');return p}
 function dropPeer(id){radioOf.delete(id);const p=peers.get(id);if(!p)return;
  for(const idx of p.hold){const it=items[idx];if(it&&it.rh===id){it.held=false;it.rh=null}}
  scene.remove(p.av.g);scene.remove(p.cc.c);p.H.forEach(h=>h&&scene.remove(h));
@@ -3915,7 +3971,10 @@ function updPeer(p,dt,k,tn){
   const hy=C(t.h[1]-t.g[1],.6,2.2);head.position.y+=(hy-head.position.y)*k;
   const mv=Math.hypot(a.position.x-p.lx,a.position.z-p.lz)/Math.max(dt,.001);p.lx=a.position.x;p.lz=a.position.z;
   if(mv>.4&&!t.de){p.wt+=dt*Math.min(mv,6)*2.4;p.av.legs[0].rotation.x=Math.sin(p.wt)*.7;p.av.legs[1].rotation.x=-Math.sin(p.wt)*.7;p.av.arms[0].rotation.x=-Math.sin(p.wt)*.5;p.av.arms[1].rotation.x=Math.sin(p.wt)*.5}
-  else{p.av.legs.forEach(l=>l.rotation.x*=.8);p.av.arms.forEach(m=>m.rotation.x*=.8)}}
+  else{p.av.legs.forEach(l=>l.rotation.x*=.8);p.av.arms.forEach(m=>m.rotation.x*=.8)}
+  if(p.playerAction){p.playerAction.paused=mv<=.4||!!t.de;p.playerAction.timeScale=mv>2.8?1.65:1;}
+  if(p.playerMixer)p.playerMixer.update(dt);
+ }
  else{const xl=-.43,zl=.35;a.visible=true;a.scale.setScalar(.72);head.position.y=1.7;a.position.set(c.position.x+xl*cs+zl*sn,c.position.y+.1,c.position.z-xl*sn+zl*cs);a.rotation.y=h+Math.PI;a.rotation.x=t.de?-1.2:0;
   p.av.legs.forEach(l=>l.rotation.x=-1.3);p.av.arms.forEach(m=>m.rotation.x=-1.0)}
  /* hands (VR players) */
