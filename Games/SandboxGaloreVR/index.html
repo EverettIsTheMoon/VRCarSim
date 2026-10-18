@@ -209,9 +209,9 @@ const box=(w,h,d,mat,x,y,z,p)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat)
 const sg2=new T.BufferGeometry(),spts=[];for(let i=0;i<350;i++){const a=R(0,6.283),b=R(.05,1.4),r=420;spts.push(Math.cos(a)*Math.cos(b)*r,Math.sin(b)*r,Math.sin(a)*Math.cos(b)*r)}sg2.setAttribute('position',new T.Float32BufferAttribute(spts,3));
 const stars=new T.Points(sg2,new T.PointsMaterial({color:0xffffff,size:2.2,sizeAttenuation:false,transparent:true,opacity:0,fog:false,depthWrite:false}));scene.add(stars);
 /* ---------- map boundary: really tall gray walls with collision (no escaping the map) ---------- */
-const MAPB={x:300,z0:150,z1:-3300},WALL_T=80,WALL_H=6000;
+const MAPB={x:300,z0:150,z1:-3300},WALL_T=80,WALL_H=6000,mapBoundaryWalls=[];
 {const wm=new T.MeshStandardMaterial({color:0x8a8f96,roughness:.95,metalness:0}),cy=WALL_H/2-100,lenZ=MAPB.z0-MAPB.z1+2*WALL_T,midZ=(MAPB.z0+MAPB.z1)/2,wX=2*(MAPB.x+WALL_T);
- const mk=(w,d,x,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,WALL_H,d),wm);m.position.set(x,cy,z);m.userData.lodEssential=true;m.userData.noLOD=true;m.frustumCulled=false;scene.add(m)};
+ const mk=(w,d,x,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,WALL_H,d),wm);m.position.set(x,cy,z);m.userData.lodEssential=true;m.userData.noLOD=true;m.frustumCulled=false;scene.add(m);mapBoundaryWalls.push(m)};
  mk(WALL_T,lenZ,MAPB.x+WALL_T/2,midZ);mk(WALL_T,lenZ,-MAPB.x-WALL_T/2,midZ);
  mk(wX,WALL_T,0,MAPB.z0+WALL_T/2);mk(wX,WALL_T,0,MAPB.z1-WALL_T/2)}
 /* keeps a point (car / player) inside the walls; bounces the velocity a little so it feels solid */
@@ -325,7 +325,7 @@ function refreshGroundElevation(){const g=ground.geometry,a=g.attributes.positio
   col[i*3]=r*nv;col[i*3+1]=gg*nv;col[i*3+2]=b*nv}
  g.attributes.color.needsUpdate=true}
 /* Lightweight connected side-road network: looping scenic roads branch off the main route. */
-const branchSegments=[];
+const branchSegments=[],branchRoadMeshes=[];
 const branchRoadMat=new T.MeshStandardMaterial({color:0x34363a,roughness:.95,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
 function addRibbonRoad(points,width=7){
  const verts=[],inds=[];for(let i=0;i<points.length;i++){const p=points[i],prev=points[Math.max(0,i-1)],next=points[Math.min(points.length-1,i+1)];
@@ -334,7 +334,7 @@ function addRibbonRoad(points,width=7){
   if(i<points.length-1){const k=i*2;/* reverse winding so both road triangles face upward */inds.push(k,k+2,k+1,k+1,k+2,k+3)}
  }
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(verts,3));g.setIndex(inds);g.computeVertexNormals();
- const m=new T.Mesh(g,branchRoadMat);m.position.y=0;m.frustumCulled=true;m.userData.lodEssential=true;scene.add(m);return m;
+ const m=new T.Mesh(g,branchRoadMat);m.position.y=0;m.frustumCulled=true;m.userData.lodEssential=true;scene.add(m);branchRoadMeshes.push(m);return m;
 }
 function branchPath(seed,sideSign){
  const pts=[];for(let i=0;i<=160;i++){const t=i/160,z=seed-t*620,x=sideSign*(9+14*Math.sin(t*Math.PI*1.25)+4*(Math.sin(t*4.5+seed*.01)-Math.sin(seed*.01)));pts.push(new T.Vector3(x,0,z))}
@@ -364,7 +364,7 @@ function xHit(x,z){for(let i=0;i<xRoads.length;i++){const c=xRoads[i];if(Math.ab
  const WH=[.86,.86,.8],YL=[.88,.72,.14];
  function mk(x0,z0,x1,z1,col){const a=P(x0,z0,.03),b=P(x1,z0,.03),c=P(x1,z1,.03),d=P(x0,z1,.03);tri(a,b,c,MP,MC,col);tri(a,c,d,MP,MC,col)}
  const names=['OAK ST','MAPLE AVE','PINE RD','ELM ST','CEDAR LN','BIRCH WAY','LAKE DR','HILL RD','WILLOW CT','RIVER RD'];
- const grp=new T.Group();scene.add(grp);
+ const grp=new T.Group();window.__roadlineCrossStreetGroup=grp;scene.add(grp);
  const poleM=new T.MeshLambertMaterial({color:0x555a60});
  function streetSign(txt,x,z){const g=new T.Group();g.position.set(x,roadHeight(z)-.3,z);grp.add(g);xSigns.push({g,z});
   const pl=new T.Mesh(new T.BoxGeometry(.12,3.4,.12),poleM);pl.position.y=1.7;g.add(pl);
@@ -992,7 +992,7 @@ const spd=window.__sprint?5.4:2.8,oldX=rig.position.x,oldZ=rig.position.z,moveX=
    terrain face; ordinary hills remain climbable and the player cannot cut through steep hill sides. */
 const run=Math.hypot(moveX,moveZ),steps=Math.max(1,Math.ceil(run/.08));let tx=oldX,tz=oldZ;
 for(let i=1;i<=steps;i++){
- const candX=mode==='sandbox'?C(oldX+moveX*i/steps,-91,91):oldX+moveX*i/steps,candZ=mode==='sandbox'?C(oldZ+moveZ*i/steps,-91,91):oldZ+moveZ*i/steps,hereH=surfaceHeightAt(tx,tz),candH=surfaceHeightAt(candX,candZ),stepDist=Math.hypot(candX-tx,candZ-tz),limit=Math.max(.2,stepDist*2.6);
+ const candX=mode==='sandbox'?C(oldX+moveX*i/steps,-SANDBOX_LIMIT,SANDBOX_LIMIT):oldX+moveX*i/steps,candZ=mode==='sandbox'?C(oldZ+moveZ*i/steps,-SANDBOX_LIMIT,SANDBOX_LIMIT):oldZ+moveZ*i/steps,hereH=surfaceHeightAt(tx,tz),candH=surfaceHeightAt(candX,candZ),stepDist=Math.hypot(candX-tx,candZ-tz),limit=Math.max(.2,stepDist*2.6);
  if(Math.abs(candH-hereH)<=limit||(candH<hereH&&hereH-candH<=.42)){tx=candX;tz=candZ;continue;}
  const hx=surfaceHeightAt(candX,tz);
  if(Math.abs(hx-hereH)<=limit||(hx<hereH&&hereH-hx<=.42))tx=candX;
@@ -1001,7 +1001,7 @@ for(let i=1;i<=steps;i++){
 }
 rig.position.x=tx;rig.position.z=tz;
 if(!adminFlingActive)rig.position.y=surfaceHeightAt(rig.position.x,rig.position.z);
-pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);if(window.sidePush)window.sidePush(rig.position,.3);if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveModelCollisions(rig.position,.3);mapClamp(rig.position,.4);
+if(mode!=='sandbox'){pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);if(window.sidePush)window.sidePush(rig.position,.3);if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveModelCollisions(rig.position,.3)}mapClamp(rig.position,.4);
 const c=Math.cos(heading),s=Math.sin(heading),dx=rig.position.x-carP.x,dz=rig.position.z-carP.z,xl=dx*c-dz*s,zl=dx*s+dz*c;
 if(Math.abs(xl)<1.2&&Math.abs(zl)<2.5){const px=1.2-Math.abs(xl),pz=2.5-Math.abs(zl);let nx=xl,nz=zl;if(px<pz)nx=Math.sign(xl||1)*1.2;else nz=Math.sign(zl||1)*2.5;rig.position.x=carP.x+nx*c+nz*s;rig.position.z=carP.z-nx*s+nz*c}}
 /* ---------- decor, blood, explosions, fx ---------- */
@@ -1344,7 +1344,7 @@ if(Math.hypot(p.x-BED.x,p.z-BED.z)<2.6){sleepT=.001;sleptDone=false;return}if(Ma
 /* ---------- boost, collisions with buildings, ramps ---------- */
 function boost(){if(boostCD<=0&&boostT<=0&&!dead&&!onFoot&&!menuOpen){const sb=mode==='sandbox';boostT=sb?4.4:2.5;boostCD=sb?3.2:7;vyc=sb?5.8:1.2;air=true;window.__bv0=Math.hypot(vel.x,vel.z);if(sb){vel.multiplyScalar(2.7);speed*=2.7}buzz(1)}}
 const CORN=[[-.9,-2.1],[.9,-2.1],[-.9,2.1],[.9,2.1],[-.9,0],[.9,0],[0,-2.1],[0,2.1]];
-function carSolids(){if(mode==='sandbox'){carP.x=C(carP.x,-91,91);carP.z=C(carP.z,-91,91)}const c=Math.cos(heading),s=Math.sin(heading),inv=boostT>0||bGrace>0;
+function carSolids(){if(mode==='sandbox'){carP.x=C(carP.x,-SANDBOX_LIMIT,SANDBOX_LIMIT);carP.z=C(carP.z,-SANDBOX_LIMIT,SANDBOX_LIMIT);return}const c=Math.cos(heading),s=Math.sin(heading),inv=boostT>0||bGrace>0;
 for(const [L,ox,oz] of [[sol,0,0],[tSol,town.position.x,town.position.z]])for(const b of L){
 if(carP.x<ox+b[0]-4||carP.x>ox+b[2]+4||carP.z<oz+b[1]-4||carP.z>oz+b[3]+4)continue;
 for(const k of CORN){const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
@@ -1356,15 +1356,16 @@ function placeRamp(r,init){r.z=rig.position.z-(init?R(250,500)+ramps.length*500:
 for(let i=0;i<2;i++){const m=new T.Mesh(rg,rmat);m.rotation.y=Math.PI/2;scene.add(m);const r={m,x:0,z:0,l:16,w:5,h:4.5};ramps.push(r);placeRamp(r,true)}
 
 /* ================= SANDBOX BASEPLATE WORLD ================= */
+const SANDBOX_SIZE=600,SANDBOX_HALF=SANDBOX_SIZE/2,SANDBOX_LIMIT=SANDBOX_HALF-9;
 let sandboxActiveCar=-1;
 const sandboxCarSpots=[{x:3,z:-54,heading:0,color:0xd52b25},{x:13,z:-54,heading:0,color:0x2478d4},{x:23,z:-54,heading:0,color:0xe7b928}];
 const sandboxRoot=new T.Group();sandboxRoot.name='Sandbox_Baseplate_World';sandboxRoot.visible=false;scene.add(sandboxRoot);
 const sandboxRamps=[];
-function sandboxSurface(x,z){let h=0;if(x < -94 || x > 94 || z < -94 || z > 94)return 0;for(const r of sandboxRamps){const lx=x-r.x,lz=z-(r.z-r.l);if(Math.abs(lx)<=r.w*.5&&lz>=0&&lz<=r.l)h=Math.max(h,r.h*(lz/r.l))}return h}
+function sandboxSurface(x,z){let h=0;if(x < -SANDBOX_HALF+6 || x > SANDBOX_HALF-6 || z < -SANDBOX_HALF+6 || z > SANDBOX_HALF-6)return 0;for(const r of sandboxRamps){const lx=x-r.x,within=z>=r.z&&z<=r.z+r.l;if(Math.abs(lx)<=r.w*.5&&within){const rampH=(r.z+r.l-z)/r.l;h=Math.max(h,r.h*C(rampH,0,1))}}return h}
 function sbMesh(geo,mat,x,y,z,parent=sandboxRoot){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m}
 const sbGroundMat=M(0x7b8587,.96,0),sbRoadMat=M(0x292e32,.98,0),sbStripeMat=M(0xf1f0dc,.8,0);
-const sbPlate=sbMesh(new T.PlaneGeometry(190,190),sbGroundMat,0,-.16,0);sbPlate.rotation.x=-Math.PI/2;sbPlate.name='SandboxBaseplate';
-const sbGrid=new T.GridHelper(190,38,0x626a6d,0x626a6d);sbGrid.position.y=-.145;sandboxRoot.add(sbGrid);
+const sbPlate=sbMesh(new T.PlaneGeometry(SANDBOX_SIZE,SANDBOX_SIZE),sbGroundMat,0,-.16,0);sbPlate.rotation.x=-Math.PI/2;sbPlate.name='SandboxBaseplate';
+const sbGrid=new T.GridHelper(SANDBOX_SIZE,SANDBOX_SIZE/5,0x626a6d,0x626a6d);sbGrid.position.y=-.145;sandboxRoot.add(sbGrid);
 const sbLot=sbMesh(new T.PlaneGeometry(62,31),sbRoadMat,8,-.09,-54);sbLot.rotation.x=-Math.PI/2;
 for(let x=-20;x<=35;x+=5)sbMesh(new T.BoxGeometry(.12,.025,5.2),sbStripeMat,x,-.055,-54);
 for(const z of [-65,-43])sbMesh(new T.BoxGeometry(62,.025,.13),sbStripeMat,8,-.055,z);
@@ -1377,12 +1378,32 @@ for(const x of [-2.7,2.7]){const arch=sbMesh(new T.TorusGeometry(1.1,.22,8,18,Ma
 sbMesh(new T.BoxGeometry(18,.28,2.2),sbRed,0,3.6,6.3,sbMcD);for(let x=-8;x<=8;x+=2)sbMesh(new T.BoxGeometry(.08,.35,2.25),sbGold,x,3.6,6.32,sbMcD);
 const sandboxCars=[];
 for(let i=0;i<sandboxCarSpots.length;i++){const clone=carMesh.clone(true);clone.name='SandboxDrivableCar_'+(i+1);clone.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);clone.rotation.y=sandboxCarSpots[i].heading;clone.visible=true;clone.traverse(o=>{if(o.isMesh){if(o.geometry)o.geometry=o.geometry.clone();if(Array.isArray(o.material))o.material=o.material.map(m=>m.clone());else if(o.material)o.material=o.material.clone()}});try{clone.children[0].material.color.setHex(sandboxCarSpots[i].color)}catch(_){}sandboxRoot.add(clone);sandboxCars.push(clone)}
-function makeSandboxRamp(x,topZ,len,height,width,color){const r={x,z:topZ,l:len,h:height,w:width};sandboxRamps.push(r);const g=new T.BufferGeometry(),A=[-width/2,0,-len],B=[width/2,0,-len],C0=[width/2,height,0],D=[-width/2,height,0],E=[-width/2,0,0],F=[width/2,0,0],v=[...A,...B,...C0,...A,...C0,...D,...A,...D,...E,...B,...F,...C0,...A,...E,...F,...A,...F,...B];g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.computeVertexNormals();sbMesh(g,M(color,.72,.12),x,.03,topZ).name='SandboxRamp_Collidable';const railMat=M(0x41464b,.7,.2);for(const side of [-1,1]){const rail=sbMesh(new T.BoxGeometry(.28,1.25,len),railMat,x+side*(width/2-.18),height*.5+.2,topZ-len/2);rail.rotation.x=-Math.atan(height/len)}}
-makeSandboxRamp(-43,30,65,36,13,0xff8b22);makeSandboxRamp(0,49,83,51,15,0x29a7df);makeSandboxRamp(43,21,58,30,12,0xe94f78);
+function makeSandboxRamp(x,topZ,len,height,width,color){
+ const r={x,z:topZ,l:len,h:height,w:width};sandboxRamps.push(r);
+ const g=new T.BufferGeometry(),A=[-width/2,0,len],B=[width/2,0,len],C0=[width/2,height,0],D=[-width/2,height,0],E=[-width/2,0,0],F=[width/2,0,0];
+ // Top triangles are deliberately wound upward; side and end faces close the wedge.
+ const v=[...A,...C0,...D, ...A,...B,...C0, ...A,...D,...E, ...B,...F,...C0, ...A,...E,...F, ...A,...F,...B, ...D,...C0,...F, ...D,...F,...E];
+ g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.computeVertexNormals();
+ const rampMat=new T.MeshStandardMaterial({color,roughness:.72,metalness:.12,side:T.DoubleSide});
+ sbMesh(g,rampMat,x,.03,topZ).name='SandboxRamp_Collidable';
+ const railMat=M(0x41464b,.7,.2);for(const side of [-1,1]){const rail=sbMesh(new T.BoxGeometry(.28,1.25,len),railMat,x+side*(width/2-.18),height*.5+.2,topZ+len/2);rail.rotation.x=Math.atan(height/len)}
+}
+makeSandboxRamp(-43,-130,65,36,18,0xff8b22);makeSandboxRamp(0,-165,83,51,20,0x29a7df);makeSandboxRamp(43,-130,58,30,17,0xe94f78);
 const sbLampMat=M(0x30363b,.7,.2),sbLampGlow=new T.MeshStandardMaterial({color:0xffe5a3,emissive:0xffc766,emissiveIntensity:1.2});for(const x of [-47,48]){sbMesh(new T.CylinderGeometry(.12,.16,6,8),sbLampMat,x,3,-55);sbMesh(new T.SphereGeometry(.28,8,6),sbLampGlow,x,6.15,-55)}
 const sandboxPeds=[];for(let i=0;i<7;i++){const p=mkPerson(pcol[i%pcol.length],pantsCol[i%pantsCol.length]);p.g.position.set(-24+(i%4)*5,0,-62+Math.floor(i/4)*9);p.g.rotation.y=i%2?Math.PI:0;sandboxRoot.add(p.g);sandboxPeds.push({p,originX:p.g.position.x,originZ:p.g.position.z,phase:i*.83,range:2.4+(i%3),speed:.35+(i%3)*.12})}
 function stepSandboxPeds(dt){if(mode!=='sandbox')return;for(const e of sandboxPeds){const t=performance.now()/1000*e.speed+e.phase,g=e.p.g;g.position.x=e.originX+Math.sin(t)*e.range;g.position.z=e.originZ+Math.cos(t*.7)*1.2;g.rotation.y=Math.atan2(Math.cos(t)*e.range,-Math.sin(t*.7)*.84);try{rlAnimateNpcModel(e.p,dt,true)}catch(_){}}}
-function setSandboxWorld(active){sandboxRoot.visible=!!active;road.visible=!active;ground.visible=!active;town.visible=!active;NAT.natRoot.visible=!active;for(const r of ramps)r.m.visible=!active;NAT.peakIM.visible=!active;if(active&&window.WX){window.WX.mode=2;window.WX.autoT=Math.max(window.WX.autoT,35)}}
+function setSandboxWorld(active){
+ const sandbox=!!active;sandboxRoot.visible=sandbox;
+ // The standard map has scenery outside the town group too, so explicitly hide all of it.
+ const worldRoots=[road,ground,house,town,NAT.natRoot,uBox,uTrunk,uCone,uRock,window.__roadlineCrossStreetGroup,...mapBoundaryWalls,...branchRoadMeshes,...ramps.map(r=>r.m)];
+ for(const o of worldRoots)if(o)o.visible=!sandbox;
+ for(const p of side)if(p)p.visible=!sandbox;
+ // Sandbox has its own pedestrians; hide the regular road/town population while it is active.
+ for(const n of npcs)if(n&&n.g)n.g.visible=!sandbox;
+ for(const e of peds)if(e&&e.g)e.g.visible=!sandbox;
+ for(const e of crowd)if(e&&e.g)e.g.visible=!sandbox;
+ if(sandbox&&window.WX){window.WX.mode=2;window.WX.autoT=Math.max(window.WX.autoT,35)}
+}
 
 function surfSlope(){const f=-Math.sin(heading),g=-Math.cos(heading);return (surfaceHeightAt(carP.x+f*1.5,carP.z+g*1.5)-surfaceHeightAt(carP.x-f*1.5,carP.z-g*1.5))/3}
 function latSlope(){const r=Math.cos(heading),q=-Math.sin(heading);return (surfaceHeightAt(carP.x+r,carP.z+q)-surfaceHeightAt(carP.x-r,carP.z-q))/2}
