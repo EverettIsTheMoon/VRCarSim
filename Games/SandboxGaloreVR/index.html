@@ -3115,7 +3115,26 @@ window.__startSelectedGame=function(driveMode){
  renderer.domElement.style.display='block';$('menu').style.display='none';$('ui').style.display='';
  $('mp').style.display=selectedPlayType==='multi'?'flex':'none';$('help').style.display='none';
  if(selectedPlayType==='multi')window.__rlMPJoin?.();else window.__rlMPLeave?.();
- if(!window.__roadlineStarted||mode!==selectedDriveMode){mode=selectedDriveMode;setSandboxWorld(mode==='sandbox');restart();window.RLJobs?.reset();window.__roadlineStarted=true;}else setSandboxWorld(mode==='sandbox');
+ // Track the mode that was actually initialized, not just the current mode variable.
+ // The in-VR menu can change mode before the world has been restarted; comparing only
+ // mode===selectedDriveMode can otherwise leave the player at the old map's spawn.
+ const needsModeReset=!window.__roadlineStarted||window.__roadlineStartedMode!==selectedDriveMode;
+ mode=selectedDriveMode;
+ if(needsModeReset){
+  setSandboxWorld(mode==='sandbox');
+  restart();
+  window.RLJobs?.reset();
+  window.__roadlineStarted=true;
+  window.__roadlineStartedMode=selectedDriveMode;
+ }
+ // Re-apply visibility after restart and explicitly place the player on the selected world's spawn.
+ setSandboxWorld(mode==='sandbox');
+ if(mode==='sandbox'){
+  sandboxActiveCar=-1;carP.set(13,0,-54);heading=0;onFoot=true;
+  rig.position.set(13,0,-50);rig.rotation.set(0,0,0);
+  cock.visible=false;carMesh.visible=false;
+  sandboxCars.forEach((c,i)=>{c.visible=true;c.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);c.rotation.y=sandboxCarSpots[i].heading});
+ }
  paintMenuChoices();
 };
 window.__hideWorldForMenu=function(){};
