@@ -289,7 +289,7 @@ function terrainBaseHeight(x,z,segs){const d=Math.max(0,Math.abs(x)-5.5),t=Math.
  const L=segs||branchSegments;let bd=1e9;for(let i=0;i<L.length;i++){const q=L[i];if(z<Math.min(q.az,q.bz)-14||z>Math.max(q.az,q.bz)+14)continue;const dx=q.bx-q.ax,dz=q.bz-q.az,ll=dx*dx+dz*dz||1,u=C(((x-q.ax)*dx+(z-q.az)*dz)/ll,0,1),ex=q.ax+dx*u-x,ez=q.az+dz*u-z,e2=ex*ex+ez*ez;if(e2<bd)bd=e2}
  if(bd<1e8){const db=Math.max(0,Math.sqrt(bd)-3.5),tb=Math.min(1,db/9),sb=tb*tb*(3-2*tb);h=Math.max(h,roadHeight(z)-.10-.55*sb)}
  const base=h+mtn(x,z)*(bd<1e8?C((Math.sqrt(bd)-4)/12,0,1):1);let mountainTop=base;
- for(const p of mountainCollisionPeaks){const mz=p.z0+TL*Math.round((z-p.z0)/TL),dx=x-p.x,dz=z-mz,nr=Math.hypot(dx,dz)/(p.Wd||1);if(nr<1){const mb=roadHeight(mz)+mtn(p.x,mz)-9;mountainTop=Math.max(mountainTop,mb+p.H*Math.pow(1-nr,.9))}}
+ for(const p of mountainCollisionPeaks){const mz=p.z0+900*Math.round((z-p.z0)/900),dx=x-p.x,dz=z-mz,nr=Math.hypot(dx,dz)/(p.Wd||1);if(nr<1){const mb=roadHeight(mz)+mtn(p.x,mz)-9;mountainTop=Math.max(mountainTop,mb+p.H*Math.pow(1-nr,.9))}}
  return mountainTop}
 function terrainHeight(x,z,segs){let h=terrainBaseHeight(x,z,segs),best=0,target=h;
  for(let i=0;i<terrainPads.length;i++){const p=terrainPads[i],dx=Math.abs(x-p.x)-p.w*.5,dz=Math.abs(z-p.z)-p.d*.5,out=Math.max(dx,dz);if(out>=p.fade||dx>p.fade||dz>p.fade)continue;
@@ -1314,7 +1314,7 @@ function mobileBeerToggle(){const it=passengerBeer;
  if(mobileBeer){mobileBeer=false;scene.add(it.m);it.held=false;it.seat=true;it.v.set(0,0,0);it.m.rotation.set(0,heading,0);return true}
  if(carView!=='first')setCarView('first');
  it.held=true;it.seat=false;it.v.set(0,0,0);mobileBeer=true;cam.add(it.m);it.m.position.set(.3,-.26,-.6);it.m.rotation.set(.1,0,0);return true}
-function mobileSip(){if(!mobileBeer)return;beerSipT=.9;try{V5.say('You take a sip. No effects.','#fff')}catch(_){}}
+function mobileSip(){if(!mobileBeer)return;beerSipT=.9;try{window.V5.say('You take a sip. No effects.','#fff')}catch(_){}}
 function mobileWeaponToggle(){if(ROADLINE_MOBILE&&!renderer.xr.isPresenting&&!onFoot&&!dead&&!menuOpen)return mobileBeerToggle();if(!ROADLINE_MOBILE||renderer.xr.isPresenting||!onFoot||dead||menuOpen||sleepT>0)return false;if(mobileHeldWeapon){const it=mobileHeldWeapon,dir=cam.getWorldDirection(new T.Vector3()),origin=cam.getWorldPosition(new T.Vector3());cam.remove(it.m);scene.add(it.m);it.m.position.copy(origin).addScaledVector(dir,1.15);it.m.position.y=Math.max(surfaceHeightAt(it.m.position.x,it.m.position.z)+it.r,surfaceHeightAt(it.m.position.x,it.m.position.z)+.18);it.m.rotation.set(0,rig.rotation.y+Math.PI/2,0);it.v.set(dir.x*1.1,-.35,dir.z*1.1);it.held=false;mobileHeldWeapon=null;return true;}let best=4.2,near=null;const p=rig.position;for(const it of [akPickup,rocketPickup]){if(it.held)continue;const q=it.m.getWorldPosition(new T.Vector3()),d=Math.hypot(q.x-p.x,q.z-p.z);if(d<best){best=d;near=it}}if(!near)return false;if(window.__buyWeapon&&!window.__buyWeapon(near))return false;window.RLWeapons?.holster();gunOut=false;near.held=true;near.v.set(0,0,0);mobileHeldWeapon=near;near.m.parent?.remove(near.m);cam.add(near.m);near.m.position.set(.28,-.26,-.64);near.m.rotation.set(0,Math.PI/2,0);return true;}
 window.toggleMobileWeapon=mobileWeaponToggle;window.mobileWeaponLabel=mobileWeaponLabel;
 function stepItems(dt){if(mobileBeer){if(onFoot||dead||menuOpen||carView==='third')mobileBeerToggle();else{beerSipT=Math.max(0,beerSipT-dt);const k=Math.sin(Math.min(1,beerSipT/.9)*Math.PI),m=passengerBeer.m;m.rotation.set(.1-1.1*k,0,0);m.position.set(.3-.05*k,-.26+.12*k,-.6+.1*k)}}
@@ -1479,7 +1479,7 @@ const isWeaponHand=!!main,useGun=isWeaponHand&&onFoot&&gunOut&&!menuOpen&&!dead&
 if(isWeaponHand&&vrHeldWeapon&&onFoot&&!dead&&!menuOpen&&sleepT<=0){if(tv>.6&&(vrHeldWeapon.weapon==='ak'||!o.vrWeaponPressed))weaponFire(vrHeldWeapon,o);o.vrWeaponPressed=tv>.6}else{o.vrWeaponPressed=tv>.6}
 /* In-car pickup is intentionally limited to the beer on the passenger seat; other items retain normal on-foot behavior. */
 if(!onFoot&&!dead&&!menuOpen&&sleepT<=0&&gd&&!o.p&&!o.grab&&!o.item){const it=passengerBeer;if(!it.held){const dd=it.m.position.distanceTo(wp);if(dd<.48){o.item=it;it.held=true;it.seat=false;it.v.set(0,0,0);buzz(.3,o)}}}
-if(!onFoot&&o.item&&o.item.beer){if(tv>.6&&!o.tp){try{V5.say('You take a sip. No effects.','#fff')}catch(_){}o.item.sipCD=.5;}o.tp=tv>.6;o.item.m.position.copy(wp).add(new T.Vector3(0,-.04,-.18).applyQuaternion(o.c.quaternion));o.item.m.quaternion.copy(o.c.quaternion);if(!gd){o.item.held=false;o.item.seat=true;o.item.v.set(0,0,0);o.item=null}}
+if(!onFoot&&o.item&&o.item.beer){if(tv>.6&&!o.tp){try{window.V5.say('You take a sip. No effects.','#fff')}catch(_){}o.item.sipCD=.5;}o.tp=tv>.6;o.item.m.position.copy(wp).add(new T.Vector3(0,-.04,-.18).applyQuaternion(o.c.quaternion));o.item.m.quaternion.copy(o.c.quaternion);if(!gd){o.item.held=false;o.item.seat=true;o.item.v.set(0,0,0);o.item=null}}
 if(onFoot&&!dead&&!menuOpen&&sleepT<=0){
 let nearGrenade=null,nearGrenadeD=.36;for(const gr of grenades){if(gr.exploded||gr.heldBy)continue;const gd0=gr.m.position.distanceTo(wp);if(gd0<nearGrenadeD){nearGrenadeD=gd0;nearGrenade=gr}}if(gd&&!o.p&&!o.item&&!o.grenade&&!useGun&&nearGrenade){o.grenade=nearGrenade;nearGrenade.heldBy=o;nearGrenade.v.set(0,0,0);nearGrenade.outline.visible=false;buzz(.35,o)}if(gd&&!o.p&&!o.item&&!o.grenade&&!useGun){let best=null,bd=.35;for(const it of items){if(it.held)continue;const d=it.m.position.distanceTo(wp);if(d<bd){bd=d;best=it}}if(best&&best.weapon&&window.__buyWeapon&&!window.__buyWeapon(best))best=null;if(best){o.item=best;best.held=true;buzz(.3,o)}}
 if(o.item&&o.item.weapon){if(tv>.6&&(o.item.weapon==='ak'||!o.tp))weaponFire(o.item,o);o.tp=tv>.6}else if(useGun){if(tv>.6&&!o.tp)shoot();o.tp=tv>.6}}
@@ -1521,7 +1521,7 @@ function equipMenuWeapon(kind){return window.RLWeapons?.equip(kind)}
  const weaponMb=[[20,58,472,42,()=>'PISTOL',()=>equipMenuWeapon('pistol')],[20,104,472,42,()=>'AK-47',()=>equipMenuWeapon('ak')],[20,150,472,42,()=>'RPG',()=>equipMenuWeapon('rocket')],[20,196,472,42,()=>'SWORD',()=>equipMenuWeapon('sword')],[20,242,472,42,()=>'GRENADE',()=>spawnGrenade()],[20,288,472,42,()=>'NONE / HOLSTER ALL',()=>equipMenuWeapon('none')],[20,334,230,42,()=>'RELOAD',()=>{window.RLWeapons?.reload();menuOpen=false;panel.visible=ray.visible=dot.visible=dot2.visible=false;}],[262,334,230,42,()=>'BACK',()=>{menuPage='main';menuSig=''}]];
 function drawMenu(h,pr){const g=pcx;g.clearRect(0,0,512,PH);g.fillStyle='rgba(24,26,29,.78)';g.fillRect(0,0,512,PH);g.textAlign='center';g.fillStyle='#e1e3e6';g.font=menuPage==='jobs'?'bold 27px sans-serif':'bold 34px sans-serif';g.fillText(rlMenuTitle(),256,48);
 const menuButtons=rlMenuButtons();menuButtons.forEach((b,i)=>{g.fillStyle=i===h?(pr?'rgba(210,214,220,.92)':'rgba(150,154,160,.82)'):'rgba(77,81,87,.70)';g.fillRect(b[0],b[1],b[2],b[3]);g.strokeStyle='rgba(230,232,235,.55)';g.lineWidth=2;g.strokeRect(b[0],b[1],b[2],b[3]);g.fillStyle='#fff';g.font=(i<2?'bold 24px':'22px')+' sans-serif';g.fillText(b[4](),b[0]+b[2]/2,b[1]+b[3]/2+8)});
-g.font='12px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='upgrades'?'Cash $'+V5.getCash()+' · '+(window.RLProgress?.status||''):(menuPage==='jobs'?'Deliver food · 3 / 8 deliveries unlock bigger runs':menuPage==='admin'?'Available to everyone in this room':'Hold Y: menu · Hold A: weapons / tap A: pistol'),256,410);ptex.needsUpdate=true}
+g.font='12px sans-serif';g.fillStyle='#c4c7cb';g.fillText(menuPage==='upgrades'?'Cash $'+window.V5.getCash()+' · '+(window.RLProgress?.status||''):(menuPage==='jobs'?'Deliver food · 3 / 8 deliveries unlock bigger runs':menuPage==='admin'?'Available to everyone in this room':'Hold Y: menu · Hold A: weapons / tap A: pistol'),256,410);ptex.needsUpdate=true}
 function openMenu(page='main'){menuOpen=true;menuPage=page;menuSig='';const p=new T.Vector3(),d=new T.Vector3();cam.getWorldPosition(p);cam.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();panel.position.copy(p).addScaledVector(d,.55);panel.position.y=p.y-.2;panel.lookAt(p.x,panel.position.y,p.z);panel.rotateX(-.25);panel.visible=true;panel.updateMatrixWorld(true);if(!renderer.xr.isPresenting)window.RLUI?.show(page)}
 window.__roadlineWeaponPageOpen=()=>menuOpen&&menuPage==='weapons';
 window.__roadlineOpenWeaponsMenu=()=>openMenu('weapons');
@@ -1713,7 +1713,7 @@ hintT-=dt;if(hintT<=0){hintT=.3;let t='';if(onFoot&&!dead&&sleepT<=0){const p=ri
 if(onFoot&&!dead){let nearDoor=null,bd=.8;for(const dr of doors){const hp3=dr.handle.getWorldPosition(new T.Vector3()),hoverP=left&&left.c?rig.localToWorld(left.c.position.clone()):cam.getWorldPosition(new T.Vector3()),dd=hp3.distanceTo(hoverP);if(dd<bd){bd=dd;nearDoor=dr}}doors.forEach(dr=>dr.mat.emissive.setHex(dr===nearDoor?0x184d22:0));if(nearDoor&&bd<.8)t='Hold grip on handle: pull/push door · X: sit in car'}
 if(t!==hintS){hintS=t;hint.visible=!!t;if(t){hx2.clearRect(0,0,384,48);hx2.fillStyle='rgba(0,0,0,.55)';hx2.fillRect(0,0,384,48);hx2.fillStyle='#fff';hx2.font='bold 24px sans-serif';hx2.textAlign='center';hx2.fillText(t,192,32);htx.needsUpdate=true}}}
 audioStep(driving,gas,slipV);
-try{if(window.V5)V5.step(dt,now)}catch(e){if(!window.V5err){window.V5err=e;console.error(e)}}
+try{if(window.V5)window.V5.step(dt,now)}catch(e){if(!window.V5err){window.V5err=e;console.error(e)}}
 rig.updateMatrixWorld();
 });
 function zoneCheck(b){const x=b.position.x,z=b.position.z,tz=town.position.z,pad=b.userData.terrainPad;if(pad){pad.x=x;pad.z=z;pad.y=terrainBaseHeight(x,z)}b.position.y=terrainHeight(x,z);b.visible=!(x<-5.8&&z>-45&&z<40)&&!(x>5.8&&z>tz-95&&z<tz+20)&&!xHit(x,z)}
@@ -3209,7 +3209,7 @@ window.__hideWorldForMenu=function(){};
   if(!state.dialog)return;
   const near=player().distanceTo(worker())<5.5&&!dead;close();if(!yes||!near)return;
   state.employed=true;state.queue=makeRoute();state.order=state.queue.shift();state.phase='deliver';thanksT=0;drawT=1;
-  V5.say((1+state.queue.length)+' food order'+(state.queue.length?'s':'')+' packed. Follow your GPS.','#b9ffd0');
+  window.V5.say((1+state.queue.length)+' food order'+(state.queue.length?'s':'')+' packed. Follow your GPS.','#b9ffd0');
  }
  function setupCustomer(){
   const o=state.order;if(!o)return;
@@ -3221,18 +3221,18 @@ window.__hideWorldForMenu=function(){};
   if(dead||menuOpen||window.__mainMenuOpen||!onFoot)return false;
   if(state.phase==='deliver'&&state.order&&thanksT<=0){
    const t=target();if(Math.hypot(player().x-t.x,player().z-t.z)<2.6&&Math.abs(player().y-t.y)<3){
-    if(gunOut||mobileHeldWeapon||vrHeldWeapon){V5.say('Holster your weapon before handing over food.','#ffd27d');return true}
-    const oldTier=rank().stops,pay=state.order.pay;state.completed++;state.total+=pay;V5.award(pay);
+    if(gunOut||mobileHeldWeapon||vrHeldWeapon){window.V5.say('Holster your weapon before handing over food.','#ffd27d');return true}
+    const oldTier=rank().stops,pay=state.order.pay;state.completed++;state.total+=pay;window.V5.award(pay);
     thanksT=2.8;received.visible=true;bubble.visible=true;marker.visible=false;window.RLProgress?.save(true);
-    V5.say('Customer: Thanks!  +$'+pay+(rank().stops>oldTier?' · NEW ROUTE TIER!':''),'#b9ffd0');drawT=1;return true;
+    window.V5.say('Customer: Thanks!  +$'+pay+(rank().stops>oldTier?' · NEW ROUTE TIER!':''),'#b9ffd0');drawT=1;return true;
    }
   }
   return offer();
  }
  function finishHandover(){
   thanksT=0;received.visible=false;bubble.visible=false;arms.forEach(a=>a.rotation.set(0,0,0));
-  if(state.queue.length){state.order=state.queue.shift();setupCustomer();V5.say('Next customer added to your GPS.','#b9ffd0');}
-  else{state.phase='return';state.order=null;V5.say('Run complete. Return to the gas station.','#b9ffd0');}
+  if(state.queue.length){state.order=state.queue.shift();setupCustomer();window.V5.say('Next customer added to your GPS.','#b9ffd0');}
+  else{state.phase='return';state.order=null;window.V5.say('Run complete. Return to the gas station.','#b9ffd0');}
   drawT=1;
  }
  function drawGps(){
@@ -3250,7 +3250,7 @@ window.__hideWorldForMenu=function(){};
   tex.needsUpdate=true;
  }
  function step(dt){
-  if(dead&&state.phase!=='idle'){reset();V5.say('Delivery cancelled. Your career progress is saved.');}
+  if(dead&&state.phase!=='idle'){reset();window.V5.say('Delivery cancelled. Your career progress is saved.');}
   if(state.dialog&&menuPage!=='jobs'&&renderer.xr.isPresenting)close();
   if(state.dialog&&(dead||player().distanceTo(worker())>6))close();
   if(thanksT>0){thanksT-=dt;if(thanksT<=0)finishHandover();}
@@ -3283,7 +3283,7 @@ window.__hideWorldForMenu=function(){};
  }
  const workerLabel=sprite('FOOD DELIVERY JOBS · Y / G');workerLabel.scale.set(2.7,.5,1);workerLabel.visible=false;scene.add(workerLabel);
  function reset(){close();state.employed=state.completed>0;state.phase='idle';state.order=null;state.queue=[];thanksT=0;received.visible=bubble.visible=marker.visible=bag.visible=wrist.visible=customer.visible=doorHinge.visible=false;gc.style.display='none';}
- function guide(){V5.say('Gas-station worker: Y / G to talk. 3 and 8 deliveries unlock multi-stop runs.','#b9ffd0');}
+ function guide(){window.V5.say('Gas-station worker: Y / G to talk. 3 and 8 deliveries unlock multi-stop runs.','#b9ffd0');}
  hint.onclick=interactJob;$('jobNo').onclick=()=>answer(false);$('jobSure').onclick=()=>answer(true);
  document.addEventListener('keydown',e=>{
   if(!state.dialog)return;
@@ -3302,7 +3302,7 @@ const upgradeSpecs=[
  {key:'durability',name:'Durability',detail:'Reduced collision and engine damage'}
 ];
 const upgradeMb=[
- [20,60,472,42,()=> 'BACK · $'+V5.getCash(),()=>{menuPage='main';menuSig=''}],
+ [20,60,472,42,()=> 'BACK · $'+window.V5.getCash(),()=>{menuPage='main';menuSig=''}],
  ...upgradeSpecs.map((s,i)=>[20,110+i*57,472,49,()=>window.RLProgress.label(s.key),()=>window.RLProgress.buy(s.key)])
 ];
 function rlUpgrade(key){return window.RLProgress?.level(key)||0}
@@ -3315,7 +3315,7 @@ function rlMenuTitle(){return menuPage==='upgrades'?'VEHICLE UPGRADES':menuPage=
  let ready=false,last='',clock=0,persistent=true,status='Saving…';
  function level(k){return levels[k]||0}
  function label(k){const spec=upgradeSpecs.find(s=>s.key===k),l=level(k);return spec.name+' '+l+'/3 · '+(l===3?'MAX':'$'+costs[l])}
- function snapshot(){const s=window.RLJobs?.state;return {version:2,cash:V5.getCash(),upgrades:{...levels},completed:s?.completed||0,total:s?.total||0,weapons:{ak:!!akPickup.owned,rocket:!!rocketPickup.owned}}}
+ function snapshot(){const s=window.RLJobs?.state;return {version:2,cash:window.V5.getCash(),upgrades:{...levels},completed:s?.completed||0,total:s?.total||0,weapons:{ak:!!akPickup.owned,rocket:!!rocketPickup.owned}}}
  function validInt(n,max=100000000){return Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):0}
  function save(force=false){
   if(!ready)return false;
@@ -3327,7 +3327,7 @@ function rlMenuTitle(){return menuPage==='upgrades'?'VEHICLE UPGRADES':menuPage=
   try{
    const raw=window.localStorage.getItem(KEY);if(!raw)return;
    const v=JSON.parse(raw);if(!v||v.version!==2)return;
-   V5.setCash(validInt(v.cash));
+   window.V5.setCash(validInt(v.cash));
    for(const k of Object.keys(levels))levels[k]=validInt(v.upgrades?.[k],3);
    const s=window.RLJobs?.state;if(s){s.completed=validInt(v.completed);s.total=validInt(v.total);s.employed=s.completed>0;}
    akPickup.owned=v.weapons?.ak===true;rocketPickup.owned=v.weapons?.rocket===true;
@@ -3336,9 +3336,9 @@ function rlMenuTitle(){return menuPage==='upgrades'?'VEHICLE UPGRADES':menuPage=
  }
  function buy(k){
   const spec=upgradeSpecs.find(s=>s.key===k);if(!spec)return false;
-  const l=level(k);if(l>=3){V5.say('Already fully upgraded.','#b9ffd0');return false}
-  if(!V5.spend(costs[l])){V5.say('Not enough cash. Complete more deliveries.','#ffd27d');return false}
-  levels[k]++;save(true);menuSig='';V5.say(spec.name+' upgraded to level '+levels[k]+'!','#b9ffd0');
+  const l=level(k);if(l>=3){window.V5.say('Already fully upgraded.','#b9ffd0');return false}
+  if(!window.V5.spend(costs[l])){window.V5.say('Not enough cash. Complete more deliveries.','#ffd27d');return false}
+  levels[k]++;save(true);menuSig='';window.V5.say(spec.name+' upgraded to level '+levels[k]+'!','#b9ffd0');
   window.RLUI?.refresh();return true;
  }
  function step(dt){clock+=dt;if(clock>.7){clock=0;save();}}
@@ -3380,7 +3380,7 @@ function rlMenuTitle(){return menuPage==='upgrades'?'VEHICLE UPGRADES':menuPage=
   if(root.style.display!=='flex')return;
   $('careerTitle').textContent=pageName==='upgrades'?'Vehicle upgrades':pageName==='weapons'?'Weapons':'Roadline · Pause';
   const s=window.RLJobs.state;
-  $('careerMeta').textContent='$'+V5.getCash()+' · '+s.completed+' deliveries · '+window.RLJobs.rank().name;
+  $('careerMeta').textContent='$'+window.V5.getCash()+' · '+s.completed+' deliveries · '+window.RLJobs.rank().name;
   const list=root.querySelector('.careerButtons');list.replaceChildren();
   function button(text,sub,fn,disabled=false){const b=document.createElement('button');b.textContent=text;if(sub){const small=document.createElement('small');small.textContent=sub;b.append(small)}b.disabled=disabled;b.onclick=fn;list.append(b);}
   if(pageName==='upgrades'){
@@ -3479,7 +3479,7 @@ function rlBulletBlock(origin,dir,max=100){
   for(const it of set)release(it);gunOut=false;pistol.visible=false;if(gun)gun.visible=false;keys.KeyF=0;
  }
  function equip(kind){
-  if(dead||!onFoot){V5.say('Get out of the car to equip a weapon.','#ffd27d');return false}
+  if(dead||!onFoot){window.V5.say('Get out of the car to equip a weapon.','#ffd27d');return false}
   if(kind==='none'){holster();return true}
   const it=kind==='ak'?akPickup:kind==='rocket'?rocketPickup:kind==='sword'?swordPickup:null;
   if(!it&&kind!=='pistol')return false;
@@ -3490,7 +3490,7 @@ function rlBulletBlock(origin,dir,max=100){
    it.held=true;it.v.set(0,0,0);it.m.parent?.remove(it.m);
    if(renderer.xr.isPresenting){
     const h=left||sec;
-    if(!h){scene.add(it.m);it.held=false;V5.say('Connect a controller before equipping.');return false}
+    if(!h){scene.add(it.m);it.held=false;window.V5.say('Connect a controller before equipping.');return false}
     scene.add(it.m);vrHeldWeapon=it;rlPoseHeldWeapon(it,h);
    }else{
     cam.add(it.m);const p=flatPose();it.m.position.set(p.x,p.y,-.64);it.m.rotation.set(0,Math.PI/2,0);mobileHeldWeapon=it;
@@ -3501,8 +3501,8 @@ function rlBulletBlock(origin,dir,max=100){
  function reload(){
   if(dead||!onFoot)return false;
   const it=active(),s=it&&weaponState[it.weapon];
-  if(s){if(s.reload>0||s.ammo>=s.max)return false;s.reload=it.weapon==='ak'?1.8:2.5;V5.say('RELOADING…','#ffdc89');return true}
-  if(gunOut){V5.reloadPistol();return true}
+  if(s){if(s.reload>0||s.ammo>=s.max)return false;s.reload=it.weapon==='ak'?1.8:2.5;window.V5.say('RELOADING…','#ffdc89');return true}
+  if(gunOut){window.V5.reloadPistol();return true}
   return false;
  }
  function clearMuzzle(model,controller){
@@ -3512,7 +3512,7 @@ function rlBulletBlock(origin,dir,max=100){
   if(renderer.xr.isPresenting&&controller?.c)controller.c.getWorldPosition(from);else cam.getWorldPosition(from);
   const dir=tip.clone().sub(from),length=dir.length();if(length<.03)return true;dir.divideScalar(length);
   const clear=rlBulletBlock(from,dir,length)>=length-.02;
-  if(!clear&&performance.now()>blockedNote){blockedNote=performance.now()+1300;V5.say('Muzzle blocked. Move away from the wall.','#ffd27d');}
+  if(!clear&&performance.now()>blockedNote){blockedNote=performance.now()+1300;window.V5.say('Muzzle blocked. Move away from the wall.','#ffd27d');}
   return clear;
  }
  function pistolClear(){return clearMuzzle(renderer.xr.isPresenting?gun:pistol,left||sec)}
@@ -3522,7 +3522,7 @@ function rlBulletBlock(origin,dir,max=100){
   const s=weaponState[it.weapon];if(!s)return false;if(s.reload>0)return false;
   if(s.ammo<=0){reload();return false}
   s.ammo--;it.recoil=1;it.flash=.045;it.m.userData.fl.visible=true;
-  if(s.ammo===0){s.reload=it.weapon==='ak'?1.8:2.5;V5.say('RELOADING…','#ffdc89');}
+  if(s.ammo===0){s.reload=it.weapon==='ak'?1.8:2.5;window.V5.say('RELOADING…','#ffdc89');}
   return true;
  }
  function recordShot(o,d,k){lastShot={kind:k,origin:o.toArray(),direction:d.toArray(),at:performance.now()};}
@@ -3531,7 +3531,7 @@ function rlBulletBlock(origin,dir,max=100){
  }
  function snapshot(){
   const it=active(),s=it&&weaponState[it.weapon];
-  return {active:gunOut?'pistol':it?.weapon||'none',ammo:gunOut?V5.pistolAmmo().ammo:s?.ammo,reloading:gunOut?V5.pistolAmmo().reload>0:!!s?.reload,lastShot};
+  return {active:gunOut?'pistol':it?.weapon||'none',ammo:gunOut?window.V5.pistolAmmo().ammo:s?.ammo,reloading:gunOut?window.V5.pistolAmmo().reload>0:!!s?.reload,lastShot};
  }
  function step(dt){
   for(const [k,s]of Object.entries(weaponState))if(s.reload>0){s.reload=Math.max(0,s.reload-dt);if(!s.reload)s.ammo=s.max;}
@@ -3610,7 +3610,7 @@ const peers=new Map();window.peers=peers;
 const q1=v=>Math.round(v*10)/10,q2=v=>Math.round(v*100)/100,qa=a=>a.map(q2);
 const now=()=>performance.now();
 const tk=()=>Math.round((-150-town.position.z)/900);
-const say=(t,c)=>{try{V5.say(t,c||'#9fe0ff')}catch(e){}};
+const say=(t,c)=>{try{window.V5.say(t,c||'#9fe0ff')}catch(e){}};
 const okA=(a,n)=>Array.isArray(a)&&a.length>=n&&a.every(x=>typeof x==='number'&&isFinite(x)&&Math.abs(x)<1e6);
 const angLerp=(a,b,k)=>{let d=b-a;d=Math.atan2(Math.sin(d),Math.cos(d));return a+d*k};
 const _v=new T.Vector3(),_v2=new T.Vector3(),_p1=new T.Vector3(),_qq=new T.Quaternion(),_q2=new T.Quaternion();
@@ -3886,7 +3886,7 @@ async function join(){
  const ch=sb.channel('roadline-'+rm,{config:{broadcast:{self:false},presence:{key:me}}});MP.ch=ch;
  const Hd={rd:d=>{if(typeof d.r==='number'&&d.r>=-1&&d.r<3)radioOf.set(d.i,d.r|0)},vo:onVO,s:onS,w:applyW,k:onK,wf:onWF,ig:onIG,ir:onIR,nh:onNH,nd:onND,cd:onCD,ce:onCE,cp:onCP,ws:onWS,
   cr:d=>{const p=peers.get(d.i);if(p)resetCar(p)},wc:applyWorld,rq:()=>{if(MP.host)setTimeout(sendWS,300)},
-  rob:d=>{try{V5.remRob(d.v)}catch(e){}},bag:d=>{try{V5.remBag(d.b)}catch(e){}},ad:d=>{try{if(d.to===me&&window.__rlAdminReceive)window.__rlAdminReceive(d)}catch(e){}},gx:onGX};
+  rob:d=>{try{window.V5.remRob(d.v)}catch(e){}},bag:d=>{try{window.V5.remBag(d.b)}catch(e){}},ad:d=>{try{if(d.to===me&&window.__rlAdminReceive)window.__rlAdminReceive(d)}catch(e){}},gx:onGX};
  Object.keys(Hd).forEach(ev=>ch.on('broadcast',{event:ev},m=>{try{const d=m&&m.payload;if(d&&typeof d.i==='string'&&d.i!==me)Hd[ev](d)}catch(e){console.error('mp',ev,e)}}));
  ch.on('presence',{event:'sync'},calcHost);
  ch.on('presence',{event:'join'},()=>{if(MP.host)setTimeout(sendWS,700)});
