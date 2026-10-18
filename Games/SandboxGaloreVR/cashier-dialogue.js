@@ -10,7 +10,7 @@
     .replace(/\s+/g, ' ');
   let library = null, recognition = null, listening = false, lastTriggerAt = 0;
   // Temporary Moonshine Voice experiment. Toggle in the on-screen test controls to fall back.
-  let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false;
+  let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineLoaded = false, moonshineStarting = false, moonshineFinalizing = false, moonshineSawText = false;
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
@@ -238,6 +238,7 @@
           .onText(text=>{
             const partial=String(text||'').trim();
             if(moonshineEnabled && listening && partial){
+              moonshineSawText=true;
               showBubble('I hear: '+partial,1800,false);
             }
           })
@@ -268,10 +269,22 @@
       if(!moonshineEnabled) return;
       // Set this before start(): microphone callbacks may begin before start() resolves.
       listening=true;
+      moonshineSawText=false;
       showBubble('Microphone starting…',3000,false);
       await moonshineMic.start();
       if(!moonshineEnabled){ await stopMoonshineListening(); return; }
       showBubble('Listening… speak now.',1800,false);
+      // If Moonshine opens the mic but never returns even a partial transcript,
+      // automatically try the browser's recognizer (or the built-in phrase picker).
+      setTimeout(async()=>{
+        if(!moonshineEnabled || !listening || moonshineSawText || moonshineFinalizing) return;
+        listening=false;
+        moonshineEnabled=false;
+        updateSpeechModeLabel();
+        try{await stopMoonshineListening();}catch(_){}
+        showBubble('Moonshine gave no transcript. Trying browser speech instead…',3500,false);
+        setTimeout(()=>startListening(),1100);
+      },10000);
     }catch(err){
       listening=false;
       // Allow retry after a failed model load or microphone initialization.
@@ -281,8 +294,13 @@
       const isolationHint=(!window.crossOriginIsolated || typeof SharedArrayBuffer==='undefined')
         ? ' This site may need cross-origin isolation for Moonshine WASM.'
         : '';
-      showBubble('Moonshine failed: '+detail+isolationHint+' Press Talk to retry, or switch speech mode.',9000,false);
-      console.warn('[Cashier] Moonshine Voice failed:',err);
+      moonshineEnabled=false;
+      updateSpeechModeLabel();
+      showBubble('Moonshine failed: '+detail+isolationHint+' Switching to browser speech…',6500,false);
+      console.warn('[Cashier] Moonshine Voice failed; falling back to browser speech:',err);
+      // Give the error bubble a moment to be readable, then try the supported
+      // browser recognizer; if unavailable, startListening opens the phrase picker.
+      setTimeout(()=>startListening(),1200);
     }finally{
       moonshineStarting=false;
     }
