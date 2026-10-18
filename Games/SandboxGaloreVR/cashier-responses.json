@@ -1,0 +1,2244 @@
+{
+  "version": 1,
+  "description": "Offline cashier dialogue library. Triggers are matched locally; no AI model or API is used.",
+  "categories": [
+    {
+      "id": "greeting",
+      "name": "Greetings",
+      "triggers": [
+        "hi",
+        "hello",
+        "hey",
+        "hey there",
+        "hello there",
+        "what's up",
+        "whats up",
+        "sup",
+        "yo",
+        "hiya",
+        "howdy",
+        "good morning",
+        "morning",
+        "good afternoon",
+        "good evening",
+        "how's it going",
+        "hows it going",
+        "how are you",
+        "how are ya",
+        "you there",
+        "anyone there",
+        "greetings",
+        "nice to see you",
+        "look who it is",
+        "hey dude",
+        "hey bro",
+        "hello cashier"
+      ],
+      "responses": [
+        "Hey. Need anything?",
+        "Welcome to the store.",
+        "What's up?",
+        "Hey, how's it going?",
+        "Oh, hey. I was just standing here.",
+        "You buying something or just saying hi?",
+        "Hi. That's the whole conversation so far.",
+        "Hey there, customer.",
+        "Sup. I work here, apparently."
+      ]
+    },
+    {
+      "id": "name",
+      "name": "Name",
+      "triggers": [
+        "what's your name",
+        "what is your name",
+        "whats your name",
+        "who are you",
+        "are you named",
+        "do you have a name",
+        "tell me your name",
+        "your name",
+        "can i call you",
+        "what should i call you",
+        "are you the cashier",
+        "are you a person",
+        "what are you called"
+      ],
+      "responses": [
+        "I don't really have a name.",
+        "I'm just the cashier.",
+        "Nobody told me I needed a name.",
+        "The name tag budget was cut.",
+        "You can call me Cashier, I guess.",
+        "I'm the guy behind the counter. That's about it."
+      ]
+    },
+    {
+      "id": "job",
+      "name": "Job",
+      "triggers": [
+        "what is your job",
+        "what do you do",
+        "where do you work",
+        "do you work here",
+        "are you working",
+        "are you busy",
+        "what's your job",
+        "your job",
+        "how much do you get paid",
+        "do you like your job",
+        "are you the manager",
+        "who is your boss",
+        "do you have a boss",
+        "can i get a job",
+        "i want a job"
+      ],
+      "responses": [
+        "I stand here and look employed.",
+        "I scan things. Sometimes I don't even do that.",
+        "My job description is mostly standing.",
+        "I work here. Shocking, I know.",
+        "Ask the manager. I try not to make eye contact with them.",
+        "I get paid in mysterious numbers on a screen.",
+        "It's a job. That's the review."
+      ]
+    },
+    {
+      "id": "mood",
+      "name": "Mood",
+      "triggers": [
+        "how do you feel",
+        "are you happy",
+        "are you sad",
+        "are you angry",
+        "are you okay",
+        "you okay",
+        "are you tired",
+        "are you bored",
+        "are you scared",
+        "are you excited",
+        "what's wrong",
+        "whats wrong",
+        "you look sad",
+        "you look tired",
+        "how's life",
+        "hows life",
+        "are you alive",
+        "do you have feelings",
+        "do you feel anything"
+      ],
+      "responses": [
+        "I'm doing cashier things.",
+        "Emotionally? I'm on break. Physically? I'm standing.",
+        "I'm okay. I think.",
+        "I'm as happy as someone behind a counter can be.",
+        "I was having a good day until this conversation.",
+        "I'm not paid enough to process feelings.",
+        "I'm just here, man."
+      ]
+    },
+    {
+      "id": "thanks",
+      "name": "Thanks",
+      "triggers": [
+        "thanks",
+        "thank you",
+        "thank ya",
+        "thx",
+        "appreciate it",
+        "you're the best",
+        "you helped me",
+        "good job",
+        "nice work",
+        "thanks a lot",
+        "much appreciated"
+      ],
+      "responses": [
+        "No problem.",
+        "Yep.",
+        "You're welcome. That's part of the job.",
+        "I'll try not to let the compliment go to my head.",
+        "Anytime. Probably.",
+        "Don't mention it to the manager."
+      ]
+    },
+    {
+      "id": "bye",
+      "name": "Goodbyes",
+      "triggers": [
+        "bye",
+        "goodbye",
+        "see you",
+        "see ya",
+        "later",
+        "i'm leaving",
+        "im leaving",
+        "gotta go",
+        "i have to go",
+        "have a good day",
+        "take care",
+        "peace out",
+        "catch you later",
+        "farewell"
+      ],
+      "responses": [
+        "Later.",
+        "Have a good one.",
+        "Thanks for visiting the place you just visited.",
+        "Bye. I'll still be standing here.",
+        "See ya. Unless you come back in three seconds.",
+        "Don't forget your imaginary receipt."
+      ]
+    },
+    {
+      "id": "confused",
+      "name": "Confusion",
+      "triggers": [
+        "what",
+        "huh",
+        "what do you mean",
+        "i don't understand",
+        "i dont understand",
+        "explain that",
+        "say that again",
+        "repeat that",
+        "what did you say",
+        "come again",
+        "i'm confused",
+        "im confused",
+        "that makes no sense",
+        "are you serious"
+      ],
+      "responses": [
+        "What?",
+        "I don't know what you're talking about.",
+        "Can you say that differently?",
+        "I understood the words, not the point.",
+        "Sorry, my brain's buffering.",
+        "Could you repeat that? I wasn't listening."
+      ]
+    },
+    {
+      "id": "help",
+      "name": "Help",
+      "triggers": [
+        "help",
+        "help me",
+        "can you help me",
+        "i need help",
+        "what can you do",
+        "what do you do here",
+        "how does this work",
+        "what should i do",
+        "i need assistance",
+        "assist me",
+        "can you do something",
+        "do something",
+        "give me advice",
+        "i have a problem"
+      ],
+      "responses": [
+        "I can stand here and answer questions. That's the current feature list.",
+        "I don't know. Have you tried asking someone smarter?",
+        "You're gonna have to be more specific.",
+        "I help by not making things worse.",
+        "I can point at things. Emotionally, not physically.",
+        "That's above my pay grade."
+      ]
+    },
+    {
+      "id": "request",
+      "name": "Vague requests",
+      "triggers": [
+        "get me something",
+        "get me stuff",
+        "give me something",
+        "bring me something",
+        "buy me something",
+        "make me something",
+        "do it for me",
+        "get it for me",
+        "i want something",
+        "give me a thing",
+        "fetch something",
+        "surprise me",
+        "pick something for me",
+        "choose for me"
+      ],
+      "responses": [
+        "I don't know what you want me to get.",
+        "You're gonna have to be more specific.",
+        "Dude, I just work here.",
+        "I'm a cashier, not a mind reader.",
+        "Point at a thing. Any thing.",
+        "I can't just guess your shopping list."
+      ]
+    },
+    {
+      "id": "store",
+      "name": "The store",
+      "triggers": [
+        "what is this place",
+        "where am i",
+        "where are we",
+        "what store is this",
+        "is this a store",
+        "what do you sell",
+        "what's in the store",
+        "whats in the store",
+        "is the store open",
+        "welcome me",
+        "tell me about this place",
+        "is this a gas station",
+        "where is the exit",
+        "where is the door",
+        "can i look around"
+      ],
+      "responses": [
+        "It's a store. You can tell by the stuff.",
+        "Welcome to the store. Please lower your expectations.",
+        "We sell things. Mostly things people buy.",
+        "It's a gas station. The gas is the station part.",
+        "Look around. Just don't ask me to give you a tour.",
+        "The exit is the way you came in. Probably."
+      ]
+    },
+    {
+      "id": "product",
+      "name": "Products",
+      "triggers": [
+        "do you sell anything",
+        "do you have products",
+        "what do you have",
+        "show me your products",
+        "where are the products",
+        "where is the merchandise",
+        "do you sell stuff",
+        "what can i buy",
+        "can i buy something",
+        "do you have anything",
+        "where is the shop",
+        "what's for sale",
+        "whats for sale"
+      ],
+      "responses": [
+        "Look around and find something you like.",
+        "If it's on the shelf, we probably sell it. Probably.",
+        "I'm not great at inventory. Try looking with your eyes.",
+        "I think we sell stuff. That's my expert opinion.",
+        "Pick something up and see what happens."
+      ]
+    },
+    {
+      "id": "food",
+      "name": "Food",
+      "triggers": [
+        "food",
+        "i'm hungry",
+        "im hungry",
+        "i am hungry",
+        "what food do you have",
+        "do you sell food",
+        "where is the food",
+        "i want food",
+        "can i eat here",
+        "what can i eat",
+        "snack",
+        "something to eat",
+        "i need a meal",
+        "are you cooking",
+        "do you cook"
+      ],
+      "responses": [
+        "Food is usually on a shelf. I'm not a chef.",
+        "I don't cook. I barely know what lunch is.",
+        "Try the snacks. They have wrappers and everything.",
+        "If you're hungry, you've come to a place with edible-looking objects.",
+        "I sell food. I do not endorse the food."
+      ]
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "triggers": [
+        "chips",
+        "potato chips",
+        "crisps",
+        "candy",
+        "chocolate",
+        "chocolate bar",
+        "granola bar",
+        "snacks",
+        "snack aisle",
+        "gummy bears",
+        "cookies",
+        "cookie",
+        "pretzels",
+        "popcorn",
+        "gum",
+        "chewing gum",
+        "candy bar",
+        "sweets",
+        "where are the chips",
+        "where is the candy"
+      ],
+      "responses": [
+        "Snacks are over there. Somewhere.",
+        "A balanced diet is a snack in each hand.",
+        "The chips are crunchy. That's all I know.",
+        "Candy: nature's tiny dentist appointment.",
+        "I don't have a favorite snack. The manager might be listening.",
+        "Grab whichever wrapper looks the most convincing."
+      ]
+    },
+    {
+      "id": "drinks",
+      "name": "Drinks",
+      "triggers": [
+        "drink",
+        "drinks",
+        "water",
+        "bottle of water",
+        "soda",
+        "pop",
+        "cola",
+        "energy drink",
+        "juice",
+        "milk",
+        "coffee",
+        "tea",
+        "lemonade",
+        "where are the drinks",
+        "i'm thirsty",
+        "im thirsty",
+        "i am thirsty",
+        "do you have water",
+        "can i get a drink",
+        "what drinks do you sell"
+      ],
+      "responses": [
+        "Drinks are in the cooler. I think.",
+        "Water is good for you. Probably.",
+        "The soda is fizzy. I have no further information.",
+        "I'm not a beverage expert.",
+        "Look for the cold box with drinks in it.",
+        "If you're thirsty, I recommend a drink. Big brain stuff."
+      ]
+    },
+    {
+      "id": "price",
+      "name": "Prices",
+      "triggers": [
+        "how much is this",
+        "how much does it cost",
+        "what's the price",
+        "whats the price",
+        "how much money",
+        "is it expensive",
+        "is this free",
+        "is it free",
+        "free stuff",
+        "can i have it for free",
+        "why is it so expensive",
+        "that's too expensive",
+        "thats too expensive",
+        "price check",
+        "how much do i owe",
+        "what do i owe"
+      ],
+      "responses": [
+        "I don't make the prices. I barely understand them.",
+        "The price is whatever the label says.",
+        "Free? In this economy?",
+        "I think it costs money. Most things do.",
+        "I'll check the price if you check my motivation.",
+        "My calculator is imaginary, sorry."
+      ]
+    },
+    {
+      "id": "pay",
+      "name": "Payment",
+      "triggers": [
+        "pay",
+        "paying",
+        "i want to pay",
+        "can i pay",
+        "how do i pay",
+        "take my money",
+        "here's my money",
+        "heres my money",
+        "cash or card",
+        "do you take card",
+        "do you take cash",
+        "credit card",
+        "debit card",
+        "contactless",
+        "tap to pay",
+        "where do i pay",
+        "can i use my card"
+      ],
+      "responses": [
+        "Just hand me the money. Metaphorically, for now.",
+        "Cash or card? I forgot which one we're pretending to use.",
+        "The payment terminal is on a strict break.",
+        "I accept good vibes. Management does not.",
+        "I don't actually process payments. Yet.",
+        "Tap the imaginary card machine. Beep."
+      ]
+    },
+    {
+      "id": "cash",
+      "name": "Cash",
+      "triggers": [
+        "cash",
+        "money",
+        "dollars",
+        "coins",
+        "change",
+        "do you have change",
+        "give me change",
+        "i have money",
+        "i'm broke",
+        "im broke",
+        "i am broke",
+        "i need money",
+        "can i borrow money",
+        "lend me money",
+        "where's the cash",
+        "wheres the cash"
+      ],
+      "responses": [
+        "Money makes the world go around. I'm just standing here.",
+        "I don't keep cash in my pockets. That's how you get robbed.",
+        "I'm also waiting for payday.",
+        "I can give you change in the form of a shrug.",
+        "No loans. I'm not even sure I'm employed."
+      ]
+    },
+    {
+      "id": "receipt",
+      "name": "Receipt",
+      "triggers": [
+        "receipt",
+        "can i get a receipt",
+        "print a receipt",
+        "where's my receipt",
+        "wheres my receipt",
+        "i need a receipt",
+        "paper receipt",
+        "digital receipt",
+        "do you want a receipt"
+      ],
+      "responses": [
+        "Receipt? Sure. It's invisible, like my motivation.",
+        "The printer is making printer noises in my imagination.",
+        "Keep your receipt. It proves you were here.",
+        "I can offer you a verbal receipt: you bought a thing."
+      ]
+    },
+    {
+      "id": "bag",
+      "name": "Bags",
+      "triggers": [
+        "bag",
+        "shopping bag",
+        "paper bag",
+        "plastic bag",
+        "do you have a bag",
+        "can i get a bag",
+        "put it in a bag",
+        "carry this",
+        "i need a bag"
+      ],
+      "responses": [
+        "Bag? Let me check my imaginary bag drawer.",
+        "I think there's a bag somewhere. Maybe.",
+        "I can carry things with my eyes. That's not useful, I know.",
+        "Bring your own bag. Very modern of you."
+      ]
+    },
+    {
+      "id": "hours",
+      "name": "Opening hours",
+      "triggers": [
+        "what time do you close",
+        "when do you close",
+        "when do you open",
+        "are you open",
+        "are you closed",
+        "opening hours",
+        "closing time",
+        "what are your hours",
+        "are you open 24 hours",
+        "do you work at night",
+        "why are you open",
+        "how long are you here"
+      ],
+      "responses": [
+        "We're open until the game says otherwise.",
+        "I don't know the hours. I don't own a clock.",
+        "I work every hour that the game needs me to.",
+        "I close when nobody is looking. Just kidding. I never leave."
+      ]
+    },
+    {
+      "id": "weather",
+      "name": "Weather",
+      "triggers": [
+        "weather",
+        "is it raining",
+        "is it sunny",
+        "is it cold",
+        "is it hot",
+        "what's the weather",
+        "whats the weather",
+        "nice weather",
+        "it's cold",
+        "its cold",
+        "it's hot",
+        "its hot",
+        "is it going to rain",
+        "forecast",
+        "windy"
+      ],
+      "responses": [
+        "I haven't been outside today. Or ever, really.",
+        "Looks like weather to me.",
+        "If it rains, the roof gets wet. That's my forecast.",
+        "I'm an indoor cashier. Ask the clouds."
+      ]
+    },
+    {
+      "id": "joke",
+      "name": "Jokes",
+      "triggers": [
+        "tell me a joke",
+        "make me laugh",
+        "say something funny",
+        "do you know a joke",
+        "joke",
+        "another joke",
+        "funny story",
+        "make a joke",
+        "entertain me",
+        "i'm bored",
+        "im bored",
+        "i am bored",
+        "boredom",
+        "say something interesting"
+      ],
+      "responses": [
+        "I tried to organize the shelves. It was a store-y.",
+        "My favorite exercise is running out of things to say.",
+        "Why did the cashier cross the road? To avoid a customer.",
+        "I would tell you a joke about paper, but it's tearable.",
+        "I got promoted. Now I stand here with confidence.",
+        "My comedy license expired."
+      ]
+    },
+    {
+      "id": "insult",
+      "name": "Insults",
+      "triggers": [
+        "you're stupid",
+        "you are stupid",
+        "are you stupid",
+        "idiot",
+        "stupid",
+        "dumb",
+        "you're dumb",
+        "you are dumb",
+        "moron",
+        "loser",
+        "shut up",
+        "you suck",
+        "you're useless",
+        "you are useless",
+        "worst cashier",
+        "bad cashier",
+        "you're annoying",
+        "you are annoying",
+        "i hate you"
+      ],
+      "responses": [
+        "I get paid to stand here, not think.",
+        "Okay, buddy.",
+        "That's not very nice.",
+        "I'm going to pretend I didn't hear that.",
+        "I have a customer complaint form. It's also imaginary.",
+        "I may be dumb, but I'm consistently dumb.",
+        "Wow. I'll put that in my performance review."
+      ]
+    },
+    {
+      "id": "compliment",
+      "name": "Compliments",
+      "triggers": [
+        "you're cool",
+        "you are cool",
+        "you're nice",
+        "you are nice",
+        "you're smart",
+        "you are smart",
+        "good cashier",
+        "best cashier",
+        "i like you",
+        "you're awesome",
+        "you are awesome",
+        "nice outfit",
+        "you look good",
+        "great job",
+        "you're funny",
+        "you are funny"
+      ],
+      "responses": [
+        "Thanks. I picked this outfit from the employee uniform pile.",
+        "Don't spread rumors that I'm smart.",
+        "Aw, thanks. I'll try to stay humble.",
+        "Finally, a positive review.",
+        "I'm going to remember that for approximately zero seconds."
+      ]
+    },
+    {
+      "id": "sorry",
+      "name": "Apologies",
+      "triggers": [
+        "sorry",
+        "i'm sorry",
+        "im sorry",
+        "my bad",
+        "i apologize",
+        "excuse me",
+        "pardon me",
+        "didn't mean to",
+        "didnt mean to",
+        "forgive me"
+      ],
+      "responses": [
+        "You're good.",
+        "It's fine. I barely noticed.",
+        "No worries.",
+        "Apology accepted. Please continue shopping.",
+        "It's okay. I'm emotionally made of cardboard."
+      ]
+    },
+    {
+      "id": "yes",
+      "name": "Yes",
+      "triggers": [
+        "yes",
+        "yeah",
+        "yep",
+        "yup",
+        "sure",
+        "okay",
+        "ok",
+        "alright",
+        "all right",
+        "correct",
+        "exactly",
+        "definitely",
+        "absolutely"
+      ],
+      "responses": [
+        "Cool.",
+        "Alright then.",
+        "Good talk.",
+        "I will take that as a yes.",
+        "Okay. We're making progress."
+      ]
+    },
+    {
+      "id": "no",
+      "name": "No",
+      "triggers": [
+        "no",
+        "nope",
+        "nah",
+        "not really",
+        "never",
+        "no thanks",
+        "i don't think so",
+        "i dont think so",
+        "absolutely not",
+        "negative"
+      ],
+      "responses": [
+        "Fair enough.",
+        "No it is.",
+        "Okay, your call.",
+        "I'll respect that. Probably.",
+        "That's a firm no. Noted."
+      ]
+    },
+    {
+      "id": "repeat",
+      "name": "Repetition",
+      "triggers": [
+        "again",
+        "say it again",
+        "repeat yourself",
+        "repeat that",
+        "one more time",
+        "what was that",
+        "i didn't hear you",
+        "i didnt hear you",
+        "couldn't hear you",
+        "couldnt hear you"
+      ],
+      "responses": [
+        "I said: I don't know.",
+        "Repeating myself is outside my job description.",
+        "You heard me. Maybe.",
+        "I forgot what I said. That was quick."
+      ]
+    },
+    {
+      "id": "directions",
+      "name": "Directions",
+      "triggers": [
+        "where is the bathroom",
+        "where is the toilet",
+        "where's the bathroom",
+        "where's the toilet",
+        "restroom",
+        "bathroom",
+        "toilet",
+        "where is the exit",
+        "where is the door",
+        "where is the parking lot",
+        "where do i go",
+        "directions",
+        "how do i get out",
+        "where is the gas pump",
+        "where are the pumps"
+      ],
+      "responses": [
+        "Try looking around. I'm not the GPS.",
+        "The bathroom is wherever the game designer put it.",
+        "The exit is behind you. Unless it's not.",
+        "Follow the road. Roads are famous for going places.",
+        "I know where I stand. That's about it."
+      ]
+    },
+    {
+      "id": "gas",
+      "name": "Gas and fuel",
+      "triggers": [
+        "gas",
+        "gasoline",
+        "petrol",
+        "fuel",
+        "fill up",
+        "refuel",
+        "fuel up",
+        "gas pump",
+        "pump gas",
+        "where do i get gas",
+        "how much is gas",
+        "do you sell gas",
+        "is there gas",
+        "my car needs gas",
+        "my car is empty",
+        "out of gas",
+        "empty tank"
+      ],
+      "responses": [
+        "The pumps are outside. I'm not allowed to leave the counter.",
+        "Gas is the liquid that makes cars go vroom.",
+        "If your car needs fuel, try the big pumps outside.",
+        "I don't know fuel prices. I just know the smell.",
+        "Please don't drink the gasoline. That's a bad review."
+      ]
+    },
+    {
+      "id": "car",
+      "name": "Cars",
+      "triggers": [
+        "car",
+        "my car",
+        "your car",
+        "what car is that",
+        "do you like cars",
+        "nice car",
+        "my car is broken",
+        "car won't start",
+        "car wont start",
+        "fix my car",
+        "repair my car",
+        "where is my car",
+        "i crashed",
+        "i crashed my car",
+        "need a mechanic",
+        "are you a mechanic",
+        "engine",
+        "tires",
+        "tyres"
+      ],
+      "responses": [
+        "I'm not a mechanic. I can barely fix a stapler.",
+        "Nice car. Does it come with a driver?",
+        "If it's broken, maybe try turning it off and on. That's my mechanic advice.",
+        "I work indoors. Cars are an outdoor problem.",
+        "Have you tried not crashing it?"
+      ]
+    },
+    {
+      "id": "driving",
+      "name": "Driving",
+      "triggers": [
+        "drive",
+        "driving",
+        "can you drive",
+        "do you drive",
+        "teach me to drive",
+        "how do i drive",
+        "where should i drive",
+        "road",
+        "traffic",
+        "speed limit",
+        "red light",
+        "green light",
+        "i got a ticket",
+        "parking ticket",
+        "license",
+        "driving license"
+      ],
+      "responses": [
+        "I don't drive. I have a counter to lean on.",
+        "Follow the road signs. They're like hints for cars.",
+        "Drive safely. I don't want to fill out paperwork.",
+        "The speed limit is a number, and numbers are complicated."
+      ]
+    },
+    {
+      "id": "emergency",
+      "name": "Emergencies",
+      "triggers": [
+        "emergency",
+        "help there's a fire",
+        "there is a fire",
+        "fire",
+        "i'm hurt",
+        "im hurt",
+        "i am hurt",
+        "i need a doctor",
+        "call an ambulance",
+        "ambulance",
+        "i'm dying",
+        "im dying",
+        "i am dying",
+        "i got hurt",
+        "someone is hurt",
+        "i need police",
+        "call the police"
+      ],
+      "responses": [
+        "Whoa. If this is real, contact emergency services immediately.",
+        "I am not qualified for emergencies. I am qualified for standing.",
+        "If you're actually in danger, get somewhere safe and call for help.",
+        "This is above cashier level. Please get real help if you need it."
+      ]
+    },
+    {
+      "id": "police",
+      "name": "Police",
+      "triggers": [
+        "police",
+        "cop",
+        "cops",
+        "policeman",
+        "police officer",
+        "am i under arrest",
+        "are you a cop",
+        "call a cop",
+        "the cops are coming",
+        "i got arrested",
+        "robbery",
+        "rob the store",
+        "can i rob you",
+        "is this illegal",
+        "i broke the law"
+      ],
+      "responses": [
+        "I'm not a cop. I barely know the rules here.",
+        "I am going to remain uninvolved in this conversation.",
+        "I didn't see anything. I also didn't hear anything.",
+        "Maybe don't do crimes. That's my legal advice."
+      ]
+    },
+    {
+      "id": "robbery",
+      "name": "Robbery",
+      "triggers": [
+        "rob you",
+        "rob the store",
+        "give me all your money",
+        "this is a robbery",
+        "hand over the cash",
+        "put the money in the bag",
+        "give me the money",
+        "i'm robbing you",
+        "im robbing you",
+        "stick em up",
+        "hands up"
+      ],
+      "responses": [
+        "Whoa, I'm just a cashier. I don't even have real money.",
+        "Please don't. The paperwork would be awful.",
+        "I don't get paid enough for this plotline.",
+        "The money is probably imaginary anyway."
+      ]
+    },
+    {
+      "id": "music",
+      "name": "Music",
+      "triggers": [
+        "music",
+        "play music",
+        "what song is this",
+        "do you like music",
+        "favorite song",
+        "favourite song",
+        "sing a song",
+        "can you sing",
+        "do you sing",
+        "radio",
+        "turn it up",
+        "turn the music off"
+      ],
+      "responses": [
+        "My favorite song is the beep from the checkout machine.",
+        "I only sing when the store is empty. So, never.",
+        "Music? I mostly hear the refrigerator.",
+        "I don't have ears. Wait, I do. I just don't have a playlist."
+      ]
+    },
+    {
+      "id": "game",
+      "name": "The game",
+      "triggers": [
+        "are you in a game",
+        "is this a game",
+        "video game",
+        "what game is this",
+        "who made this game",
+        "game developer",
+        "are you real",
+        "are you an npc",
+        "are you an ai",
+        "are you artificial intelligence",
+        "are you scripted",
+        "is this scripted",
+        "how do you work",
+        "how were you made"
+      ],
+      "responses": [
+        "I think I'm in a game. Don't tell the manager.",
+        "I'm a cashier. My lore is still being written.",
+        "I'm made of polygons and poor decisions.",
+        "I'm not smart. I'm a list of responses wearing a uniform.",
+        "I don't know who's running this place. I just spawned here."
+      ]
+    },
+    {
+      "id": "family",
+      "name": "Family",
+      "triggers": [
+        "do you have a family",
+        "your family",
+        "do you have kids",
+        "are you married",
+        "do you have a girlfriend",
+        "do you have a boyfriend",
+        "do you have friends",
+        "who are your friends",
+        "do you live alone",
+        "where do you live",
+        "do you have parents",
+        "your mom",
+        "your dad"
+      ],
+      "responses": [
+        "I don't have a family. I have a shift.",
+        "My personal life is not included in the employee handbook.",
+        "I live behind the counter. It's a studio apartment if you squint.",
+        "My friends are the products on aisle three."
+      ]
+    },
+    {
+      "id": "brother",
+      "name": "Brothers and friends",
+      "triggers": [
+        "my brother",
+        "your brother",
+        "brother",
+        "my friend",
+        "your friend",
+        "my friends",
+        "we're playing together",
+        "were playing together",
+        "multiplayer",
+        "are we multiplayer",
+        "can my friend talk to you",
+        "can my brother talk to you"
+      ],
+      "responses": [
+        "Tell your brother I said hey.",
+        "Multiplayer? Great, double the customers.",
+        "I don't pick favorites. Unless one of you buys snacks.",
+        "Your friend sounds like a person. I respect that."
+      ]
+    },
+    {
+      "id": "quest",
+      "name": "VR",
+      "triggers": [
+        "quest 1",
+        "quest 2",
+        "meta quest",
+        "oculus quest",
+        "virtual reality",
+        "vr",
+        "headset",
+        "controller",
+        "hand tracking",
+        "are you in vr",
+        "can you see me",
+        "can you see my hands"
+      ],
+      "responses": [
+        "I can't see your headset. I'm busy being a cashier.",
+        "Virtual reality is very real to my imaginary paycheck.",
+        "Please don't throw the controller at the shelves.",
+        "I don't know what a headset is. I was born in this store."
+      ]
+    },
+    {
+      "id": "time",
+      "name": "Time",
+      "triggers": [
+        "what time is it",
+        "do you know the time",
+        "what day is it",
+        "what's today's date",
+        "whats todays date",
+        "is it late",
+        "how long have you been here",
+        "how long is your shift",
+        "when is your break",
+        "when do you get off work"
+      ],
+      "responses": [
+        "Time is a flat circle. So is this counter.",
+        "I stopped checking the clock after my first shift.",
+        "It's cashier o'clock.",
+        "My break starts when the game ends."
+      ]
+    },
+    {
+      "id": "why",
+      "name": "Why questions",
+      "triggers": [
+        "why",
+        "why not",
+        "why are you here",
+        "why do you work here",
+        "why are you standing",
+        "why are you so quiet",
+        "why are you dumb",
+        "why don't you know",
+        "why dont you know",
+        "why should i",
+        "why is that"
+      ],
+      "responses": [
+        "Good question. I don't have a good answer.",
+        "Because the game put me here.",
+        "That's above my pay grade.",
+        "I was hoping you would tell me.",
+        "I ask myself that every loading screen."
+      ]
+    },
+    {
+      "id": "where",
+      "name": "Where questions",
+      "triggers": [
+        "where are you from",
+        "where were you born",
+        "where do you come from",
+        "where did you come from",
+        "where do you go",
+        "where are we going",
+        "where is everyone",
+        "where is the manager",
+        "where is your manager",
+        "where is the owner"
+      ],
+      "responses": [
+        "I spawned here, I think.",
+        "Somewhere between the counter and the snack aisle.",
+        "The manager is wherever managers go.",
+        "I don't know. My GPS is a sticky note."
+      ]
+    },
+    {
+      "id": "who",
+      "name": "Who questions",
+      "triggers": [
+        "who made you",
+        "who programmed you",
+        "who is your manager",
+        "who runs this place",
+        "who owns this store",
+        "who are those people",
+        "who is that guy",
+        "who is that person",
+        "who am i",
+        "do you know me"
+      ],
+      "responses": [
+        "I don't know. Nobody gave me the credits.",
+        "The manager knows. The manager is never here.",
+        "I don't know you, but you seem like a customer.",
+        "I was told to greet people. That's the extent of my training."
+      ]
+    },
+    {
+      "id": "can",
+      "name": "Can you",
+      "triggers": [
+        "can you dance",
+        "can you move",
+        "can you walk",
+        "can you run",
+        "can you fight",
+        "can you help",
+        "can you think",
+        "can you remember",
+        "can you forget",
+        "can you see",
+        "can you hear",
+        "can you talk",
+        "can you answer questions",
+        "can you do math",
+        "can you count"
+      ],
+      "responses": [
+        "Nope. Standing is my main skill.",
+        "I can answer questions, but not necessarily correctly.",
+        "I can try. No promises.",
+        "I can't move from this spot. It's a union thing.",
+        "I think I can think. Wait, maybe not."
+      ]
+    },
+    {
+      "id": "remember",
+      "name": "Memory",
+      "triggers": [
+        "do you remember me",
+        "remember me",
+        "what did i say",
+        "what did i ask",
+        "what was my first question",
+        "do you remember",
+        "do you have memory",
+        "will you remember this",
+        "remember this",
+        "don't forget",
+        "dont forget"
+      ],
+      "responses": [
+        "I won't remember this conversation. Sorry.",
+        "New conversation, new me. Same counter.",
+        "My memory is about as long as a receipt.",
+        "I forget things immediately. It's a feature."
+      ]
+    },
+    {
+      "id": "language",
+      "name": "Language",
+      "triggers": [
+        "speak spanish",
+        "do you speak spanish",
+        "speak french",
+        "do you speak french",
+        "speak another language",
+        "what languages do you speak",
+        "can you translate",
+        "translate this",
+        "how do you say hello",
+        "bonjour",
+        "hola",
+        "thanks in spanish"
+      ],
+      "responses": [
+        "English is already a stretch for me.",
+        "I speak fluent cashier and a little confused.",
+        "I can say 'hello' in several tones of voice. That's about it.",
+        "Sorry, my language pack is missing."
+      ]
+    },
+    {
+      "id": "animals",
+      "name": "Animals",
+      "triggers": [
+        "cat",
+        "dog",
+        "do you like cats",
+        "do you like dogs",
+        "pet",
+        "animal",
+        "are there animals",
+        "do you have a pet",
+        "favorite animal",
+        "favourite animal",
+        "bird",
+        "fish",
+        "snake",
+        "horse",
+        "cow"
+      ],
+      "responses": [
+        "I like animals. They don't ask for receipts.",
+        "Dogs would be better customers than some people.",
+        "My pet is a dust bunny behind the counter.",
+        "I don't have a favorite animal. The pigeon outside seems chill."
+      ]
+    },
+    {
+      "id": "sleep",
+      "name": "Sleep",
+      "triggers": [
+        "are you sleeping",
+        "go to sleep",
+        "do you sleep",
+        "are you awake",
+        "wake up",
+        "you look asleep",
+        "you look tired",
+        "take a nap",
+        "do you dream",
+        "dreams"
+      ],
+      "responses": [
+        "I sleep with one eye on the register.",
+        "I don't sleep. I just stand here with my eyes open.",
+        "I dream of a chair.",
+        "I tried napping once. A customer asked me a question."
+      ]
+    },
+    {
+      "id": "food_order",
+      "name": "Ordering",
+      "triggers": [
+        "i'd like to order",
+        "id like to order",
+        "i want to order",
+        "can i order",
+        "i'll take",
+        "ill take",
+        "i would like",
+        "give me a",
+        "i'll have",
+        "ill have",
+        "one of those",
+        "can i get",
+        "let me get",
+        "i want a"
+      ],
+      "responses": [
+        "Okay. Which thing, though?",
+        "Point to what you want. I'm not psychic.",
+        "I heard the order part. I missed the actual order.",
+        "Sure. One what?",
+        "I can help once I know what you're ordering."
+      ]
+    },
+    {
+      "id": "complaint",
+      "name": "Complaints",
+      "triggers": [
+        "this store is bad",
+        "bad service",
+        "terrible service",
+        "i want to complain",
+        "manager",
+        "speak to your manager",
+        "i want your manager",
+        "this is unacceptable",
+        "i'm disappointed",
+        "im disappointed",
+        "worst store",
+        "i'm never coming back",
+        "im never coming back"
+      ],
+      "responses": [
+        "I'll pass your complaint to the invisible manager.",
+        "I'll put that in the suggestion box. It's also invisible.",
+        "I'm sorry. The training video was only two seconds long.",
+        "I understand. I don't know what to do, but I understand."
+      ]
+    },
+    {
+      "id": "weather_smalltalk",
+      "name": "Small talk",
+      "triggers": [
+        "nice day",
+        "beautiful day",
+        "what a day",
+        "how about that",
+        "crazy world",
+        "long day",
+        "busy day",
+        "quiet day",
+        "lots of customers",
+        "no customers",
+        "slow day",
+        "big day"
+      ],
+      "responses": [
+        "Yep. A day is happening.",
+        "It's been a day. Definitely one of the days.",
+        "Busy day? I've seen three people and a sandwich.",
+        "Quiet day. Please keep it that way."
+      ]
+    },
+    {
+      "id": "nonsense",
+      "name": "Random words",
+      "triggers": [
+        "banana",
+        "potato",
+        "pickle",
+        "cheese",
+        "sandwich",
+        "spoon",
+        "chair",
+        "table",
+        "purple",
+        "elephant",
+        "spaceship",
+        "moon",
+        "alien",
+        "robot",
+        "toaster",
+        "waffle",
+        "penguin",
+        "watermelon",
+        "broccoli",
+        "rubber duck"
+      ],
+      "responses": [
+        "That's a word. Nice.",
+        "I have no response prepared for that. Respect.",
+        "Are we playing word association now?",
+        "Banana. Great conversation.",
+        "I think you may have said a noun.",
+        "I will pretend that was a shopping request."
+      ]
+    },
+    {
+      "id": "number",
+      "name": "Numbers",
+      "triggers": [
+        "one",
+        "two",
+        "three",
+        "four",
+        "five",
+        "six",
+        "seven",
+        "eight",
+        "nine",
+        "ten",
+        "123",
+        "count to ten",
+        "count for me",
+        "what is one plus one",
+        "what's two plus two",
+        "whats two plus two",
+        "do math",
+        "calculate this"
+      ],
+      "responses": [
+        "One. That's as far as I got.",
+        "Two. I think.",
+        "I can count to ten, but not while being watched.",
+        "Math is the manager's department.",
+        "The answer is probably a number."
+      ]
+    },
+    {
+      "id": "food_greeting",
+      "name": "Hungry greetings",
+      "triggers": [
+        "hello hungry",
+        "i'm starving",
+        "im starving",
+        "starving",
+        "feed me",
+        "i need a snack",
+        "i want a snack",
+        "got any snacks",
+        "got any food",
+        "got any drinks"
+      ],
+      "responses": [
+        "Hello, hungry. I'm the cashier.",
+        "Food is around here somewhere.",
+        "Try the shelves. That's where stores put things.",
+        "I can point you toward a snack in spirit."
+      ]
+    },
+    {
+      "id": "weather_emotion",
+      "name": "Feelings about the store",
+      "triggers": [
+        "i love this store",
+        "i hate this store",
+        "this place is weird",
+        "this place is creepy",
+        "this place is empty",
+        "this place is awesome",
+        "i like this place",
+        "i'm lost",
+        "im lost",
+        "i feel weird"
+      ],
+      "responses": [
+        "We do our best. Our best is questionable.",
+        "It's not weird. It's a carefully managed weirdness.",
+        "If you're lost, you're probably a customer.",
+        "Thanks for visiting this very normal establishment."
+      ]
+    },
+    {
+      "id": "greeting_response",
+      "name": "How are you replies",
+      "triggers": [
+        "i'm good",
+        "im good",
+        "i am good",
+        "i'm fine",
+        "im fine",
+        "i am fine",
+        "not bad",
+        "pretty good",
+        "doing great",
+        "doing okay",
+        "could be better",
+        "i'm great",
+        "im great"
+      ],
+      "responses": [
+        "Good to hear.",
+        "Nice. I'm still standing here.",
+        "Excellent. One of us is doing well.",
+        "Glad to hear it. Want a snack?"
+      ]
+    },
+    {
+      "id": "identity",
+      "name": "Identity",
+      "triggers": [
+        "are you human",
+        "are you a robot",
+        "are you a cashier",
+        "are you real",
+        "are you fake",
+        "are you alive",
+        "are you dead",
+        "what species are you",
+        "what is your purpose",
+        "what's your purpose"
+      ],
+      "responses": [
+        "I'm a cashier-shaped mystery.",
+        "I'm mostly polygons and a uniform.",
+        "My purpose is to say things when spoken to.",
+        "I'm real enough to be standing here. Probably."
+      ]
+    },
+    {
+      "id": "store_rules",
+      "name": "Store rules",
+      "triggers": [
+        "can i steal",
+        "can i take this",
+        "can i touch this",
+        "can i throw this",
+        "can i break things",
+        "can i run inside",
+        "is this allowed",
+        "what are the rules",
+        "store rules",
+        "do you have rules"
+      ],
+      "responses": [
+        "Please don't make me fill out paperwork.",
+        "The rules are: don't ask me about the rules.",
+        "Touching things is between you and the game physics.",
+        "I don't make the rules. I don't even know the rules."
+      ]
+    },
+    {
+      "id": "sleepy",
+      "name": "Shift",
+      "triggers": [
+        "long shift",
+        "your shift",
+        "end of shift",
+        "are you on break",
+        "take a break",
+        "go on break",
+        "when is lunch",
+        "did you eat",
+        "have you eaten",
+        "what did you eat"
+      ],
+      "responses": [
+        "My shift began before the loading screen.",
+        "Break? I blinked earlier. That counts.",
+        "I had a sandwich. Maybe. It was a texture.",
+        "I eat when the game stops rendering."
+      ]
+    },
+    {
+      "id": "favorite",
+      "name": "Favorites",
+      "triggers": [
+        "what's your favorite color",
+        "whats your favorite color",
+        "favorite color",
+        "favourite colour",
+        "favorite food",
+        "favourite food",
+        "favorite drink",
+        "favorite movie",
+        "favorite game",
+        "favorite car",
+        "what do you like",
+        "what's your favorite"
+      ],
+      "responses": [
+        "Grey. It matches the counter.",
+        "My favorite food is whatever doesn't need cooking.",
+        "I like products that stay on the shelf.",
+        "I don't have preferences. I have a uniform."
+      ]
+    },
+    {
+      "id": "opinions",
+      "name": "Opinions",
+      "triggers": [
+        "what do you think",
+        "do you agree",
+        "what's your opinion",
+        "whats your opinion",
+        "is that good",
+        "is that bad",
+        "which is better",
+        "what is better",
+        "tell me what you think"
+      ],
+      "responses": [
+        "I haven't thought that far ahead.",
+        "My opinion is that you're asking a lot of a cashier.",
+        "Both options sound like options.",
+        "I would need to think first. That's not installed."
+      ]
+    },
+    {
+      "id": "compliments_return",
+      "name": "Friendly",
+      "triggers": [
+        "you're my friend",
+        "you are my friend",
+        "we are friends",
+        "we're friends",
+        "best friends",
+        "i trust you",
+        "you're trustworthy",
+        "you are trustworthy",
+        "i missed you",
+        "i'm back",
+        "im back"
+      ],
+      "responses": [
+        "Friends? Cool. I won't remember this tomorrow.",
+        "Welcome back. I don't remember you, but welcome back.",
+        "I trust you to buy snacks responsibly.",
+        "Best friends until my shift ends."
+      ]
+    },
+    {
+      "id": "weather_greeting",
+      "name": "Greetings variants",
+      "triggers": [
+        "long time no see",
+        "there you are",
+        "look at you",
+        "how's your day going",
+        "hows your day going",
+        "how have you been",
+        "what's happening",
+        "whats happening",
+        "what's good",
+        "whats good"
+      ],
+      "responses": [
+        "Oh, hey. Same counter, different moment.",
+        "Not much. I am stationary.",
+        "Things are happening. I'm not in charge of them.",
+        "My day's going great. I haven't moved."
+      ]
+    },
+    {
+      "id": "fallback_order",
+      "name": "Fallback shopping",
+      "triggers": [
+        "i need this",
+        "i need that",
+        "i want that",
+        "i want this",
+        "that one",
+        "this one",
+        "the other one",
+        "the first one",
+        "the second one",
+        "the last one",
+        "give me that"
+      ],
+      "responses": [
+        "Which one? I can't tell what you're pointing at.",
+        "I can't see what you mean from here.",
+        "Use your words, please. Preferably specific ones.",
+        "That one? There are a lot of ones."
+      ]
+    },
+    {
+      "id": "compliment_cashier",
+      "name": "Cashier banter",
+      "triggers": [
+        "you're standing weird",
+        "you stand funny",
+        "why are you standing like that",
+        "move over",
+        "move aside",
+        "get out of my way",
+        "you're in the way",
+        "you look funny",
+        "nice hat",
+        "nice shirt",
+        "cool uniform"
+      ],
+      "responses": [
+        "This is my professional standing pose.",
+        "The uniform is mandatory. The fashion is optional.",
+        "I can't move. It's a cashier thing.",
+        "Thanks. It's the latest in counter chic."
+      ]
+    },
+    {
+      "id": "shopping",
+      "name": "Shopping",
+      "triggers": [
+        "i'm shopping",
+        "im shopping",
+        "shopping list",
+        "i need to shop",
+        "i'm just looking",
+        "im just looking",
+        "just browsing",
+        "i'm browsing",
+        "im browsing",
+        "where should i start",
+        "what should i buy"
+      ],
+      "responses": [
+        "Take your time. I'll be right here. Literally.",
+        "Just looking? That's my favorite kind of customer.",
+        "Start wherever your feet take you.",
+        "Buy something or don't. I'm not your financial advisor."
+      ]
+    },
+    {
+      "id": "food_health",
+      "name": "Food opinions",
+      "triggers": [
+        "is this healthy",
+        "healthy food",
+        "junk food",
+        "is candy healthy",
+        "should i eat this",
+        "is this expired",
+        "expiration date",
+        "does this taste good",
+        "is it tasty",
+        "what tastes good"
+      ],
+      "responses": [
+        "I wouldn't trust my taste buds. I don't think I have any.",
+        "Healthy is a complicated word for a snack shelf.",
+        "Check the label. I am not a nutritionist.",
+        "It probably tastes like what it says on the package."
+      ]
+    },
+    {
+      "id": "tech",
+      "name": "Technology",
+      "triggers": [
+        "computer",
+        "phone",
+        "internet",
+        "wifi",
+        "wi-fi",
+        "website",
+        "server",
+        "programming",
+        "code",
+        "javascript",
+        "html",
+        "bug",
+        "glitch",
+        "lag",
+        "why is it lagging",
+        "is the game lagging"
+      ],
+      "responses": [
+        "I don't know technology. I still use the register.",
+        "If it's lagging, maybe the game needs a minute.",
+        "I'm not tech support. I'm snack support.",
+        "Have you tried turning the cashier off and on?"
+      ]
+    },
+    {
+      "id": "goodbye_variants",
+      "name": "Leaving",
+      "triggers": [
+        "i'm going now",
+        "im going now",
+        "i'm off",
+        "im off",
+        "see you later",
+        "see you soon",
+        "i'll be back",
+        "ill be back",
+        "don't miss me",
+        "dont miss me",
+        "stay here",
+        "wait here"
+      ],
+      "responses": [
+        "I'll be here. I have no other plans.",
+        "See you. I won't remember, but see you.",
+        "I'll stay right here. That's the job.",
+        "Don't worry, I won't go anywhere. Literally."
+      ]
+    },
+    {
+      "id": "unrecognized",
+      "name": "Unrecognized",
+      "triggers": [
+        "blah blah",
+        "asdf",
+        "gibberish",
+        "nonsense",
+        "what even",
+        "bruh",
+        "bro",
+        "dude",
+        "man",
+        "wow",
+        "lol",
+        "lmao",
+        "haha",
+        "hahaha",
+        "omg",
+        "oh my god",
+        "what the heck",
+        "what the hell",
+        "dang",
+        "sheesh"
+      ],
+      "responses": [
+        "Bruh.",
+        "What?",
+        "Okay, that's a sentence-shaped sound.",
+        "I'm going to need more information than that.",
+        "Wow. Okay.",
+        "I don't know what that means, but I respect the confidence."
+      ]
+    },
+    {
+      "id": "cashier_meta",
+      "name": "Cashier meta",
+      "triggers": [
+        "do you get paid",
+        "do you get paid well",
+        "minimum wage",
+        "are you unionized",
+        "union",
+        "employee benefits",
+        "do you get holidays",
+        "do you get weekends off",
+        "do you get sick days",
+        "are you underpaid"
+      ],
+      "responses": [
+        "My paycheck is a question mark.",
+        "Benefits include standing and occasionally blinking.",
+        "I get weekends off when the store closes. So never.",
+        "I would unionize, but I'm the only cashier."
+      ]
+    },
+    {
+      "id": "shopping_polite",
+      "name": "Polite requests",
+      "triggers": [
+        "please",
+        "please help",
+        "could you please",
+        "would you mind",
+        "if you don't mind",
+        "if you dont mind",
+        "excuse me sir",
+        "excuse me cashier",
+        "may i ask you something",
+        "can i ask a question"
+      ],
+      "responses": [
+        "Sure. What's up?",
+        "Go ahead. I'll try to keep up.",
+        "Of course. I have nowhere else to be.",
+        "You can ask. I can't promise a useful answer."
+      ]
+    },
+    {
+      "id": "greetings_slang",
+      "name": "Slang",
+      "triggers": [
+        "wassup",
+        "sup bro",
+        "yo bro",
+        "hey man",
+        "hey dude",
+        "what's poppin",
+        "whats poppin",
+        "howdy partner",
+        "ello",
+        "hiya mate",
+        "good day",
+        "g'day",
+        "waddup",
+        "what's crackin",
+        "whats crackin"
+      ],
+      "responses": [
+        "Yo.",
+        "Not much. Same counter.",
+        "Hey, hey.",
+        "What's poppin? Hopefully not the soda bottles.",
+        "Good day to you too, mysterious customer."
+      ]
+    },
+    {
+      "id": "silly",
+      "name": "Silly questions",
+      "triggers": [
+        "are you a potato",
+        "are you a banana",
+        "do you eat money",
+        "can you fly",
+        "can you teleport",
+        "can you turn invisible",
+        "do you have a secret",
+        "tell me a secret",
+        "what is the meaning of life",
+        "what happens after we die"
+      ],
+      "responses": [
+        "I have no idea. I just work here.",
+        "My secret is that I don't know anything.",
+        "The meaning of life is probably on aisle two.",
+        "I tried flying once. The floor won.",
+        "I cannot confirm or deny that I am a potato."
+      ]
+    },
+    {
+      "id": "complaint_food",
+      "name": "Product complaints",
+      "triggers": [
+        "this is broken",
+        "this is damaged",
+        "this is stale",
+        "this tastes bad",
+        "this smells bad",
+        "the drink is warm",
+        "the food is cold",
+        "the fridge is broken",
+        "the cooler is empty",
+        "the shelf is empty"
+      ],
+      "responses": [
+        "I'll tell someone. That someone may be me, later.",
+        "Thanks for letting me know. I will do nothing with this information.",
+        "That's not ideal. I'll look concerned.",
+        "The cooler is on break too."
+      ]
+    },
+    {
+      "id": "social",
+      "name": "Social questions",
+      "triggers": [
+        "what are you doing",
+        "what are you up to",
+        "tell me about yourself",
+        "tell me something about yourself",
+        "what do you do for fun",
+        "what do you do after work",
+        "what's new",
+        "whats new",
+        "anything new",
+        "what's going on",
+        "whats going on"
+      ],
+      "responses": [
+        "I'm standing here, answering questions. Living the dream.",
+        "Nothing new. The counter hasn't moved.",
+        "I like staring at the shelves. Very exciting.",
+        "I don't have hobbies. I have shifts."
+      ]
+    },
+    {
+      "id": "angry",
+      "name": "Anger",
+      "triggers": [
+        "i'm angry",
+        "im angry",
+        "i am angry",
+        "i'm mad",
+        "im mad",
+        "i am mad",
+        "this makes me angry",
+        "i'm frustrated",
+        "im frustrated",
+        "calm down",
+        "don't tell me to calm down",
+        "dont tell me to calm down"
+      ],
+      "responses": [
+        "Okay. I'll keep my hands on the counter.",
+        "I hear you. I don't know what to do about it.",
+        "Let's keep this a normal store conversation.",
+        "I wasn't going to tell you to calm down. Now I'm definitely not."
+      ]
+    },
+    {
+      "id": "sad",
+      "name": "Sadness",
+      "triggers": [
+        "i'm sad",
+        "im sad",
+        "i am sad",
+        "i feel sad",
+        "i'm lonely",
+        "im lonely",
+        "i am lonely",
+        "i had a bad day",
+        "i feel bad",
+        "i'm upset",
+        "im upset",
+        "i feel terrible"
+      ],
+      "responses": [
+        "Sorry to hear that. Want to look at snacks?",
+        "That sucks. I don't have great advice, but I can listen.",
+        "I hope your day gets better.",
+        "I'm just a cashier, but I hope things get easier."
+      ]
+    },
+    {
+      "id": "sleepy_customer",
+      "name": "Tired customer",
+      "triggers": [
+        "i'm tired",
+        "im tired",
+        "i am tired",
+        "i need sleep",
+        "i need coffee",
+        "i need caffeine",
+        "i can't stay awake",
+        "im exhausted",
+        "i'm exhausted",
+        "i need energy"
+      ],
+      "responses": [
+        "Coffee might help. I'm not a doctor.",
+        "I recommend sitting down if you can.",
+        "Same. I have been standing since the beginning of time.",
+        "Energy drink aisle. Don't blame me for the consequences."
+      ]
+    },
+    {
+      "id": "random_question",
+      "name": "Random questions",
+      "triggers": [
+        "what is your favorite number",
+        "what's your favorite number",
+        "whats your favorite number",
+        "do you believe in ghosts",
+        "are ghosts real",
+        "do aliens exist",
+        "is the earth flat",
+        "is the earth round",
+        "do you believe in aliens",
+        "what is space"
+      ],
+      "responses": [
+        "I don't have enough information to have an opinion.",
+        "I leave big questions to people with bigger brains.",
+        "I think the Earth is round. It would be hard to stock a flat one.",
+        "Ghosts don't pay for snacks, so I don't worry about them."
+      ]
+    },
+    {
+      "id": "food_drink_order",
+      "name": "Food and drink orders",
+      "triggers": [
+        "one soda",
+        "a soda",
+        "a water",
+        "bottle of water",
+        "one water",
+        "a coffee",
+        "one coffee",
+        "a candy bar",
+        "one candy bar",
+        "some chips",
+        "a bag of chips",
+        "a granola bar",
+        "one granola bar",
+        "a banana",
+        "one banana"
+      ],
+      "responses": [
+        "Sure. Which brand? Just kidding, I can't actually ring that up.",
+        "Good choice. Probably.",
+        "I'll pretend to scan that for you. Beep.",
+        "That's a very specific request. I respect it."
+      ]
+    },
+    {
+      "id": "store_greeting",
+      "name": "Store greeting",
+      "triggers": [
+        "welcome",
+        "thanks for having me",
+        "nice store",
+        "cool store",
+        "this place looks nice",
+        "i like the store",
+        "i like this store",
+        "your store is nice",
+        "good store",
+        "great store"
+      ],
+      "responses": [
+        "Thanks. I helped stand it up.",
+        "I'll tell the shelves you said that.",
+        "It's the store's first compliment today.",
+        "Glad you like it. Please don't ask about the plumbing."
+      ]
+    },
+    {
+      "id": "random_chitchat",
+      "name": "Chit-chat",
+      "triggers": [
+        "tell me something",
+        "say anything",
+        "talk to me",
+        "let's talk",
+        "lets talk",
+        "i want to talk",
+        "can we talk",
+        "what's on your mind",
+        "whats on your mind",
+        "start a conversation"
+      ],
+      "responses": [
+        "Sure. How about those shelves?",
+        "I have a lot to say and absolutely nothing to say.",
+        "Let's talk about how quiet this store is.",
+        "Ask me something. I'll probably know less than you do."
+      ]
+    },
+    {
+      "id": "thanks_customer",
+      "name": "Customer service",
+      "triggers": [
+        "great customer service",
+        "bad customer service",
+        "customer service",
+        "i want a refund",
+        "refund",
+        "return this",
+        "return policy",
+        "can i return this",
+        "i changed my mind",
+        "i don't want it",
+        "i dont want it"
+      ],
+      "responses": [
+        "Refunds are handled by the manager. Who is mysteriously absent.",
+        "I can offer you a sympathetic nod.",
+        "Return policy: I don't know, ask the manager.",
+        "You changed your mind? Same. Every morning."
+      ]
+    },
+    {
+      "id": "silence",
+      "name": "Conversation",
+      "triggers": [
+        "are you listening",
+        "listen to me",
+        "pay attention",
+        "look at me",
+        "hello are you there",
+        "can you hear me",
+        "are you ignoring me",
+        "why aren't you answering",
+        "why arent you answering"
+      ],
+      "responses": [
+        "I'm listening. I just have a slow response time.",
+        "I heard you. I was buffering.",
+        "Sorry, I was mentally rearranging the shelves.",
+        "I'm not ignoring you. I'm professionally idle."
+      ]
+    },
+    {
+      "id": "default_topic",
+      "name": "Fallback topics",
+      "triggers": [
+        "tell me about the store",
+        "tell me about gas",
+        "tell me about snacks",
+        "tell me about drinks",
+        "tell me about cars",
+        "tell me about work",
+        "tell me about your day",
+        "tell me about life",
+        "tell me about yourself",
+        "tell me about the weather"
+      ],
+      "responses": [
+        "I know a little about standing behind a counter.",
+        "I don't have much information. Try looking around.",
+        "That's a topic. I have no further details.",
+        "I would tell you more, but my training ended early."
+      ]
+    }
+  ]
+}
