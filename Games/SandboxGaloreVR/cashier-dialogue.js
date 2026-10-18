@@ -9,6 +9,8 @@
     .trim()
     .replace(/\s+/g, ' ');
   let library = null, recognition = null, listening = false, lastTriggerAt = 0;
+  // Temporary Moonshine Voice experiment. Toggle in the on-screen test controls to fall back.
+  let moonshineEnabled = true, moonshineModulePromise = null, moonshineMic = null, moonshineStarting = false, moonshineFinalizing = false;
   let currentWorker = null, bubble = null, bubbleTexture = null, bubbleCanvas = null, bubbleCtx = null;
   let bubbleMode = 'hidden', bubbleUntil = 0, bubbleText = '';
   let lastY = false, lastPrompt = 0, lastWorkerScan = 0, nearWorker = null, promptVisible = false;
@@ -152,8 +154,9 @@
     try { window.dispatchEvent(new CustomEvent('rl-cashier-reply',{detail:{heard:transcript,reply:answer}})); } catch(_){}
   }
   function startListening(){
-    if(listening || performance.now()-lastTriggerAt<900) return;
+    if(listening || moonshineStarting || performance.now()-lastTriggerAt<900) return;
     lastTriggerAt=performance.now();
+    if(moonshineEnabled){ startMoonshineListening(); return; }
     const SR=window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SR){
       fallbackMenu = true;
@@ -196,6 +199,79 @@
       console.warn('[Cashier] start failed:',e);
     }
   }
+
+  // Moonshine Voice runs locally in WebAssembly. Model files are downloaded once
+  // and cached by the browser; microphone audio is never sent to a server.
+  async function startMoonshineListening(){
+    if(moonshineStarting || listening) return;
+    moonshineStarting=true;
+    showBubble('Starting Moonshine Voice… first use downloads the small local model.',10000,false);
+    try{
+      if(!moonshineModulePromise){
+        moonshineModulePromise=import('https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm/dist/index.js');
+      }
+      const {MicTranscriber,ModelArch}=await moonshineModulePromise;
+      if(!moonshineMic){
+        moonshineMic=new MicTranscriber()
+          .language('en')
+          .modelArch(ModelArch.TinyStreaming)
+          .onText(text=>{
+            if(moonshineEnabled && listening && text && String(text).trim()){
+              showBubble('Listening: '+String(text).trim(),3500,false);
+            }
+          })
+          .onLine(line=>{
+            const transcript=String(line && line.text || '').trim();
+            if(!moonshineEnabled || !listening || moonshineFinalizing || !line || !line.isComplete || !transcript) return;
+            moonshineFinalizing=true;
+            listening=false;
+            showBubble('You said: '+transcript,2200,false);
+            Promise.resolve(moonshineMic.stop()).catch(()=>{}).finally(()=>{
+              setTimeout(()=>speakReply(transcript),850);
+              moonshineFinalizing=false;
+            });
+          })
+          .onError(err=>{
+            listening=false;
+            const detail=String(err && err.message || err || 'unknown error').slice(0,110);
+            showBubble('Moonshine microphone error: '+detail,7000,false);
+          });
+      }
+      await moonshineMic.start();
+      listening=true;
+      showBubble('Moonshine is listening. Say something!',8000,false);
+    }catch(err){
+      listening=false;
+      const detail=String(err && err.message || err || 'unknown error').slice(0,150);
+      const isolationHint=(!window.crossOriginIsolated || typeof SharedArrayBuffer==='undefined')
+        ? ' This site may need cross-origin isolation for Moonshine WASM.'
+        : '';
+      showBubble('Moonshine test failed: '+detail+isolationHint+' Tap the speech-mode toggle to try the browser fallback.',9000,false);
+      console.warn('[Cashier] Moonshine Voice failed:',err);
+    }finally{
+      moonshineStarting=false;
+    }
+  }
+  async function stopMoonshineListening(){
+    listening=false;
+    if(moonshineMic){ try{await moonshineMic.stop();}catch(_){} }
+  }
+  function setMoonshineEnabled(enabled){
+    moonshineEnabled=!!enabled;
+    if(!moonshineEnabled) stopMoonshineListening();
+    updateSpeechModeLabel();
+    showBubble(moonshineEnabled
+      ? 'Moonshine test ON — local Tiny Streaming model'
+      : 'Browser speech fallback selected',3200,false);
+  }
+  let speechModeButton=null;
+  function updateSpeechModeLabel(){
+    if(speechModeButton){
+      speechModeButton.textContent=moonshineEnabled?'🧪 Speech: Moonshine ON':'↩ Speech: Browser fallback';
+      speechModeButton.setAttribute('aria-pressed',moonshineEnabled?'true':'false');
+    }
+  }
+
   function showFallbackPrompt(){
     const item=flatTriggers[fallbackIndex];
     const phrase=item ? item.phrase : 'hello';
@@ -291,13 +367,21 @@
   }
   // Optional desktop test button; it is hidden during immersive VR and is not needed on Quest.
   function addDesktopButton(){
+    speechModeButton=document.createElement('button');
+    speechModeButton.type='button';
+    speechModeButton.textContent='🧪 Speech: Moonshine ON';
+    speechModeButton.setAttribute('aria-label','Toggle experimental Moonshine local speech recognition');
+    Object.assign(speechModeButton.style,{position:'fixed',right:'14px',bottom:'70px',zIndex:'10000',display:'none',padding:'10px 12px',border:'1px solid #fff8',borderRadius:'12px',background:'#26313d',color:'#fff',font:'bold 13px system-ui',cursor:'pointer',pointerEvents:'auto',maxWidth:'calc(100vw - 28px)'});
+    speechModeButton.addEventListener('click',()=>setMoonshineEnabled(!moonshineEnabled));
+    document.body.appendChild(speechModeButton);
+    updateSpeechModeLabel();
     const b=document.createElement('button');
     b.textContent='🎙 Talk to cashier';
     b.setAttribute('aria-label','Talk to cashier using microphone');
     Object.assign(b.style,{position:'fixed',right:'14px',bottom:'14px',zIndex:'9999',display:'none',padding:'12px 16px',border:'1px solid #fff8',borderRadius:'12px',background:'#202832',color:'#fff',font:'bold 15px system-ui',cursor:'pointer',pointerEvents:'auto'});
     b.addEventListener('click',()=>startListening());
     document.body.appendChild(b);
-    const update=()=>{ b.style.display=(renderer && renderer.xr && renderer.xr.isPresenting) ? 'none' : 'block'; };
+    const update=()=>{ const visible=!(renderer && renderer.xr && renderer.xr.isPresenting); b.style.display=visible?'block':'none'; if(speechModeButton) speechModeButton.style.display=visible?'block':'none'; };
     setInterval(update,1000);
   }
   window.RLCashierDialogue={
@@ -306,7 +390,10 @@
     get ready(){return !!library;},
     get triggerCount(){return flatTriggers.length;},
     get speechRecognitionAvailable(){return !!(window.SpeechRecognition || window.webkitSpeechRecognition);},
-    closePhrasePicker(){fallbackMenu=false;}
+    closePhrasePicker(){fallbackMenu=false;},
+    setMoonshineEnabled,
+    get moonshineEnabled(){return moonshineEnabled;},
+    stopListening: stopMoonshineListening
   };
   loadLibrary();
   const waitForScene=setInterval(()=>{
