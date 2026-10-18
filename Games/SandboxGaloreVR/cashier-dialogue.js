@@ -652,8 +652,21 @@
       if(phrasePointerLine){
         phrasePointerLine.visible=!!(phraseOpen && renderer && renderer.xr && renderer.xr.isPresenting);
         if(phrasePointerLine.visible){
-          let ctrl=null; try{ctrl=renderer.xr.getController(0)}catch(_){}
-          if(ctrl){ctrl.updateWorldMatrix(true,false);const origin=new T.Vector3().setFromMatrixPosition(ctrl.matrixWorld);const dir=new T.Vector3(0,0,-1).transformDirection(ctrl.matrixWorld);const end=origin.clone().addScaledVector(dir,3);const a=phrasePointerLine.geometry.attributes.position;a.setXYZ(0,origin.x,origin.y,origin.z);a.setXYZ(1,end.x,end.y,end.z);a.needsUpdate=true;phrasePointerLine.geometry.computeBoundingSphere();}
+          let origin=null,dir=null;
+          try{
+            const handObj=[left,sec].find(o=>o&&o.src&&o.src.handedness==='left');
+            if(handObj&&handObj.src.hand){
+              const joints=renderer.xr.getHand(handObj.i).joints,tip=joints&&joints['index-finger-tip'],base=joints&&joints['index-finger-metacarpal'];
+              if(tip&&base){rig.updateWorldMatrix(true,false);origin=tip.position.clone();base.position;rig.localToWorld(origin);const bp=base.position.clone();rig.localToWorld(bp);dir=origin.clone().sub(bp).normalize();}
+            } else if(handObj&&handObj.c){
+              handObj.c.updateWorldMatrix(true,false);origin=new T.Vector3().setFromMatrixPosition(handObj.c.matrixWorld);dir=new T.Vector3(0,0,-1).transformDirection(handObj.c.matrixWorld);
+            } else {
+              let ctrl=null;for(let i=0;i<2;i++){const test=renderer.xr.getController(i);if(test&&test.userData&&test.userData.inputSource&&test.userData.inputSource.handedness==='left'){ctrl=test;break;}}
+              if(!ctrl)ctrl=renderer.xr.getController(0);
+              if(ctrl){ctrl.updateWorldMatrix(true,false);origin=new T.Vector3().setFromMatrixPosition(ctrl.matrixWorld);dir=new T.Vector3(0,0,-1).transformDirection(ctrl.matrixWorld);}
+            }
+          }catch(_){}
+          if(origin&&dir){const end=origin.clone().addScaledVector(dir,3);const a=phrasePointerLine.geometry.attributes.position;a.setXYZ(0,origin.x,origin.y,origin.z);a.setXYZ(1,end.x,end.y,end.z);a.needsUpdate=true;phrasePointerLine.geometry.computeBoundingSphere();}
         }
       }
       if(nearWorker && onFoot && !menuOpen && !dead){
