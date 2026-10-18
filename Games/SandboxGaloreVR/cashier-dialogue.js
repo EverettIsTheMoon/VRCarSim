@@ -30,14 +30,30 @@
           const phrase = normalise(trigger);
           if(phrase) flatTriggers.push({phrase, category:cat});
         }));
-        flatTriggers.sort((a,b) => b.phrase.length - a.phrase.length);
-        console.info('[Cashier] Loaded '+flatTriggers.length+' voice triggers.');
+        flatTriggers.forEach(indexTrigger);
+        console.info('[Cashier] Loaded '+flatTriggers.length+' voice triggers across '+triggersByFirstWord.size+' word groups.');
       })
       .catch(err => { console.warn('[Cashier] Could not load response library:',err); library = {categories:[]}; });
   }
+  // Index triggers by their first word so the larger dialogue library stays cheap to search on Quest.
+  const triggersByFirstWord = new Map();
+  function indexTrigger(item){
+    const first = item.phrase.split(' ')[0];
+    if(!triggersByFirstWord.has(first)) triggersByFirstWord.set(first, []);
+    triggersByFirstWord.get(first).push(item);
+  }
   function chooseResponse(text){
-    const q = ' ' + normalise(text) + ' ';
-    for(const item of flatTriggers){
+    const words = normalise(text).split(' ').filter(Boolean);
+    const candidates = [];
+    const seen = new Set();
+    for(const word of words){
+      const list = triggersByFirstWord.get(word);
+      if(!list) continue;
+      for(const item of list) if(!seen.has(item.phrase)){seen.add(item.phrase);candidates.push(item);}
+    }
+    candidates.sort((a,b)=>b.phrase.length-a.phrase.length);
+    const q = ' ' + words.join(' ') + ' ';
+    for(const item of candidates){
       if(q.includes(' '+item.phrase+' ')){
         const arr = item.category.responses || [];
         if(arr.length) return arr[Math.floor(Math.random()*arr.length)];
