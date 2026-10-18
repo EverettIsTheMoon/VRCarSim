@@ -848,7 +848,7 @@ pa.needsUpdate=true;mesh.geometry.computeVertexNormals()}
 const S={hand:'left',gas:0,grab:1},carP=new T.Vector3(),vel=new T.Vector3(),QF=new T.Quaternion().setFromEuler(new T.Euler(0,0,-Math.PI/2)),QFr=new T.Quaternion().setFromEuler(new T.Euler(0,0,Math.PI/2));
 let left=null,sec=null,hand=null,hand2=null,gun=null,gear=1,speed=0,heading=0,damage=0,steer=0,wasRec=0,wasRep=0,smk=0,wallCool=0,hudT=0,yHold=0,yDone=0,hintT=0,hintS='';const keys={};
 let passengerOf='',passengerSeatAt=0,mobileBeer=false,beerSipT=0;let mode='free',onFoot=false,dead=0,sx=0,sy=0,raceT=0,raceDone=0,doneT=0,ramp=0,wheelA=0,wSm=0,hbA=0,wheelHeld=0,mobileHeldWeapon=null,vrHeldWeapon=null;
-let fuel=1,rpm=900,gi=1,shiftT=0,engineDamage=0,engineFire=0,doorGrab=null,doorGripWas=false,yaw=0,slipV=0,refuel=0,bGrace=0,boostT=0,boostCD=0,vyc=0,air=false,lastVy=0,lastRampPitch=0,carPitch=0,carRoll=0,boomDeath=false;
+let fuel=1,rpm=900,gi=1,shiftT=0,engineDamage=0,engineFire=0,steeringDamage=0,doorGrab=null,doorGripWas=false,yaw=0,slipV=0,refuel=0,bGrace=0,boostT=0,boostCD=0,vyc=0,air=false,lastVy=0,lastRampPitch=0,carPitch=0,carRoll=0,boomDeath=false;
 let night=0,nightT=0,sleepT=0,sleptDone=false,gunOut=false,gunCD=0,menuOpen=true,musicOn=true,menuPrev=0;
 const GR=[0,3.4,2.1,1.5,1.12,.88,.72],FD=3.7,RW=.32,MASS=1400,IDLE=900,RED=6400,WB=2.7;
 const $m=id=>$(id);
@@ -856,7 +856,7 @@ addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.c
 if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)window.__roadlineOpenMainMenu?.();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
 const ctrls={};
 [0,1].forEach(i=>{const c=renderer.xr.getController(i);rig.add(c);rig.add(renderer.xr.getHand(i));c.addEventListener('connected',e=>{ctrls[i]={c,src:e.data,i};bind()});c.addEventListener('disconnected',()=>{delete ctrls[i];bind()})});
-function repair(){damage=0;engineDamage=0;engineFire=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)})}
+function repair(){damage=0;engineDamage=0;engineFire=0;steeringDamage=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});try{resetCrashGeometry()}catch(_){}}
 function recenter(){if(renderer.xr.isPresenting)cock.position.copy(cam.position)}
 function buzz(i,o){try{(o||left).src.gamepad.hapticActuators[0].pulse(Math.min(1,i),60)}catch(e){}}
 function hurtHood(imp,x,dir){dent(hood,[C(x,-.7,.7),0,-.4],dir,C(imp*.025,.04,.55));try{dent(cbp,[C(x,-.72,.72),C(-.25,.25,.25),-1.85],[0,-.15,.9],C(imp*.018,.025,.42),.72)}catch(_){}}
@@ -872,7 +872,7 @@ for(const sx2 of[-.92,.92])for(const sz of[-1.35,1.35]){const w=new T.Mesh(new T
 box(1.86,.18,.14,dkm,0,.38,-2.15,g);box(1.86,.18,.14,dkm,0,.38,2.15,g);box(.7,.15,.04,dkm,0,.7,-2.13,g);box(.5,.12,.02,M(0xeeeeee),0,.52,2.14,g);[-1,1].forEach(s=>box(.12,.08,.2,bm,s*1,1.05,-.7,g));scene.add(g);rlAttachModel('traffic_car',g,{size:[2.1,1.8,4.5]});
 const n={g,body,o:body.geometry.attributes.position.array.slice(),cool:0,arr:true,life:0};npcs.push(n);place(n,1)}
 /* ---------- menu, on-foot, death ---------- */
-const doors=[];const carMesh=new T.Group();const carInterior=new T.Group();{const cb=box(1.8,.8,4.2,M(0xc0261f,.4,.5),0,.65,0,carMesh);
+const doors=[];const carMesh=new T.Group();const carInterior=new T.Group();{const cb=new T.Mesh(new T.BoxGeometry(1.8,.8,4.2,10,4,20),M(0xc0261f,.4,.5));cb.position.set(0,.65,0);carMesh.add(cb);
 /* Open cabin glazing: transparent windows plus visible seats/dashboard make the interior readable from outside. */
 const glass=new T.MeshStandardMaterial({color:0x426070,roughness:.18,metalness:.18,transparent:true,opacity:.16,depthWrite:false,side:T.DoubleSide});
 const trim=M(0x171a1d,.72,.08),seatMat=M(0x9a8468,.9,0),dashMat=M(0x3d434b,.7,.05);
@@ -923,7 +923,7 @@ const tailMat=new T.MeshStandardMaterial({color:0xd51e18,emissive:0x3b0503,rough
 for(const sideSign of [-1,1]){
  /* Door hinges sit on the forward edge; panels are thin and aligned to the car's sides. */
  const hinge=new T.Group();hinge.position.set(sideSign*.86,.68,-.72);carMesh.add(hinge);
- const panel=box(.065,.75,1.42,M(0xb3221c,.48,.28),sideSign*.035,0,.70,hinge);
+ const panel=new T.Mesh(new T.BoxGeometry(.065,.75,1.42,1,4,14),M(0xb3221c,.48,.28));panel.position.set(sideSign*.035,0,.70);hinge.add(panel);
  const win=box(.052,.27,1.34,new T.MeshStandardMaterial({color:0x426070,roughness:.18,metalness:.18,transparent:true,opacity:.16,depthWrite:false,side:T.DoubleSide}),sideSign*.031,.515,.70,hinge);
  const hm2=new T.MeshStandardMaterial({color:0xbfc7cf,emissive:0x000000,roughness:.3,metalness:.65});
  const handle=box(.025,.035,.15,hm2,sideSign*.073,.08,.92,hinge);
@@ -934,6 +934,9 @@ for(const sideSign of [-1,1]){
 }
 carMesh.add(carInterior);
 scene.add(carMesh)}
+const carBodyBase=carMesh.children[0].geometry.attributes.position.array.slice();
+const carDoorBases=doors.map(d=>d.panel.geometry.attributes.position.array.slice());
+function resetCrashGeometry(){const body=carMesh.children[0],pa=body.geometry.attributes.position;pa.array.set(carBodyBase);pa.needsUpdate=true;body.geometry.computeVertexNormals();body.material.color.setHex(0xc0261f);doors.forEach((d,i)=>{const a=d.panel.geometry.attributes.position;a.array.set(carDoorBases[i]);a.needsUpdate=true;d.panel.geometry.computeVertexNormals();d.panel.material.color.setHex(0xb3221c)})}
 /* Simple capsule-vs-hinged-door collision. Uses each animated panel's current world transform. */
 const _doorWorld=new T.Vector3(),_doorLocal=new T.Vector3();
 function resolveDoorCollision(){
@@ -1338,18 +1341,50 @@ const wall=rlBulletBlock(o,d,80);if(best>wall){best=wall;tp=null;}const officer=
 tracer.visible=true;trT=.05;tracer.position.copy(o).addScaledVector(d,len/2);tracer.scale.z=len;tracer.lookAt(o.x+d.x*len,o.y+d.y*len,o.z+d.z*len);
 window.RLWeapons?.pistolFired();if(gun){gun.userData.fl.visible=true;flT=.05}gunShot();buzz(.8,left)}
 function interact(){if(!onFoot||dead||menuOpen||sleepT>0)return;if(window.RLJobs?.interact())return;const p=rig.position;
-if(Math.hypot(p.x-(town.position.x-63),p.z-(town.position.z+4))<11){if(hp>=99){say('HOSPITAL: YOU ARE ALREADY HEALTHY','#b9ffd0');return}if(cash<50){say('HOSPITAL: $50 NEEDED FOR TREATMENT','#ffd27d');return}cash-=50;hp=100;hpT=0;say('HOSPITAL: HEALTH RESTORED · -$50','#7dff9a');cashBeep();buzz(.35);return}
-if(Math.hypot(p.x-(town.position.x-40),p.z-(town.position.z-38))<13){if(cash<250){say('AUTO SERVICE: $250 NEEDED','#ffd27d');return}cash-=250;repair();say('AUTO SERVICE: VEHICLE REPAIRED · -$250','#7dff9a');cashBeep();buzz(.35);return}
+if(Math.hypot(p.x-(town.position.x-63),p.z-(town.position.z+4))<11){window.V5?.hospitalTreatment?.();return}
+if(Math.hypot(p.x-(town.position.x-40),p.z-(town.position.z-38))<13){window.V5?.autoService?.();return}
 if(Math.hypot(p.x-BED.x,p.z-BED.z)<2.6){sleepT=.001;sleptDone=false;return}if(Math.hypot(p.x-TVP.x,p.z-TVP.z)<4)tvOn=!tvOn}
 /* ---------- boost, collisions with buildings, ramps ---------- */
 function boost(){if(boostCD<=0&&boostT<=0&&!dead&&!onFoot&&!menuOpen){const sb=mode==='sandbox';boostT=sb?4.4:2.5;boostCD=sb?3.2:7;vyc=sb?5.8:1.2;air=true;window.__bv0=Math.hypot(vel.x,vel.z);if(sb){vel.multiplyScalar(2.7);speed*=2.7}buzz(1)}}
 const CORN=[[-.9,-2.1],[.9,-2.1],[-.9,2.1],[.9,2.1],[-.9,0],[.9,0],[0,-2.1],[0,2.1]];
-function carSolids(){if(mode==='sandbox'){carP.x=C(carP.x,-SANDBOX_LIMIT,SANDBOX_LIMIT);carP.z=C(carP.z,-SANDBOX_LIMIT,SANDBOX_LIMIT);return}const c=Math.cos(heading),s=Math.sin(heading),inv=boostT>0||bGrace>0;
-for(const [L,ox,oz] of [[sol,0,0],[tSol,town.position.x,town.position.z]])for(const b of L){
-if(carP.x<ox+b[0]-4||carP.x>ox+b[2]+4||carP.z<oz+b[1]-4||carP.z>oz+b[3]+4)continue;
-for(const k of CORN){const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
-if(wx>ox+b[0]&&wx<ox+b[2]&&wz>oz+b[1]&&wz<oz+b[3]){const d=[wx-(ox+b[0]),ox+b[2]-wx,wz-(oz+b[1]),oz+b[3]-wz],m=Math.min(d[0],d[1],d[2],d[3]);let nx=0,nz=0;if(m===d[0])nx=-1;else if(m===d[1])nx=1;else if(m===d[2])nz=-1;else nz=1;
-carP.x+=nx*m;carP.z+=nz*m;const vn=vel.x*nx+vel.z*nz;if(vn<0){vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;const imp=-vn;if(imp>1.5&&wallCool<=0){wallCool=.3;if(!inv)damage=Math.min(.95,damage+rlDamage(imp*.01));hurtHood(imp,0,[nx*.3,-.2,.5]);wallDent(imp,wx,wz,nx,nz);if(nz<-.25)hitEngine(imp);buzz(imp/20);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/15,.2,1))}}break}}}if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveCarModelCollisions()}
+function carSolids(){
+ const c=Math.cos(heading),s=Math.sin(heading),inv=boostT>0||bGrace>0;
+ const localRestaurant=b=>b[0]>=13&&b[2]<=29&&b[1]>=-59&&b[3]<=-41;
+ const rects=mode==='sandbox'?tSol.filter(localRestaurant):null;
+ const lists=mode==='sandbox'?[[rects,town.position.x,town.position.z]]:[[sol,0,0],[tSol,town.position.x,town.position.z]];
+ if(mode==='sandbox'){carP.x=C(carP.x,-SANDBOX_LIMIT,SANDBOX_LIMIT);carP.z=C(carP.z,-SANDBOX_LIMIT,SANDBOX_LIMIT)}
+ for(const [L,ox,oz] of lists)for(const b of L){
+  if(carP.x<ox+b[0]-4||carP.x>ox+b[2]+4||carP.z<oz+b[1]-4||carP.z>oz+b[3]+4)continue;
+  for(const k of CORN){
+   const wx=carP.x+c*k[0]+s*k[1],wz=carP.z-s*k[0]+c*k[1];
+   if(wx>ox+b[0]&&wx<ox+b[2]&&wz>oz+b[1]&&wz<oz+b[3]){
+    const d=[wx-(ox+b[0]),ox+b[2]-wx,wz-(oz+b[1]),oz+b[3]-wz],m=Math.min(d[0],d[1],d[2],d[3]);
+    let nx=0,nz=0;if(m===d[0])nx=-1;else if(m===d[1])nx=1;else if(m===d[2])nz=-1;else nz=1;
+    carP.x+=nx*m;carP.z+=nz*m;
+    const vn=vel.x*nx+vel.z*nz;
+    if(vn<0){
+     vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;
+     const imp=-vn;
+     if(imp>1.5&&wallCool<=0){
+      wallCool=.3;
+      if(!inv){
+       const severity=C((imp-2)/24,0,1);
+       damage=Math.min(.98,damage+rlDamage(.025+severity*.48));
+       steeringDamage=Math.min(.85,steeringDamage+Math.max(0,imp-7)*.012);
+       wallDent(imp,wx,wz,nx,nz);
+       if(imp>11&&severity>.32)hitEngine(imp*.55);
+       vel.multiplyScalar(C(1-severity*.12,.74,1));
+      }
+      buzz(imp/20);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/15,.2,1));
+      if(imp>8)shed(new T.Vector3(wx,.25,wz),C(Math.floor(imp/2),2,10));
+     }
+    }
+    break;
+   }
+  }
+ }
+ if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveCarModelCollisions();
+}
 const ramps=[],rs=new T.Shape();rs.moveTo(0,0);rs.lineTo(16,0);rs.lineTo(16,4.5);rs.lineTo(0,0);
 const rg=new T.ExtrudeGeometry(rs,{depth:5,bevelEnabled:false});rg.translate(0,0,-2.5);const rmat=M(0xe8a020,.7,.1);
 function placeRamp(r,init){r.z=rig.position.z-(init?R(250,500)+ramps.length*500:R(900,1800));r.x=R(-1.5,1.5);r.m.position.set(r.x,0,r.z)}
@@ -1408,14 +1443,56 @@ function setSandboxWorld(active){
 
 function surfSlope(){const f=-Math.sin(heading),g=-Math.cos(heading);return (surfaceHeightAt(carP.x+f*1.5,carP.z+g*1.5)-surfaceHeightAt(carP.x-f*1.5,carP.z-g*1.5))/3}
 function latSlope(){const r=Math.cos(heading),q=-Math.sin(heading);return (surfaceHeightAt(carP.x+r,carP.z+q)-surfaceHeightAt(carP.x-r,carP.z-q))/2}
-function wallDent(imp,wx,wz,nx,nz){const c=Math.cos(heading),s=Math.sin(heading),dx=wx-carP.x,dz=wz-carP.z,lx=dx*c-dz*s,lz=dx*s+dz*c,nlx=nx*c-nz*s,nlz=nx*s+nz*c;try{dent(carMesh.children[0],[C(lx,-.9,.9),0,C(lz,-2.1,2.1)],[nlx,0,nlz],C(imp*.04,.05,.45),1.3)}catch(_){}}
-function playerDent(imp,xl,zl,fb){if(fb&&zl<0){hurtHood(imp,xl,[0,-.3,.9]);return}const body=carMesh.children[0];try{if(fb){dent(body,[C(xl,-.7,.7),0,2.1],[0,0,-.9],C(imp*.04,.05,.5),1.3)}else{const sg=Math.sign(xl)||1,zc=C(zl*.5,-1.9,1.9);dent(body,[sg*.9,0,zc],[-sg,0,0],C(imp*.05,.06,.5),1.4);const d=doors.find(k=>k.side===sg);if(d&&Math.abs(zc+.02)<.85)dent(d.panel,[0,0,C(zc+.02,-.65,.65)],[-sg,0,0],C(imp*.02,.03,.16),.7)}}catch(_){}}
-function splashDamage(imp){if(boostT>0||bGrace>0)return;damage=Math.min(.95,damage+rlDamage((imp-6))*.03);buzz(1)}
+function wallDent(imp,wx,wz,nx,nz){
+ const c=Math.cos(heading),s=Math.sin(heading),dx=wx-carP.x,dz=wz-carP.z;
+ const lx=dx*c-dz*s,lz=dx*s+dz*c,lnx=nx*c-nz*s,lnz=nx*s+nz*c;
+ const body=carMesh.children[0],severity=C((imp-2)/24,0,1),x=C(lx,-.86,.86),z=C(lz,-2.02,2.02),dir=[lnx,0,lnz];
+ const amt=.055+severity*.68;
+ // Local multi-point crushing imitates the visible crumple zones of a soft-body crash simulator.
+ dent(body,[x,0,z],dir,amt,1.02+severity*.62);
+ if(Math.abs(lnz)>.55){
+  for(const ox of[-.48,.48])dent(body,[C(x+ox,-.86,.86),.03,z],[lnx*.8,-.08,lnz],amt*.62,1.05);
+  for(const ox of[-.70,.70])dent(body,[C(x+ox,-.86,.86),-.18,C(z+Math.sign(lnz)*.18,-2.02,2.02)],[lnx*.7,-.15,lnz],amt*.38,.82);
+  if(lz< -1.0)hurtHood(imp,C(lx,-.7,.7),[0,-.18,1]);
+ }else{
+  for(const oz of[-.72,-.24,.28,.72])dent(body,[x,0,C(z+oz,-2.02,2.02)],[lnx,0,lnz*.7],amt*.44,.84);
+  const sideSign=Math.sign(lx)||Math.sign(lnx)||1,door=doors.find(d=>d.side===sideSign);
+  if(door){
+   dent(door.panel,[0,0,C(lz-.70,-.66,.66)],[sideSign,0,0],amt*.68,.72);
+   if(severity>.55)door.open=Math.max(door.open,.12+severity*.2);
+  }
+ }
+ if(lz< -1.05&&imp>8){engineDamage=Math.min(1,engineDamage+severity*.28);if(engineDamage>.68)engineFire=Math.min(1,engineFire+severity*.08)}
+ if(severity>.82&&imp>23){for(const d of doors)if(Math.abs(lx)>.52)d.open=Math.max(d.open,.18)}
+ try{if(cbp&&cbp.geometry)cbp.geometry.computeVertexNormals()}catch(_){}
+}
+function landingCrash(imp){
+ if(imp<4.8||boostT>0||bGrace>0)return;
+ const severity=C((imp-4.5)/12,0,1),body=carMesh.children[0];
+ damage=Math.min(.98,damage+rlDamage(.025+severity*.43));
+ steeringDamage=Math.min(.85,steeringDamage+Math.max(0,imp-6)*.018);
+ engineDamage=Math.min(1,engineDamage+Math.max(0,imp-7)*.022);
+ if(imp>12)engineFire=Math.min(1,engineFire+severity*.04);
+ // Hard landings load all four corners, crease the lower shell, and compress the suspension.
+ for(const x of[-.67,.67])for(const z of[-1.56,1.56]){
+  dent(body,[x,-.24,z],[-x*.25,-1,Math.sign(z)*.22],.06+severity*.58,.72+severity*.38);
+  dent(body,[x*.72,.12,z*.86],[-x*.18,-.72,Math.sign(z)*.3],.04+severity*.36,.8);
+ }
+ dent(body,[0,.26,-1.62],[0,-1,.18],severity*.44,1.02);
+ dent(body,[0,.18,1.7],[0,-.8,-.12],severity*.32,.92);
+ for(const d of doors)if(severity>.4)dent(d.panel,[0,-.12,0],[d.side*.25,-.9,0],severity*.18,.62);
+ try{SU.v-=Math.min(5,imp*.28);SU.pv+=C((vel.x*Math.sin(heading)+vel.z*Math.cos(heading))*.08,-1.2,1.2);SU.rv+=C((vel.x*Math.cos(heading)-vel.z*Math.sin(heading))*.05,-1,1)}catch(_){}
+ vel.multiplyScalar(C(1-severity*.2,.7,.98));
+ sparks(new T.Vector3(carP.x,.55,carP.z),imp);shed(carP,C(Math.floor(3+severity*9),3,12));thud(C(imp/14,.3,1));buzz(C(imp/14,.3,1));
+ if(severity>.65&&engineDamage>.75)engineFire=Math.min(1,engineFire+.08);
+ try{if(window.V5)window.V5.say(severity>.55?'HARD LANDING · VEHICLE DAMAGED':'Hard landing · suspension stress',severity>.55?'#ff6a5a':'#ffd27d')}catch(_){}
+}
+function splashDamage(imp){landingCrash(imp)}
 function airStep(dt){if(mode!=='sandbox')for(const r of ramps)if(r.z>rig.position.z+40||r.z<rig.position.z-2500)placeRamp(r);if(dead||onFoot)return;let gy=carGroundHeight(carP.x,carP.z,heading),rampPitchNow=0,onRamp=false;
 if(mode!=='sandbox')for(const r of ramps){const dx=Math.abs(carP.x-r.x),dz=r.z-carP.z;if(dx<r.w/2&&dz>0&&dz<r.l){gy=Math.max(gy,dz/r.l*r.h);rampPitchNow=Math.atan(-Math.sign(vel.z||-1)*r.h/r.l);onRamp=true}}
 if(onRamp)lastRampPitch=rampPitchNow;
 if(!air){if(gy<carP.y-.1-Math.hypot(vel.x,vel.z)*dt*.75){air=true;const launch=Math.hypot(vel.x,vel.z)*Math.sin(lastRampPitch);vyc=C(Math.max(lastVy,launch),-5,14)}else{lastVy=(gy-carP.y)/Math.max(dt,.001);carP.y=gy}}
-if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>7){sparks(new T.Vector3(carP.x,.6,carP.z),imp);shed(carP,6);splashDamage(imp)}}}
+if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>4.8){splashDamage(imp)}}}
 const roadPitch=Math.atan(surfSlope());const targetPitch=air?C(Math.atan2(vyc,Math.max(5,Math.hypot(vel.x,vel.z))),-.52,.52):(onRamp?rampPitchNow:roadPitch);
 carPitch+=(targetPitch-carPitch)*Math.min(1,dt*(air?3.5:7));
 carRoll+=(-C(yaw*Math.abs(speed)*.012,-.22,.22)+(air?0:C(Math.atan(latSlope()),-.5,.5))-carRoll)*Math.min(1,dt*4);
@@ -1633,7 +1710,7 @@ if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;
 wheelA+=(-kt*1.2-wheelA)*Math.min(1,dt*10);target=C(-wheelA/1.1,-1,1)}
 /* Snap turn removed as requested; head direction controls walking orientation in VR. */
 const driving=!onFoot&&!dead&&!menuOpen&&sleepT<=0;
-target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));steer+=(target-steer)*Math.min(1,dt*(4.5+rlUpgrade('handling')*.7));if(!driving){gas=0;brake=1;target=0}
+target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(4.5+rlUpgrade('handling')*.7));if(!driving){gas=0;brake=1;target=0}
 /* ===== realistic car physics ===== */
 {const h=heading,fx=-Math.sin(h),fz=-Math.cos(h),rx2=Math.cos(h),rz2=-Math.sin(h),roadS=onRoadAt(carP.x,carP.z),mu=(roadS?1:.62)*(1-(window.WX?WX.wet:0)*.4);
 let vF=vel.x*fx+vel.z*fz,vL=vel.x*rx2+vel.z*rz2;slipV=0;refuel=0;
@@ -2404,7 +2481,7 @@ function officerRay(o,d,max){
   for(const h of [.5,1.1,1.65]){const t=rayT(o,d,center.set(p.x,p.y+h,p.z),.34);if(t<best){best=t;target=u;}}}
  if(!target)return null;return {distance:best,hit(n){target.hp=Math.max(0,target.hp-n);crime(1.2);if(target.hp===0){target.st='dead';target.os='down';target.ts=0;target.dead=0;target.off.g.rotation.x=-1.35;target.off.arms.forEach(a=>a.rotation.x=.25);}buzz(.4);}};
 }
-window.V5={step,reset,say,officerRay,officers(){return cops.filter(u=>u.act).map(u=>({hp:u.hp,state:u.st,onFoot:u.os,position:u.off.g.position.toArray()}))},award(n){cash+=n;sig='';cashBeep();window.RLProgress?.save()},spend(n){if(!Number.isFinite(n)||n<0||cash<n)return false;cash-=n;sig='';cashBeep();return true},setCash(n){cash=Math.max(0,Math.floor(n));sig=''},pistolAmmo(){return {ammo,reload:reloadT}},reloadPistol(){if(ammo<12&&reloadT<=0)reloadT=1.4},getCash(){return cash},remRob(vals){if(robbed)return;robbed=true;robT=0;alarmT=16;bags.forEach((b,i)=>{b.on=true;b.v=vals[i]||2000;b.m.visible=true});say('Bank robbery nearby!','#ffd23a')},remBag(i){const b=bags[i];if(b){b.on=false;b.m.visible=false}}};
+window.V5={step,reset,say,officerRay,officers(){return cops.filter(u=>u.act).map(u=>({hp:u.hp,state:u.st,onFoot:u.os,position:u.off.g.position.toArray()}))},award(n){cash+=n;sig='';cashBeep();window.RLProgress?.save()},spend(n){if(!Number.isFinite(n)||n<0||cash<n)return false;cash-=n;sig='';cashBeep();return true},setCash(n){cash=Math.max(0,Math.floor(n));sig=''},pistolAmmo(){return {ammo,reload:reloadT}},reloadPistol(){if(ammo<12&&reloadT<=0)reloadT=1.4},getCash(){return cash},hospitalTreatment(){if(hp>=99){say('HOSPITAL: YOU ARE ALREADY HEALTHY','#b9ffd0');return false}if(cash<50){say('HOSPITAL: $50 NEEDED FOR TREATMENT','#ffd27d');return false}cash-=50;hp=100;hpT=0;sig='';say('HOSPITAL: HEALTH RESTORED · -$50','#7dff9a');cashBeep();return true},autoService(){if(cash<250){say('AUTO SERVICE: $250 NEEDED','#ffd27d');return false}cash-=250;sig='';repair();say('AUTO SERVICE: VEHICLE REPAIRED · -$250','#7dff9a');cashBeep();return true},remRob(vals){if(robbed)return;robbed=true;robT=0;alarmT=16;bags.forEach((b,i)=>{b.on=true;b.v=vals[i]||2000;b.m.visible=true});say('Bank robbery nearby!','#ffd23a')},remBag(i){const b=bags[i];if(b){b.on=false;b.m.visible=false}}};
 reset();
 })();
 </script><script>
