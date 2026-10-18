@@ -859,10 +859,18 @@ const ctrls={};
 function repair(){damage=0;engineDamage=0;engineFire=0;steeringDamage=0;hood.geometry.attributes.position.array.set(hood0);hood.geometry.attributes.position.needsUpdate=true;hood.geometry.computeVertexNormals();doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});try{resetCrashGeometry()}catch(_){}}
 function recenter(){if(renderer.xr.isPresenting)cock.position.copy(cam.position)}
 function buzz(i,o){try{(o||left).src.gamepad.hapticActuators[0].pulse(Math.min(1,i),60)}catch(e){}}
-function hurtHood(imp,x,dir){dent(hood,[C(x,-.7,.7),0,-.4],dir,C(imp*.025,.04,.55));try{dent(cbp,[C(x,-.72,.72),C(-.25,.25,.25),-1.85],[0,-.15,.9],C(imp*.018,.025,.42),.72)}catch(_){}}
+function hurtHood(imp,x,dir){dent(hood,[C(x,-.7,.7),0,-.4],dir,C(.12+imp*.06,.12,.72),1.05);try{dent(cbp,[C(x,-.72,.72),C(-.25,.25,.25),-1.85],[0,-.15,.9],C(.1+imp*.045,.1,.58),.86)}catch(_){}}
 function hitEngine(imp){imp=rlDamage(imp);engineDamage=Math.min(1,engineDamage+Math.max(0,imp-1)*.025);if(engineDamage>.28)engineFire=Math.min(1,engineFire+imp*.006);if(engineDamage>=1&&!dead)explodeCar()}
 /* ---------- NPC traffic (7 cars) ---------- */
-const npcs=[],lanes=[-3.6,0,3.6];function npcDent(n,lp,ld,imp){const sideHit=Math.abs(ld[0])>.5;dent(n.body,lp,ld,C(imp*(sideHit?.075:.055),.18,1.25),sideHit?1.8:1.5);n.body.material.color.multiplyScalar(.82);if(sideHit){/* Add a broad shallow crease by pushing the nearest side vertices inward. */const pa=n.body.geometry.attributes.position,v=new T.Vector3(),cx=lp[0],cz=lp[2];for(let i=0;i<pa.count;i++){v.fromBufferAttribute(pa,i);if(Math.abs(v.x-cx)<.62&&Math.abs(v.z-cz)<.95&&Math.abs(v.y)<.34){const f=(1-Math.abs(v.z-cz)/.95)*(1-Math.abs(v.y)/.34);pa.setX(i,v.x-Math.sign(v.x||ld[0])*.12*f)}}pa.needsUpdate=true;n.body.geometry.computeVertexNormals()}}
+const npcs=[],lanes=[-3.6,0,3.6];function npcDent(n,lp,ld,imp){const sideHit=Math.abs(ld[0])>.5,sev=C((imp-.7)/8,0,1);dent(n.body,lp,ld,.16+sev*1.02,sideHit?2.05:1.75);n.body.material.color.multiplyScalar(.78);if(sideHit){/* Broad, visible side crease from even a low-speed bump. */const pa=n.body.geometry.attributes.position,v=new T.Vector3(),cx=lp[0],cz=lp[2],crease=.14+sev*.24;for(let i=0;i<pa.count;i++){v.fromBufferAttribute(pa,i);if(Math.abs(v.x-cx)<.72&&Math.abs(v.z-cz)<1.12&&Math.abs(v.y)<.38){const f=(1-Math.abs(v.z-cz)/1.12)*(1-Math.abs(v.y)/.38);pa.setX(i,v.x-Math.sign(v.x||ld[0])*crease*f)}}pa.needsUpdate=true;n.body.geometry.computeVertexNormals()}}
+function playerDent(imp,xl,zl,fb){
+ const c=Math.cos(heading),s=Math.sin(heading),side=Math.sign(xl||1);
+ const lx=fb?C(xl,-.78,.78):side*.86,lz=fb?(zl<0?-2:2):C(zl,-1.98,1.98);
+ const lnx=fb?0:-side,lnz=fb?(zl<0?1:-1):0;
+ const wx=carP.x+lx*c+lz*s,wz=carP.z-lx*s+lz*c;
+ const nx=lnx*c+lnz*s,nz=-lnx*s+lnz*c;
+ wallDent(imp,wx,wz,nx,nz);
+}
 function place(n,m){const pa=n.body.geometry.attributes.position;pa.array.set(n.o);pa.needsUpdate=true;n.body.geometry.computeVertexNormals();n.spin=0;n.g.rotation.y=0;n.dmg=0;n.boom=false;n.life=0;n.g.scale.y=1;n.vx=0;n.speed=R(10,24);n.body.material.color.setHSL(Math.random(),.6,.45);const pz=rig.position.z;
 for(let t=0;t<15;t++){n.lane=lanes[Math.random()*3|0];const z=m===1?pz+R(-450,300):m===2?pz+R(250,420):pz-R(300,520);if((m!==1||Math.abs(z-pz)>45)&&npcs.every(o=>o===n||o.lane!==n.lane||Math.abs(o.g.position.z-z)>25)){n.g.position.set(n.lane,roadHeight(z),z);n.arr=z<pz+50;return}}n.g.position.set(n.lane,roadHeight(pz-600),pz-600);n.arr=true}
 for(let i=0;i<7;i++){const g=new T.Group(),body=new T.Mesh(new T.BoxGeometry(1.8,.8,4.2,14,6,28),M(0xffffff,.4,.5));body.position.y=.65;g.add(body);const bm=body.material,suv=Math.random()<.35,dkm=M(0x101010,.7,.2),glm=M(0x16202c,.1,.8),lt=new T.MeshBasicMaterial({color:0xfff3c0}),rt2=new T.MeshBasicMaterial({color:0xd01010}),chr=M(0xb8bcc4,.2,.9);
@@ -1365,18 +1373,18 @@ function carSolids(){
     if(vn<0){
      vel.x-=1.25*vn*nx;vel.z-=1.25*vn*nz;
      const imp=-vn;
-     if(imp>1.5&&wallCool<=0){
-      wallCool=.3;
+     if(imp>.9&&wallCool<=0){
+      wallCool=.28;
       if(!inv){
-       const severity=C((imp-2)/24,0,1);
-       damage=Math.min(.98,damage+rlDamage(.025+severity*.48));
-       steeringDamage=Math.min(.85,steeringDamage+Math.max(0,imp-7)*.012);
+       const severity=C((imp-.6)/8,0,1);
+       damage=Math.min(.98,damage+rlDamage(.045+severity*.56));
+       steeringDamage=Math.min(.9,steeringDamage+Math.max(0,imp-2)*.022);
        wallDent(imp,wx,wz,nx,nz);
-       if(imp>11&&severity>.32)hitEngine(imp*.55);
-       vel.multiplyScalar(C(1-severity*.12,.74,1));
+       if(imp>4.5&&severity>.12)hitEngine(imp*.78);
+       vel.multiplyScalar(C(1-severity*.24,.58,1));
       }
-      buzz(imp/20);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/15,.2,1));
-      if(imp>8)shed(new T.Vector3(wx,.25,wz),C(Math.floor(imp/2),2,10));
+      buzz(imp/15);sparks(new T.Vector3(wx,.8,wz),imp);thud(C(imp/12,.25,1));
+      if(imp>3.2)shed(new T.Vector3(wx,.25,wz),C(Math.floor(imp*1.05),2,12));
      }
     }
     break;
@@ -1446,8 +1454,8 @@ function latSlope(){const r=Math.cos(heading),q=-Math.sin(heading);return (surfa
 function wallDent(imp,wx,wz,nx,nz){
  const c=Math.cos(heading),s=Math.sin(heading),dx=wx-carP.x,dz=wz-carP.z;
  const lx=dx*c-dz*s,lz=dx*s+dz*c,lnx=nx*c-nz*s,lnz=nx*s+nz*c;
- const body=carMesh.children[0],severity=C((imp-2)/24,0,1),x=C(lx,-.86,.86),z=C(lz,-2.02,2.02),dir=[lnx,0,lnz];
- const amt=.055+severity*.68;
+ const body=carMesh.children[0],severity=C((imp-.6)/8,0,1),x=C(lx,-.86,.86),z=C(lz,-2.02,2.02),dir=[lnx,0,lnz];
+ const amt=.14+severity*.91;
  // Local multi-point crushing imitates the visible crumple zones of a soft-body crash simulator.
  dent(body,[x,0,z],dir,amt,1.02+severity*.62);
  if(Math.abs(lnz)>.55){
@@ -1459,28 +1467,28 @@ function wallDent(imp,wx,wz,nx,nz){
   const sideSign=Math.sign(lx)||Math.sign(lnx)||1,door=doors.find(d=>d.side===sideSign);
   if(door){
    dent(door.panel,[0,0,C(lz-.70,-.66,.66)],[sideSign,0,0],amt*.68,.72);
-   if(severity>.55)door.open=Math.max(door.open,.12+severity*.2);
+   if(severity>.24)door.open=Math.max(door.open,.08+severity*.28);
   }
  }
- if(lz< -1.05&&imp>8){engineDamage=Math.min(1,engineDamage+severity*.28);if(engineDamage>.68)engineFire=Math.min(1,engineFire+severity*.08)}
- if(severity>.82&&imp>23){for(const d of doors)if(Math.abs(lx)>.52)d.open=Math.max(d.open,.18)}
+ if(lz< -1.05&&imp>3.5){engineDamage=Math.min(1,engineDamage+.06+severity*.34);if(engineDamage>.52)engineFire=Math.min(1,engineFire+severity*.09)}
+ if(severity>.66&&imp>10){for(const d of doors)if(Math.abs(lx)>.38)d.open=Math.max(d.open,.12+severity*.2)}
  try{if(cbp&&cbp.geometry)cbp.geometry.computeVertexNormals()}catch(_){}
 }
 function landingCrash(imp){
- if(imp<4.8||boostT>0||bGrace>0)return;
- const severity=C((imp-4.5)/12,0,1),body=carMesh.children[0];
- damage=Math.min(.98,damage+rlDamage(.025+severity*.43));
- steeringDamage=Math.min(.85,steeringDamage+Math.max(0,imp-6)*.018);
- engineDamage=Math.min(1,engineDamage+Math.max(0,imp-7)*.022);
- if(imp>12)engineFire=Math.min(1,engineFire+severity*.04);
- // Hard landings load all four corners, crease the lower shell, and compress the suspension.
+ if(imp<2.8||boostT>0||bGrace>0)return;
+ const severity=C((imp-2)/7.5,0,1),body=carMesh.children[0];
+ damage=Math.min(.98,damage+rlDamage(.045+severity*.55));
+ steeringDamage=Math.min(.9,steeringDamage+Math.max(0,imp-3)*.024);
+ engineDamage=Math.min(1,engineDamage+Math.max(0,imp-5)*.028);
+ if(imp>8)engineFire=Math.min(1,engineFire+severity*.06);
+ // Even a moderately rough landing leaves visible creases; harder landings buckle all four corners.
  for(const x of[-.67,.67])for(const z of[-1.56,1.56]){
-  dent(body,[x,-.24,z],[-x*.25,-1,Math.sign(z)*.22],.06+severity*.58,.72+severity*.38);
-  dent(body,[x*.72,.12,z*.86],[-x*.18,-.72,Math.sign(z)*.3],.04+severity*.36,.8);
+  dent(body,[x,-.24,z],[-x*.25,-1,Math.sign(z)*.22],.14+severity*.72,.82+severity*.42);
+  dent(body,[x*.72,.12,z*.86],[-x*.18,-.72,Math.sign(z)*.3],.09+severity*.48,.9);
  }
- dent(body,[0,.26,-1.62],[0,-1,.18],severity*.44,1.02);
- dent(body,[0,.18,1.7],[0,-.8,-.12],severity*.32,.92);
- for(const d of doors)if(severity>.4)dent(d.panel,[0,-.12,0],[d.side*.25,-.9,0],severity*.18,.62);
+ dent(body,[0,.26,-1.62],[0,-1,.18],.08+severity*.56,1.08);
+ dent(body,[0,.18,1.7],[0,-.8,-.12],.08+severity*.44,.98);
+ for(const d of doors)if(severity>.14)dent(d.panel,[0,-.12,0],[d.side*.25,-.9,0],.08+severity*.3,.72);
  try{window.V5?.landingShock?.(imp,vel.x,vel.z,heading)}catch(_){}
  vel.multiplyScalar(C(1-severity*.2,.7,.98));
  sparks(new T.Vector3(carP.x,.55,carP.z),imp);shed(carP,C(Math.floor(3+severity*9),3,12));thud(C(imp/14,.3,1));buzz(C(imp/14,.3,1));
@@ -1492,7 +1500,7 @@ function airStep(dt){if(mode!=='sandbox')for(const r of ramps)if(r.z>rig.positio
 if(mode!=='sandbox')for(const r of ramps){const dx=Math.abs(carP.x-r.x),dz=r.z-carP.z;if(dx<r.w/2&&dz>0&&dz<r.l){gy=Math.max(gy,dz/r.l*r.h);rampPitchNow=Math.atan(-Math.sign(vel.z||-1)*r.h/r.l);onRamp=true}}
 if(onRamp)lastRampPitch=rampPitchNow;
 if(!air){if(gy<carP.y-.1-Math.hypot(vel.x,vel.z)*dt*.75){air=true;const launch=Math.hypot(vel.x,vel.z)*Math.sin(lastRampPitch);vyc=C(Math.max(lastVy,launch),-5,14)}else{lastVy=(gy-carP.y)/Math.max(dt,.001);carP.y=gy}}
-if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>4.8){splashDamage(imp)}}}
+if(air){vyc-=14*dt;carP.y+=vyc*dt;if(carP.y<=gy){const imp=-vyc;carP.y=gy;vyc=0;air=false;lastVy=0;lastRampPitch=0;if(imp>2.6){splashDamage(imp)}}}
 const roadPitch=Math.atan(surfSlope());const targetPitch=air?C(Math.atan2(vyc,Math.max(5,Math.hypot(vel.x,vel.z))),-.52,.52):(onRamp?rampPitchNow:roadPitch);
 carPitch+=(targetPitch-carPitch)*Math.min(1,dt*(air?3.5:7));
 carRoll+=(-C(yaw*Math.abs(speed)*.012,-.22,.22)+(air?0:C(Math.atan(latSlope()),-.5,.5))-carRoll)*Math.min(1,dt*4);
@@ -1748,12 +1756,12 @@ const vrel=(vel.x-n.vx)*nx+(vel.z+n.speed)*nz;
 if(vrel>0){const dv=(1+.3)*vrel/2;vel.x-=nx*dv;vel.z-=nz*dv;n.vx+=nx*dv;n.speed=Math.max(0,n.speed-nz*dv)}
 carP.x-=nx*ov*.5;carP.z-=nz*ov*.5;p.x+=nx*ov*.5;p.z+=nz*ov*.5;
 const imp=Math.max(0,vrel)+2;npcDent(n,[C(-dx,-.8,.8),0,fb?(zl<0?2.1:-2.1):C(pz-p.z,-1.5,1.5)],fb?[0,0,zl<0?-.9:.9]:[Math.sign(xl)||1,0,0],imp);playerDent(imp,xl,zl,fb);
-n.dmg=Math.min(1,n.dmg+imp*.02);if(!inv)damage=Math.min(.95,damage+rlDamage(imp*.012*w));buzz(imp/20);carFx(n,imp)}}
+n.dmg=Math.min(1,n.dmg+imp*.035);if(!inv)damage=Math.min(.95,damage+rlDamage(imp*.018*w));buzz(imp/20);carFx(n,imp)}}
 for(let i=0;i<npcs.length;i++)for(let j=i+1;j<npcs.length;j++){let f=npcs[i],b=npcs[j];if(f.g.position.z>b.g.position.z){const t=f;f=b;b=t}
 const fp=f.g.position,bp2=b.g.position,ddx=bp2.x-fp.x,gap=bp2.z-fp.z;
 if(Math.abs(ddx)<2&&gap<18&&b.speed>f.speed)b.speed+=(f.speed-b.speed)*Math.min(1,dt*2);
 if(f.cool<=0&&b.cool<=0&&Math.abs(ddx)<1.85&&gap<4.3){f.cool=b.cool=.4;const cl=Math.abs(b.speed-f.speed)+3,m=(b.speed+f.speed)/2;bp2.z=fp.z+4.3;b.speed=m*.8;f.speed=m*1.1;
-npcDent(f,[C(ddx,-.8,.8),0,2.1],[0,0,-.9],cl);npcDent(b,[C(-ddx,-.8,.8),0,-2.1],[0,0,.9],cl);f.dmg=Math.min(1,f.dmg+cl*.02);b.dmg=Math.min(1,b.dmg+cl*.02)}}
+npcDent(f,[C(ddx,-.8,.8),0,2.1],[0,0,-.9],cl);npcDent(b,[C(-ddx,-.8,.8),0,-2.1],[0,0,.9],cl);f.dmg=Math.min(1,f.dmg+cl*.035);b.dmg=Math.min(1,b.dmg+cl*.035)}}
 if(damage>.04){smk+=dt*damage*45;while(smk>1){smk--;puff(onFoot?carMesh.localToWorld(new T.Vector3(R(-.4,.4),1,-1.4)):hood.localToWorld(new T.Vector3(R(-.4,.4),.1,-.3)),damage)}}
 for(const q of puffs)if(q.l>0){q.l-=dt*.45;q.s.position.addScaledVector(q.v,dt);q.v.multiplyScalar(1-dt*.4);q.s.scale.setScalar(.5+(1-q.l)*2.5);q.s.material.opacity=Math.max(0,q.l*.7);if(q.l<=0)q.s.visible=false}
 if(mode==='race'&&!dead&&!raceDone){raceT+=dt;if(-carP.z>=2500){raceDone=1;doneT=6}}if(raceDone){doneT-=dt;if(doneT<0)restart()}
