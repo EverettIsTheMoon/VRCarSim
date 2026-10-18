@@ -1509,7 +1509,7 @@ const mb=[
 [262,190,230,46,()=>'Gas: '+(S.gas?'Grip':'Trigger'),()=>{S.gas=1-S.gas;S.grab=1-S.gas}],
 [20,246,230,46,()=>'Grab: '+(S.grab?'Grip':'Trigger'),()=>{S.grab=1-S.grab;S.gas=1-S.grab}],
 [262,246,230,46,()=>'Music: '+(bgm?(bgm.paused?'off':'custom'):(musicOn?'on':'off')),()=>{if(bgm){bgm.paused?bgm.play():bgm.pause()}else musicOn=!musicOn}],
-[20,302,472,44,()=>'Driving: '+(selectedDriveMode==='race'?'RACE 2.5 km':'FREE RIDE'),()=>{selectedDriveMode=selectedDriveMode==='free'?'race':'free';$('sDriveMode').value=selectedDriveMode;menuSig=''}],
+[20,302,472,44,()=>'Driving: '+(selectedDriveMode==='race'?'RACE 2.5 km':selectedDriveMode==='sandbox'?'SANDBOX':'FREE RIDE'),()=>{selectedDriveMode=selectedDriveMode==='free'?'race':selectedDriveMode==='race'?'sandbox':'free';$('sDriveMode').value=selectedDriveMode;menuSig=''}],
 [20,356,230,38,()=>'UPGRADES',()=>{menuPage='upgrades';menuSig=''}],[262,356,230,38,()=>'ADMIN',()=>{menuPage='admin';menuSig=''}]];
 let menuPage='main';
 const adminMb=[[20,68,472,48,()=>'BACK TO MENU',()=>{menuPage='main';menuSig=''}],[20,126,472,48,()=>'TELEPORT TO NEAREST PLAYER',()=>adminAction('teleport')],[20,190,472,48,()=>'FLING NEAREST PLAYER UP',()=>adminAction('fling')],[20,254,472,48,()=>'DROP CAR ON NEAREST PLAYER',()=>adminAction('car')]];
