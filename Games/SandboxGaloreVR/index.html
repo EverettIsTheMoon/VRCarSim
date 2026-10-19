@@ -2098,6 +2098,30 @@ mergeGroup(pg);solid(162.1,-31.2,165.9,3.2);
 /* jet bridge */
 const jb=new T.Group();air.add(jb);bx(14.6,2.7,2.6,0xb4b9c0,155.3,3.2,ZD,jb);bx(14.7,.2,2.7,0x6d7178,155.3,1.8,ZD,jb);gl(.1,.9,2.2,155.3,3.4,ZD-1.31,jb);bx(1.2,2.9,2.9,0x8e949c,162.3,3.2,ZD,jb);
 cy(.28,.28,1.8,0x30343a,159.5,.9,ZD,8,jb);bx(1.2,.3,1.8,0x111111,159.5,.18,ZD,jb);mergeGroup(jb);solid(159.1,ZD-.5,159.9,ZD+.5);
+/* ---------- boarding stairs up to the parked jet ---------- */
+/* The jet door is several metres above the apron. Add broad, visible steps
+   beside the jet bridge so players can walk up instead of trying to jump. */
+{
+ const stairMat=mt(0x8f969e,.72,.12),edgeMat=mt(0x555d66,.8,.08);
+ const steps=9,stepH=.34,stepD=.72,startZ=-23.2,stairX=161.5;
+ for(let i=0;i<steps;i++){
+  const h=(i+1)*stepH,z=startZ+i*stepD;
+  bx(2.0,h,stepD,0x8f969e,stairX,h/2,z,air,.72,.12);
+  bx(2.04,.07,stepD+.035,0xb8bec5,stairX,h-.035,z,air,.68,.08);
+ }
+ /* Side rails follow the rise; the landing reaches the aircraft doorway. */
+ for(const side of [-1,1]){
+  for(let i=0;i<5;i++){
+   const h=.65+i*.58,z=-22.7+i*1.42;
+   cy(.055,.055,Math.max(.2,h),0x626a73,stairX+side*1.08,h/2,z,8,air,.7,.1);
+  }
+  const rail=new T.Mesh(new T.CylinderGeometry(.055,.055,Math.hypot(3.0,6.2),8),edgeMat);
+  rail.position.set(stairX+side*1.08,1.75,-19.7);
+  rail.rotation.x=Math.atan2(6.2,3.0);
+  air.add(rail);
+ }
+ bx(2.5,.18,1.8,0x8f969e,161.5,3.12,-16.9,air,.72,.12);
+}
 /* baggage tug + carts, fuel truck */
 {const g=new T.Group();air.add(g);bx(2.3,.9,1.3,0xd9a400,154,.7,-4,g);bx(1.1,.8,1.2,0xd9a400,153.6,1.5,-4,g);for(let i=0;i<3;i++){bx(2.5,.18,1.4,0x6d7178,151.4-i*2.8,.5,-4,g);bx(1.6,.9,1.1,[0x8a4b2a,0x2b5d9e,0x4a4a4a][i],151.4-i*2.8,1.0,-4,g)}
  for(const wx of[-.8,.8])for(const wzz of[-.7,.7]){const w=cy(.3,.3,.2,0x111111,154+wx,.3,-4+wzz,8,g);w.rotation.x=Math.PI/2}mergeGroup(g);solid(143.5,-5,155.5,-3)}
@@ -4535,7 +4559,7 @@ const fd=new T.Mesh(new T.PlaneGeometry(3,3),new T.MeshBasicMaterial({color:0,tr
 const prox=new T.Mesh(new T.PlaneGeometry(6000,6000),new T.MeshBasicMaterial({color:0x7fa859}));prox.rotation.x=-Math.PI/2;prox.visible=false;scene.add(prox);
 const SEAT=new T.Vector3(0,-.9,-6),FL={on:false,stage:'',t:0,dir:-1,x:0,z:0,alt:0,sp:0,gS:0,yaw:0,pit:0,D0:1,zT:0,xT:0,x0:0,px:0,pz:0,fi:0,isl:false};
 let prevFar=false,hintT=0,au=null,t0=0;
-function nearJet(p){const jx=town.position.x+164,jz=town.position.z-16;return Math.hypot(p.x-jx,p.z-C(p.z,jz-14,jz+16))<9}
+function nearJet(p){const jx=town.position.x+164,jz=town.position.z-16;return Math.hypot(p.x-jx,p.z-C(p.z,jz-20,jz+18))<13}
 function nearPlane(p){return Math.hypot(p.x-SX,p.z-C(p.z,PZ-14,PZ+16))<12}
 function place(){const y=FL.gS+3.6+FL.alt;plane.rotation.set(FL.pit,FL.yaw,0);plane.position.set(FL.x,y,FL.z);const o=SEAT.clone().applyEuler(plane.rotation);rig.position.set(FL.x+o.x,y+o.y,FL.z+o.z)}
 function startFlight(dir){if(FL.on)return;try{synth()}catch(e){}mkAudio();FL.on=true;FL.dir=dir;FL.stage='out';FL.t=0;gunOut=false}
