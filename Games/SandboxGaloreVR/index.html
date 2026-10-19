@@ -1479,7 +1479,7 @@ function makeSandboxRamp(x,topZ,len,height,width,color){
  g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.computeVertexNormals();
  const rampMat=new T.MeshStandardMaterial({color,roughness:.72,metalness:.12,side:T.DoubleSide});
  sbMesh(g,rampMat,x,.03,topZ).name='SandboxRamp_Collidable';
- const railMat=M(0x41464b,.7,.2);for(const side of [-1,1]){const rail=sbMesh(new T.BoxGeometry(.28,1.25,len),railMat,x+side*(width/2-.18),height*.5+.2,topZ+len/2);rail.rotation.x=Math.atan(height/len)}
+ const railMat=M(0x41464b,.7,.2);for(const side of [-1,1]){const rail=sbMesh(new T.BoxGeometry(.28,1.25,len),railMat,x+side*(width/2-.18),height*.5+.2,topZ+len/2);rail.name='SandboxRampRail';rail.rotation.x=Math.atan(height/len)}
 }
 makeSandboxRamp(-43,-130,65,36,18,0xff8b22);makeSandboxRamp(0,-165,83,51,20,0x29a7df);makeSandboxRamp(43,-130,58,30,17,0xe94f78);
 const sbLampMat=M(0x30363b,.7,.2),sbLampGlow=new T.MeshStandardMaterial({color:0xffe5a3,emissive:0xffc766,emissiveIntensity:1.2});for(const x of [-47,48]){sbMesh(new T.CylinderGeometry(.12,.16,6,8),sbLampMat,x,3,-55);sbMesh(new T.SphereGeometry(.28,8,6),sbLampGlow,x,6.15,-55)}
