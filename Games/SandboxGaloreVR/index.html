@@ -2098,29 +2098,29 @@ mergeGroup(pg);solid(162.1,-31.2,165.9,3.2);
 /* jet bridge */
 const jb=new T.Group();air.add(jb);bx(14.6,2.7,2.6,0xb4b9c0,155.3,3.2,ZD,jb);bx(14.7,.2,2.7,0x6d7178,155.3,1.8,ZD,jb);gl(.1,.9,2.2,155.3,3.4,ZD-1.31,jb);bx(1.2,2.9,2.9,0x8e949c,162.3,3.2,ZD,jb);
 cy(.28,.28,1.8,0x30343a,159.5,.9,ZD,8,jb);bx(1.2,.3,1.8,0x111111,159.5,.18,ZD,jb);mergeGroup(jb);solid(159.1,ZD-.5,159.9,ZD+.5);
-/* ---------- boarding stairs up to the parked jet ---------- */
-/* The jet door is several metres above the apron. Add broad, visible steps
-   beside the jet bridge so players can walk up instead of trying to jump. */
+/* ---------- stairs up to the enclosed jet bridge boarding box ---------- */
+/* The boarding route is the enclosed jet bridge (the box leading onto the plane),
+   so place the stairs directly alongside its outer end, rising to its floor. */
 {
- const stairMat=mt(0x8f969e,.72,.12),edgeMat=mt(0x555d66,.8,.08);
- const steps=9,stepH=.34,stepD=.72,startZ=-23.2,stairX=161.5;
+ const steps=10,stepW=.88,stepH=.32,stairZ=ZD,firstX=146.2;
  for(let i=0;i<steps;i++){
-  const h=(i+1)*stepH,z=startZ+i*stepD;
-  bx(2.0,h,stepD,0x8f969e,stairX,h/2,z,air,.72,.12);
-  bx(2.04,.07,stepD+.035,0xb8bec5,stairX,h-.035,z,air,.68,.08);
+  const h=(i+1)*stepH,x=firstX+i*stepW;
+  bx(stepW+.04,h,2.35,0x8f969e,x+stepW/2,h/2,stairZ,air,.72,.12);
+  bx(stepW+.06,.06,2.39,0xb8bec5,x+stepW/2,h-.03,stairZ,air,.68,.08);
  }
- /* Side rails follow the rise; the landing reaches the aircraft doorway. */
+ /* A level landing joins the top step to the enclosed boarding bridge. */
+ bx(2.4,.18,2.55,0x8f969e,155.4,3.18,ZD,air,.72,.12);
+ /* Handrails run along both sides of the rising steps. */
  for(const side of [-1,1]){
-  for(let i=0;i<5;i++){
-   const h=.65+i*.58,z=-22.7+i*1.42;
-   cy(.055,.055,Math.max(.2,h),0x626a73,stairX+side*1.08,h/2,z,8,air,.7,.1);
+  for(let i=0;i<6;i++){
+   const x=147.0+i*1.35,h=.8+i*.48;
+   cy(.055,.055,1.15,0x626a73,x,h-.25,ZD+side*1.28,8,air,.7,.1);
   }
-  const rail=new T.Mesh(new T.CylinderGeometry(.055,.055,Math.hypot(3.0,6.2),8),edgeMat);
-  rail.position.set(stairX+side*1.08,1.75,-19.7);
-  rail.rotation.x=Math.atan2(6.2,3.0);
+  const rail=new T.Mesh(new T.CylinderGeometry(.055,.055,.9*10,8),mt(0x555d66,.8,.08));
+  rail.position.set(150.7,2.0,ZD+side*1.28);
+  rail.rotation.z=-Math.atan2(3.0,8.1);
   air.add(rail);
  }
- bx(2.5,.18,1.8,0x8f969e,161.5,3.12,-16.9,air,.72,.12);
 }
 /* baggage tug + carts, fuel truck */
 {const g=new T.Group();air.add(g);bx(2.3,.9,1.3,0xd9a400,154,.7,-4,g);bx(1.1,.8,1.2,0xd9a400,153.6,1.5,-4,g);for(let i=0;i<3;i++){bx(2.5,.18,1.4,0x6d7178,151.4-i*2.8,.5,-4,g);bx(1.6,.9,1.1,[0x8a4b2a,0x2b5d9e,0x4a4a4a][i],151.4-i*2.8,1.0,-4,g)}
