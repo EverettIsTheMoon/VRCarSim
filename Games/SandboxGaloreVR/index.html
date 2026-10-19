@@ -1062,7 +1062,7 @@ for(let i=1;i<=steps;i++){
 }
 rig.position.x=tx;rig.position.z=tz;
 if(!adminFlingActive)rig.position.y=surfaceHeightAt(rig.position.x,rig.position.z);
-if(mode!=='sandbox'){pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);if(window.sidePush)window.sidePush(rig.position,.3);if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveModelCollisions(rig.position,.3)}mapClamp(rig.position,.4);
+if(mode==='sandbox'){if(window.__rlResolveSandboxPlayer)window.__rlResolveSandboxPlayer(rig.position,.3)}else{pushOut(sol,0,0,rig.position,.3);pushOut(tSol,town.position.x,town.position.z,rig.position,.3);if(window.sidePush)window.sidePush(rig.position,.3);if(window.RoadlineModels&&window.RoadlineModels.colliders)rlResolveModelCollisions(rig.position,.3)}mapClamp(rig.position,.4);
 const c=Math.cos(heading),s=Math.sin(heading),dx=rig.position.x-carP.x,dz=rig.position.z-carP.z,xl=dx*c-dz*s,zl=dx*s+dz*c;
 if(Math.abs(xl)<1.2&&Math.abs(zl)<2.5){const px=1.2-Math.abs(xl),pz=2.5-Math.abs(zl);let nx=xl,nz=zl;if(px<pz)nx=Math.sign(xl||1)*1.2;else nz=Math.sign(zl||1)*2.5;rig.position.x=carP.x+nx*c+nz*s;rig.position.z=carP.z-nx*s+nz*c}}
 /* ---------- decor, blood, explosions, fx ---------- */
@@ -1485,6 +1485,57 @@ makeSandboxRamp(-43,-130,65,36,18,0xff8b22);makeSandboxRamp(0,-165,83,51,20,0x29
 const sbLampMat=M(0x30363b,.7,.2),sbLampGlow=new T.MeshStandardMaterial({color:0xffe5a3,emissive:0xffc766,emissiveIntensity:1.2});for(const x of [-47,48]){sbMesh(new T.CylinderGeometry(.12,.16,6,8),sbLampMat,x,3,-55);sbMesh(new T.SphereGeometry(.28,8,6),sbLampGlow,x,6.15,-55)}
 const sandboxPeds=[];for(let i=0;i<7;i++){const p=mkPerson(pcol[i%pcol.length],pantsCol[i%pantsCol.length]);p.g.position.set(-24+(i%4)*5,0,-62+Math.floor(i/4)*9);p.g.rotation.y=i%2?Math.PI:0;sandboxRoot.add(p.g);sandboxPeds.push({p,originX:p.g.position.x,originZ:p.g.position.z,phase:i*.83,range:2.4+(i%3),speed:.35+(i%3)*.12})}
 function stepSandboxPeds(dt){if(mode!=='sandbox')return;for(const e of sandboxPeds){const t=performance.now()/1000*e.speed+e.phase,g=e.p.g;g.position.x=e.originX+Math.sin(t)*e.range;g.position.z=e.originZ+Math.cos(t*.7)*1.2;g.rotation.y=Math.atan2(Math.cos(t)*e.range,-Math.sin(t*.7)*.84);try{rlAnimateNpcModel(e.p,dt,true)}catch(_){}}}
+/* Lightweight sandbox collision map: cache solid world-mesh bounds once, then resolve the
+   player's capsule against those bounds and the three parked/drivable cars. Ground, markings,
+   ramps, ramp rails, and moving pedestrians are deliberately excluded so the baseplate and
+   ramps remain walkable. */
+const RL_SANDBOX_SOLIDS=[];
+function rlBuildSandboxSolids(){
+ RL_SANDBOX_SOLIDS.length=0;
+ const excluded=new Set([sbPlate,sbGrid,sbLot]);
+ for(const child of sandboxRoot.children){
+  if(child===sbPlate||child===sbGrid||child===sbLot||child===sbMcD||sandboxCars.includes(child)||sandboxPeds.some(e=>e.p.g===child))continue;
+  child.traverse(o=>{
+   if(!o.isMesh||!o.geometry||o.name==='SandboxRamp_Collidable'||/SandboxBaseplate|GridHelper|SandboxRamp/i.test(o.name||''))return;
+   o.updateWorldMatrix(true,false);
+   const box=new T.Box3().setFromObject(o);if(box.isEmpty())return;
+   const size=box.getSize(new T.Vector3());
+   if(size.y<.32||size.x<.25||size.z<.25)return;
+   RL_SANDBOX_SOLIDS.push({box,source:o});
+  });
+ }
+ sbMcD.traverse(o=>{
+  if(!o.isMesh||!o.geometry)return;
+  o.updateWorldMatrix(true,false);
+  const box=new T.Box3().setFromObject(o);if(box.isEmpty())return;
+  const size=box.getSize(new T.Vector3());
+  if(size.y<.32||size.x<.25||size.z<.25)return;
+  RL_SANDBOX_SOLIDS.push({box,source:o});
+ });
+}
+function rlResolveSandboxPlayer(p,r=.3){
+ const bottom=p.y,top=p.y+1.8;
+ for(const item of RL_SANDBOX_SOLIDS){
+  const b=item.box;
+  if(top<b.min.y||bottom>b.max.y)continue;
+  const x0=b.min.x-r,x1=b.max.x+r,z0=b.min.z-r,z1=b.max.z+r;
+  if(p.x<=x0||p.x>=x1||p.z<=z0||p.z>=z1)continue;
+  const d=[p.x-x0,x1-p.x,p.z-z0,z1-p.z],m=Math.min(...d);
+  if(m===d[0])p.x=x0;else if(m===d[1])p.x=x1;else if(m===d[2])p.z=z0;else p.z=z1;
+ }
+ for(const car of sandboxCars){
+  if(!car.visible)continue;
+  car.updateWorldMatrix(true,false);
+  const b=new T.Box3().setFromObject(car);
+  if(top<b.min.y||bottom>b.max.y+1.2)continue;
+  const x0=b.min.x-r,x1=b.max.x+r,z0=b.min.z-r,z1=b.max.z+r;
+  if(p.x<=x0||p.x>=x1||p.z<=z0||p.z>=z1)continue;
+  const d=[p.x-x0,x1-p.x,p.z-z0,z1-p.z],m=Math.min(...d);
+  if(m===d[0])p.x=x0;else if(m===d[1])p.x=x1;else if(m===d[2])p.z=z0;else p.z=z1;
+ }
+}
+window.__rlResolveSandboxPlayer=rlResolveSandboxPlayer;
+rlBuildSandboxSolids();
 function setSandboxWorld(active){
  const sandbox=!!active;sandboxRoot.visible=sandbox;
  // The standard map has scenery outside the town group too, so explicitly hide all of it.
