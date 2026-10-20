@@ -1363,7 +1363,7 @@ function privatePlaneEnter(){
  onFoot=false;gunOut=false;carEnterAnim=null;carMesh.visible=false;cock.visible=false;
  if(left){left.grab=null;left.p=0;left.dg=null}if(sec){sec.grab=null;sec.p=0;sec.dg=null}
  rig.position.copy(p.g.position);rig.rotation.order='YXZ';rig.quaternion.copy(p.g.quaternion);cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);
- window.V5?.say('PRIVATE PLANE · LEFT TRIGGER: THROTTLE · GRIP THE RIGHT-HAND STICK AND MOVE IT UP/DOWN TO PITCH · LEFT STICK: TURN · X: EXIT WHEN LANDED','#9fe3ff');
+ window.V5?.say('PRIVATE PLANE · LEFT TRIGGER: THROTTLE · LEFT THUMBSTICK LEFT/RIGHT: TURN · LEFT THUMBSTICK FORWARD/BACK: PITCH UP/DOWN · YOU CAN ALSO GRIP THE PHYSICAL STICK ON THE RIGHT WITH YOUR LEFT CONTROLLER · X: EXIT WHEN LANDED','#9fe3ff');
  return true;
 }
 function privatePlaneTryExit(){
@@ -1399,7 +1399,14 @@ function privatePlaneStep(dt,desktopThrottle,desktopSteer){
  let pitchTarget=0;
  if(p.stickHand)pitchTarget=p.stickAmount*.48;
  else if(!renderer.xr.isPresenting)pitchTarget=(keys.KeyI&&!keys.KeyK)?.42:(keys.KeyK&&!keys.KeyI)?-.42:0;
- else{const r=[left,sec].find(o=>o?.src.handedness==='right'&&!o.src.hand&&o.gp);const ay=r?.gp?.axes?.[3]??r?.gp?.axes?.[1]??0;if(Math.abs(ay)>.35)pitchTarget=C(-ay,-1,1)*.32}
+ else{
+  /* One-controller support: fall back to whichever physical controller exists.
+     On a Quest with only the left controller, pushing its thumbstick forward/back
+     pitches the plane while the horizontal axis still steers. */
+  const pitchController=[left,sec].find(o=>o?.gp&&!o.src.hand);
+  const ay=pitchController?.gp?.axes?.[3]??pitchController?.gp?.axes?.[1]??0;
+  if(Math.abs(ay)>.2)pitchTarget=C(-ay,-1,1)*.38;
+ }
  p.stick.position.y=.68+p.stickAmount*.11;p.stick.rotation.x=-p.stickAmount*.55;
  p.pitch+=(pitchTarget-p.pitch)*Math.min(1,dt*2.6);p.roll+=(-turn*.3-p.roll)*Math.min(1,dt*2.4);p.yaw-=turn*(.18+p.speed*.035)*dt;
  if(throttle>.015)p.speed=Math.min(25,p.speed+5.4*throttle*dt);else p.speed=Math.max(0,p.speed-(p.alt>.1?.18:1.45)*dt);
