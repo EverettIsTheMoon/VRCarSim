@@ -882,7 +882,7 @@ let fuel=1,rpm=900,gi=1,shiftT=0,engineDamage=0,engineFire=0,steeringDamage=0,do
 let night=0,nightT=0,sleepT=0,sleptDone=false,gunOut=false,gunCD=0,menuOpen=true,musicOn=true,menuPrev=0;
 const GR=[0,3.4,2.1,1.5,1.12,.88,.72],FD=3.7,RW=.32,MASS=1400,IDLE=900,RED=6400,WB=2.7;
 const $m=id=>$(id);
-addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.code==='KeyX'&&!e.repeat){if(onFoot&&Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6)rlCarInteract();else repair();}if(e.code==='KeyE'&&!e.repeat)rlCarInteract();
+addEventListener('keydown',e=>{keys[e.code]=1;if(e.code==='KeyR')gear*=-1;if(e.code==='KeyX'&&!e.repeat){if(privatePlane.active||(onFoot&&Math.hypot(rig.position.x-privatePlane.g.position.x,rig.position.z-privatePlane.g.position.z)<5.2)||(onFoot&&Math.hypot(rig.position.x-carP.x,rig.position.z-carP.z)<3.6))rlCarInteract();else repair();}if(e.code==='KeyE'&&!e.repeat)rlCarInteract();
 if(e.code==='KeyF'){const held=left&&left.item;if(held&&held.weapon)weaponFire(held,left);else if(mobileHeldWeapon)weaponFire(mobileHeldWeapon,null);else if(mobileBeer)mobileSip();else shoot();}if(e.code==='KeyG')interact();if(e.code==='KeyM'&&renderer.xr.isPresenting)window.__roadlineOpenMainMenu?.();if(e.code==='Space')hbA=hbA>.3?0:.8;if(e.code==='KeyB')boost()});addEventListener('keyup',e=>keys[e.code]=0);
 const ctrls={};
 [0,1].forEach(i=>{const c=renderer.xr.getController(i);rig.add(c);rig.add(renderer.xr.getHand(i));c.addEventListener('connected',e=>{ctrls[i]={c,src:e.data,i};bind()});c.addEventListener('disconnected',()=>{delete ctrls[i];bind()})});
