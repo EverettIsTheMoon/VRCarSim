@@ -1023,7 +1023,7 @@ if(man.position.y===0&&!pool.visible){pool.visible=true;pool.position.set(man.po
 rig.position.lerp(new T.Vector3(man.position.x,1.2,man.position.z+7),Math.min(1,dt*3));rig.rotation.y=0;
 if(dead<.1){bx.fillStyle='rgba(150,0,0,.35)';bx.fillRect(0,0,256,256)}if(Math.random()<dt*18&&drips.length<90)drips.push({x:R(0,256),y:0,s:R(30,90),w:R(5,16)});
 bx.fillStyle='rgba(120,0,10,.9)';for(const d of drips)if(d.y<256){bx.fillRect(d.x,d.y,d.w,d.s*dt+2);d.y+=d.s*dt}btex.needsUpdate=true;if(dead>4.5)restart()}
-function restart(){rlCancelXButton();rlClearGrenades();dead=0;boomDeath=false;air=false;vyc=0;lastVy=0;lastRampPitch=0;carPitch=0;carRoll=0;vel.set(0,0,0);speed=0;steer=0;wheelA=0;yaw=0;gi=1;rpm=IDLE;shiftT=0;boostT=0;boostCD=0;bGrace=0;gear=1;fuel=1;hbA=0;gunOut=false;sleepT=0;fade.visible=false;
+function restart(){rlCancelXButton();rlClearGrenades();if(typeof privatePlane!=='undefined'&&privatePlane.active){privatePlane.active=false;privatePlane.speed=0;privatePlane.alt=0;privatePlane.stickHand=null}dead=0;boomDeath=false;air=false;vyc=0;lastVy=0;lastRampPitch=0;carPitch=0;carRoll=0;vel.set(0,0,0);speed=0;steer=0;wheelA=0;yaw=0;gi=1;rpm=IDLE;shiftT=0;boostT=0;boostCD=0;bGrace=0;gear=1;fuel=1;hbA=0;gunOut=false;sleepT=0;fade.visible=false;
 carMesh.children[0].material.color.setHex(0xc0261f);ramps.forEach(r=>placeRamp(r,true));repair();engineDamage=0;engineFire=0;doors.forEach(d=>{d.open=0;d.hinge.rotation.y=0;d.mat.emissive.setHex(0)});raceT=0;raceDone=0;man.visible=pool.visible=blood.visible=false;
 if(mode==='race'){carP.set(0,0,0);heading=0;onFoot=false;rig.position.set(0,0,0);rig.rotation.y=0;cock.visible=true;carMesh.visible=false}
 else if(mode==='sandbox'){sandboxActiveCar=-1;carP.set(13,0,-54);heading=0;onFoot=true;rig.position.set(13,0,-50);rig.rotation.set(0,0,0);cock.visible=false;carMesh.visible=false;sandboxCars.forEach((c,i)=>{c.visible=true;c.position.set(sandboxCarSpots[i].x,0,sandboxCarSpots[i].z);c.rotation.y=sandboxCarSpots[i].heading})}
@@ -1312,8 +1312,116 @@ function rlPollXButton(dt){
  if(leftPhysical?.gp){rlCancelAButton();rlHandleXButton(!!leftPhysical.gp.buttons[4]?.pressed,dt);return;}
  rlCancelXButton();rlCancelAButton();
 }
+
+/* ---------- small private plane parked beside the house ---------- */
+const privatePlane=(()=>{
+ const px0=-4.6,pz0=4.2,ground0=surfaceHeightAt(px0,pz0);
+ const runway=new T.Group();runway.name='PrivatePlaneRunway';scene.add(runway);
+ box(18,.045,9,M(0x4b4e52,.92,.02),0,ground0-.018,pz0,runway);
+ const lineMat=M(0xe8c64d,.8,0);
+ for(let x=-8.1;x<9;x+=3.2)box(1.05,.012,.12,lineMat,x,ground0+.008,pz0,runway);
+ for(const z of[pz0-4.25,pz0+4.25])box(17.4,.014,.07,M(0xbfc4c9,.8,0),0,ground0+.009,z,runway);
+ const g=new T.Group();g.name='RoadlinePrivatePlane';scene.add(g);
+ const paint=M(0xe8e9e6,.46,.16),red=M(0xc52c32,.48,.12),navy=M(0x1c344c,.42,.2),metal=M(0x8e969d,.38,.55),rubber=M(0x17191c,.82,.04);
+ const glass=new T.MeshStandardMaterial({color:0x87c9e8,roughness:.13,metalness:.08,transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide});
+ const part=(w,h,d,mat,x,y,z,parent=g)=>box(w,h,d,mat,x,y,z,parent);
+ const ball=(rx,ry,rz,mat,x,y,z,parent=g)=>{const m=new T.Mesh(new T.SphereGeometry(1,12,8),mat);m.scale.set(rx,ry,rz);m.position.set(x,y,z);parent.add(m);return m};
+ /* Smooth single-engine fuselage, nose points along local -Z. */
+ const fus=new T.Mesh(new T.CylinderGeometry(.31,.43,5.45,14,1),paint);fus.rotation.x=Math.PI/2;fus.position.set(0,.78,0);g.add(fus);
+ ball(.36,.34,.53,paint,0,.79,-2.52);part(.055,.025,4.25,red,0,1.105,-.03);
+ /* High-wing layout with red tips and a tailplane. */
+ part(7.25,.14,1.28,paint,0,1.15,-.02);part(7.15,.018,.11,red,0,1.226,-.28);
+ for(const s of[-1,1]){ball(.22,.07,.66,red,s*3.52,1.15,-.02);const strut=new T.Mesh(new T.CylinderGeometry(.028,.028,.64,7),metal);strut.position.set(s*.92,.82,.08);strut.rotation.z=s*.18;g.add(strut)}
+ part(2.15,.1,.63,paint,0,1.02,2.23);part(.14,.9,1.04,red,0,1.43,2.10);part(.34,.12,.68,navy,0,1.91,2.1);
+ /* Cockpit glazing and a low instrument dash. */
+ ball(.34,.29,.68,glass,0,1.17,-.77);part(.66,.08,.36,navy,0,.94,-.63);part(.72,.11,.5,M(0x242a31,.72,.1),0,.85,-.45);
+ for(const s of[-1,1]){part(.025,.24,.14,metal,s*.31,1.1,-1.12);part(.035,.25,.16,red,s*.33,.79,.55)}
+ /* Three landing wheels and simple struts. */
+ for(const [x,y,z,r]of[[-.62,.20,.7,.23],[.62,.20,.7,.23],[0,.15,-1.8,.17]]){
+  const w=new T.Mesh(new T.CylinderGeometry(r,r,.16,10),rubber);w.rotation.z=Math.PI/2;w.position.set(x,y,z);g.add(w);
+  const hub=new T.Mesh(new T.CylinderGeometry(r*.42,r*.42,.172,10),metal);hub.rotation.z=Math.PI/2;hub.position.set(x,y,z);g.add(hub);
+ }
+ for(const s of[-1,1]){const st=new T.Mesh(new T.CylinderGeometry(.025,.035,.38,7),metal);st.position.set(s*.62,.39,.7);g.add(st)}
+ const ns=new T.Mesh(new T.CylinderGeometry(.025,.035,.32,7),metal);ns.position.set(0,.31,-1.8);g.add(ns);
+ /* Spinning front propeller. */
+ const prop=new T.Group();prop.position.set(0,.79,-2.94);g.add(prop);ball(.105,.105,.13,metal,0,0,0,prop);
+ const blade=part(.105,1.06,.075,navy,0,.42,0,prop);const blade2=blade.clone();blade2.rotation.z=Math.PI/2;prop.add(blade2);
+ /* The physical pitch stick is deliberately on the pilot's right-hand side. */
+ part(.27,.045,.27,metal,.45,.66,.23);
+ const stick=new T.Group();stick.position.set(.45,.68,.23);g.add(stick);
+ const rod=new T.Mesh(new T.CylinderGeometry(.028,.045,.23,8),metal);rod.position.y=.12;stick.add(rod);
+ const grip=ball(.08,.075,.085,red,0,.25,0,stick);
+ part(.55,.12,.5,M(0x292c31,.8,.05),0,.42,.42);
+ g.position.set(px0,ground0,pz0);g.rotation.order='YXZ';g.rotation.y=-Math.PI/2;
+ return {g,runway,prop,stick,grip,active:false,x:px0,z:pz0,alt:0,speed:0,pitch:0,yaw:-Math.PI/2,roll:0,throttle:0,stickHand:null,stickNeutralY:.8,stickAmount:0,collisionAt:0};
+})();
+function privatePlaneEnter(){
+ const p=privatePlane;
+ if(p.alt>.55||p.speed>1.5){window.V5?.say('LAND THE PLANE AND LET IT SLOW DOWN FIRST.','#ffd27d');return true}
+ p.active=true;p.speed=0;p.throttle=0;p.pitch=0;p.roll=0;p.alt=0;
+ p.g.position.set(p.x,surfaceHeightAt(p.x,p.z),p.z);p.g.rotation.order='YXZ';p.g.rotation.set(p.pitch,p.yaw,p.roll);
+ onFoot=false;gunOut=false;carEnterAnim=null;carMesh.visible=false;cock.visible=false;
+ if(left){left.grab=null;left.p=0;left.dg=null}if(sec){sec.grab=null;sec.p=0;sec.dg=null}
+ rig.position.copy(p.g.position);rig.rotation.order='YXZ';rig.quaternion.copy(p.g.quaternion);cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);
+ window.V5?.say('PRIVATE PLANE · LEFT TRIGGER: THROTTLE · GRIP THE RIGHT-HAND STICK AND MOVE IT UP/DOWN TO PITCH · LEFT STICK: TURN · X: EXIT WHEN LANDED','#9fe3ff');
+ return true;
+}
+function privatePlaneTryExit(){
+ const p=privatePlane;
+ if(p.alt>.45||p.speed>1.45){window.V5?.say('LAND AND SLOW DOWN BEFORE EXITING THE PLANE.','#ffd27d');return true}
+ p.active=false;p.speed=0;p.throttle=0;p.stickHand=null;p.stickAmount=0;p.stick.rotation.set(0,0,0);
+ const out=p.g.localToWorld(new T.Vector3(-1.15,.08,.38));
+ rig.position.set(out.x,surfaceHeightAt(out.x,out.z)+.03,out.z);rig.rotation.set(0,p.yaw,0);onFoot=true;gunOut=false;cock.visible=false;carMesh.visible=true;
+ cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);
+ window.V5?.say('You got out of the plane. Tap X near it to get back in.','#9fe3ff');
+ return true;
+}
+function privatePlaneStep(dt,desktopThrottle,desktopSteer){
+ const p=privatePlane;
+ p.runway.visible=mode==='free'||p.active;p.g.visible=mode==='free'||p.active;
+ if(!p.active)return;
+ const throttleController=[left,sec].find(o=>o?.src.handedness==='left'&&!o.src.hand&&o.gp)||[left,sec].find(o=>o?.gp);
+ let throttle=renderer.xr.isPresenting?(throttleController?.gp?.buttons?.[0]?.value||0):(keys.KeyW?1:(keys.ArrowUp?1:desktopThrottle));
+ throttle=C(throttle,0,1);
+ const turn=renderer.xr.isPresenting?C((throttleController?.gp?.axes?.[2]??throttleController?.gp?.axes?.[0]??0),-1,1):desktopSteer;
+ p.throttle=throttle;
+ p.g.updateMatrixWorld(true);rig.updateMatrixWorld(true);
+ const candidates=[sec,left].filter(o=>o&&o.gp&&o.c&&!o.src.hand).sort((a,b)=>(a.src.handedness==='right'?-1:1)-(b.src.handedness==='right'?-1:1));
+ for(const o of candidates){
+  const gp=o.gp,pressed=!!(gp.buttons[S.grab]&&gp.buttons[S.grab].value>.55);
+  const wp=o.c.getWorldPosition(new T.Vector3()),local=p.g.worldToLocal(wp.clone());
+  if(p.stickHand===o){if(!pressed){p.stickHand=null;p.stickAmount=0}else p.stickAmount=C((local.y-p.stickNeutralY)/.22,-1,1)}
+  else if(pressed&&!p.stickHand&&local.x>.08&&local.x<1.08&&local.y>.22&&local.y<1.48&&local.z>-.42&&local.z<.95){
+   const handleWorld=p.g.localToWorld(new T.Vector3(.45,.91,.23));
+   if(wp.distanceTo(handleWorld)<.72){p.stickHand=o;p.stickNeutralY=local.y;p.stickAmount=0}
+  }
+ }
+ let pitchTarget=0;
+ if(p.stickHand)pitchTarget=p.stickAmount*.48;
+ else if(!renderer.xr.isPresenting)pitchTarget=(keys.KeyI&&!keys.KeyK)?.42:(keys.KeyK&&!keys.KeyI)?-.42:0;
+ else{const r=[left,sec].find(o=>o?.src.handedness==='right'&&!o.src.hand&&o.gp);const ay=r?.gp?.axes?.[3]??r?.gp?.axes?.[1]??0;if(Math.abs(ay)>.35)pitchTarget=C(-ay,-1,1)*.32}
+ p.stick.position.y=.68+p.stickAmount*.11;p.stick.rotation.x=-p.stickAmount*.55;
+ p.pitch+=(pitchTarget-p.pitch)*Math.min(1,dt*2.6);p.roll+=(-turn*.3-p.roll)*Math.min(1,dt*2.4);p.yaw-=turn*(.18+p.speed*.035)*dt;
+ if(throttle>.015)p.speed=Math.min(25,p.speed+5.4*throttle*dt);else p.speed=Math.max(0,p.speed-(p.alt>.1?.18:1.45)*dt);
+ const oldX=p.x,oldZ=p.z;
+ if(p.speed>.001){p.x+=-Math.sin(p.yaw)*Math.cos(p.pitch)*p.speed*dt;p.z+=-Math.cos(p.yaw)*Math.cos(p.pitch)*p.speed*dt}
+ const blocked=(x,z)=>{
+  if(p.alt>1.35)return false;
+  for(const [list,ox,oz]of[[sol,0,0],[tSol,town.position.x,town.position.z]])for(const b of list)if(x>b[0]+ox-.42&&x<b[2]+ox+.42&&z>b[1]+oz-.42&&z<b[3]+oz+.42)return true;
+  return false;
+ };
+ if(blocked(p.x,p.z)){p.x=oldX;p.z=oldZ;p.speed*=.28;if(performance.now()>p.collisionAt){p.collisionAt=performance.now()+1400;window.V5?.say('The plane hit something. Turn or climb to clear it.','#ffd27d')}}
+ if(p.alt>0||(p.speed>8.5&&p.pitch>.04))p.alt+=Math.sin(p.pitch)*p.speed*.66*dt;
+ p.alt=C(p.alt,0,240);
+ const ground=surfaceHeightAt(p.x,p.z);if(p.alt<.035)p.alt=0;
+ p.g.position.set(p.x,ground+p.alt,p.z);p.g.rotation.order='YXZ';p.g.rotation.set(p.pitch,p.yaw,p.roll);p.prop.rotation.z+=dt*(5+p.speed*3.8);
+}
+function privatePlanePlacePilot(){const p=privatePlane;if(!p.active)return;rig.position.copy(p.g.position);rig.rotation.order='YXZ';rig.quaternion.copy(p.g.quaternion)}
+
 function rlCarInteract(){
  if(dead||menuOpen||sleepT>0||carEnterAnim)return false;
+ if(privatePlane.active)return privatePlaneTryExit();
+ if(onFoot&&mode==='free'&&Math.hypot(rig.position.x-privatePlane.g.position.x,rig.position.z-privatePlane.g.position.z)<5.2)return privatePlaneEnter();
  if(passengerOf){
   passengerOf='';passengerSeatAt=0;onFoot=true;carMesh.visible=true;
   window.V5?.say('Left passenger seat.');return true;
@@ -1642,7 +1750,7 @@ function handStep(o,main,dt){const hd=main?hand:hand2,gp=o.gp;hd.visible=!!gp;if
 const gv=gp.buttons[S.grab]?gp.buttons[S.grab].value:0,gd=gv>.5,tv=gp.buttons[0]?gp.buttons[0].value:0,oth=main?sec:left;
 const wp=(o.wpv||(o.wpv=new T.Vector3())).copy(o.c.position);rig.localToWorld(wp);if(!o.pw)o.pw=wp.clone();o.vel.lerp(_t1.copy(wp).sub(o.pw).divideScalar(Math.max(dt,.001)),.35);o.pw.copy(wp);
 const hp=(o.hpv||(o.hpv=new T.Vector3())).copy(o.c.position).sub(cock.position),wl=_t2.copy(hp).sub(wTilt.position).applyQuaternion(_q1.copy(wTilt.quaternion).invert()),ang=Math.atan2(wl.y,wl.x),rad=Math.hypot(wl.x,wl.y);
-const free=!onFoot&&!dead&&!menuOpen,dW=hp.distanceTo(wTilt.position),dL=hp.distanceTo(kp),dH=hp.distanceTo(hbp);
+const free=!onFoot&&!dead&&!menuOpen&&!privatePlane.active,dW=hp.distanceTo(wTilt.position),dL=hp.distanceTo(kp),dH=hp.distanceTo(hbp);
  /* On foot, grip the highlighted door handle to swing it open/closed. */
  if(onFoot&&!dead&&!menuOpen&&sleepT<=0){
  carMesh.updateMatrixWorld(true);
@@ -1787,6 +1895,12 @@ target=C(-wheelA/1.1,-1,1)}
 else{rlCancelXButton();if(sec&&sec.gp)handStep(sec,false,dt);const J=window.__joy||{x:0,y:0},kk=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),ky=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);gas=keys.KeyW||keys.ArrowUp?1:C(-J.y,0,1);brake=keys.KeyS||keys.ArrowDown?1:C(J.y,0,1);const kt=C(kk+J.x,-1,1);
 if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;sy=C(ky+J.y,-1,1)}
 wheelA+=(-kt*1.2-wheelA)*Math.min(1,dt*10);target=C(-wheelA/1.1,-1,1)}
+/* Plane input is independent of the car: left trigger adds throttle, and the right-side physical stick controls pitch. */
+if(privatePlane.active){
+ const desktopSteer=renderer.xr.isPresenting?0:C((keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),-1,1);
+ privatePlaneStep(dt,gas,desktopSteer);
+ gas=0;brake=0;target=0;
+}
 /* Snap turn removed as requested; head direction controls walking orientation in VR. */
 const driving=!onFoot&&!dead&&!menuOpen&&sleepT<=0;
 target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(9+rlUpgrade('handling')*1.0));if(!driving){gas=0;brake=1;target=0}
@@ -1839,7 +1953,7 @@ if(mode==='race'&&!dead&&!raceDone){raceT+=dt;if(-carP.z>=2500){raceDone=1;doneT
 /* sleeping */
 if(sleepT>0){sleepT+=dt;const a=sleepT<1?sleepT:sleepT<1.3?1:Math.max(0,1-(sleepT-1.3));fade.material.opacity=a;fade.visible=a>.01;if(!sleptDone&&sleepT>=1){sleptDone=true;nightT=nightT>.5?0:1}if(sleepT>2.3){sleepT=0;sleptDone=false;fade.visible=false}}
 if(menuOpen)menuStep();else if(panel.visible){panel.visible=ray.visible=dot.visible=dot2.visible=false}updateFX(dt);
-if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(rig.rotation.x||rig.rotation.z)rig.rotation.set(0,rig.rotation.y,0);if(sleepT<=0&&!carEnterAnim)walk(dt);carMesh.position.set(carP.x,carP.y,carP.z);carMesh.rotation.order='YXZ';carMesh.rotation.set(0,heading,0);resolveDoorCollision()}else{rig.position.copy(carP);rig.rotation.order='YXZ';rig.rotation.set(carPitch,heading,carRoll);carMesh.position.copy(carP);carMesh.rotation.order='YXZ';carMesh.rotation.set(carPitch,heading,carRoll)}
+if(dead){boomDeath?boomStep(dt):deadStep(dt)}else if(onFoot){if(rig.rotation.x||rig.rotation.z)rig.rotation.set(0,rig.rotation.y,0);if(sleepT<=0&&!carEnterAnim)walk(dt);carMesh.position.set(carP.x,carP.y,carP.z);carMesh.rotation.order='YXZ';carMesh.rotation.set(0,heading,0);resolveDoorCollision()}else if(privatePlane.active){privatePlanePlacePilot();carMesh.visible=false;cock.visible=false}else{rig.position.copy(carP);rig.rotation.order='YXZ';rig.rotation.set(carPitch,heading,carRoll);carMesh.position.copy(carP);carMesh.rotation.order='YXZ';carMesh.rotation.set(carPitch,heading,carRoll)}
 /* Keep the active sandbox clone aligned with the real car pose so its deformations remain visible on exit. */
 if(mode==='sandbox'&&sandboxActiveCar>=0&&sandboxCars[sandboxActiveCar]){const activeSandboxCar=sandboxCars[sandboxActiveCar];activeSandboxCar.position.copy(carP);activeSandboxCar.rotation.order='YXZ';activeSandboxCar.rotation.set(carPitch,heading,carRoll)}
 /* Third-person on-foot camera works on desktop and touch; immersive VR remains head-tracked. */
@@ -1869,7 +1983,8 @@ if(!renderer.xr.isPresenting){
    if(q>=1){carEnterAnim=null;onFoot=false;doors.forEach(d=>{d.open=0});cock.visible=true;carMesh.visible=false;rig.position.copy(carP);rig.rotation.y=heading;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0);setCarView('first')}
  }else if(!onFoot){
    playerAvatar.visible=false;
-   if(carView==='third'){carMesh.visible=true;cock.visible=false;/* Match the stable third-person follow camera used on foot, with the car's heading driving the camera rig. */cam.position.set(0,2.25,4.6);cam.lookAt(0,0.95,0)}
+   if(privatePlane.active){carMesh.visible=false;cock.visible=false;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0)}
+   else if(carView==='third'){carMesh.visible=true;cock.visible=false;/* Match the stable third-person follow camera used on foot, with the car's heading driving the camera rig. */cam.position.set(0,2.25,4.6);cam.lookAt(0,0.95,0)}
    else{carMesh.visible=false;cock.visible=true;cam.position.set(0,1.2,0);cam.rotation.set(0,0,0)}
  }
 }
