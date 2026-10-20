@@ -1911,8 +1911,8 @@ if(privatePlane.active){
  gas=0;brake=0;target=0;
 }
 /* Snap turn removed as requested; head direction controls walking orientation in VR. */
-const driving=!onFoot&&!dead&&!menuOpen&&sleepT<=0;
-target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(9+rlUpgrade('handling')*1.0));if(!driving){gas=0;brake=1;target=0}
+const driving=!onFoot&&!privatePlane.active&&!dead&&!menuOpen&&sleepT<=0;
+target=Math.abs(target)<.04?0:target*(.55+.45*Math.abs(target));const effectiveTarget=target*(1-steeringDamage*.62);steer+=(effectiveTarget-steer)*Math.min(1,dt*(9+rlUpgrade('handling')*1.0));if(!driving){gas=0;brake=privatePlane.active?0:1;target=0}
 /* ===== realistic car physics ===== */
 {const h=heading,fx=-Math.sin(h),fz=-Math.cos(h),rx2=Math.cos(h),rz2=-Math.sin(h),roadS=onRoadAt(carP.x,carP.z),mu=(roadS?1:.62)*(1-(window.WX?WX.wet:0)*.4);
 let vF=vel.x*fx+vel.z*fz,vL=vel.x*rx2+vel.z*rz2;slipV=0;refuel=0;
