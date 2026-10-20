@@ -1358,7 +1358,7 @@ const privatePlane=(()=>{
 function privatePlaneEnter(){
  const p=privatePlane;
  if(p.alt>.55||p.speed>1.5){window.V5?.say('LAND THE PLANE AND LET IT SLOW DOWN FIRST.','#ffd27d');return true}
- p.active=true;p.speed=0;p.throttle=0;p.pitch=0;p.roll=0;p.alt=0;
+ p.active=true;p.speed=0;p.throttle=0;p.pitch=0;p.roll=0;p.alt=0;speed=0;vel.set(0,0,0);steer=0;
  p.g.position.set(p.x,surfaceHeightAt(p.x,p.z),p.z);p.g.rotation.order='YXZ';p.g.rotation.set(p.pitch,p.yaw,p.roll);
  onFoot=false;gunOut=false;carEnterAnim=null;carMesh.visible=false;cock.visible=false;
  if(left){left.grab=null;left.p=0;left.dg=null}if(sec){sec.grab=null;sec.p=0;sec.dg=null}
@@ -1895,6 +1895,8 @@ target=C(-wheelA/1.1,-1,1)}
 else{rlCancelXButton();if(sec&&sec.gp)handStep(sec,false,dt);const J=window.__joy||{x:0,y:0},kk=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),ky=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);gas=keys.KeyW||keys.ArrowUp?1:C(-J.y,0,1);brake=keys.KeyS||keys.ArrowDown?1:C(J.y,0,1);const kt=C(kk+J.x,-1,1);
 if(onFoot&&!left){sx=J.x;sy=C(ky+J.y,-1,1);rig.rotation.y-=kk*1.8*dt}else{sx=kt;sy=C(ky+J.y,-1,1)}
 wheelA+=(-kt*1.2-wheelA)*Math.min(1,dt*10);target=C(-wheelA/1.1,-1,1)}
+/* Keep the runway/plane in the home map and hide them in separate race/sandbox scenarios. */
+privatePlane.runway.visible=mode==='free'||privatePlane.active;privatePlane.g.visible=mode==='free'||privatePlane.active;
 /* Plane input is independent of the car: left trigger adds throttle, and the right-side physical stick controls pitch. */
 if(privatePlane.active){
  const desktopSteer=renderer.xr.isPresenting?0:C((keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0),-1,1);
