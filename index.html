@@ -42,12 +42,16 @@
     .play:hover { transform:translateX(3px); }
     footer { padding:24px; text-align:center; border-top:1px solid #ffffff12; color:#7f8aa5; font-size:.85rem; }
     @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } *,*:before,*:after { transition:none!important; } }
-  </style>
+  
+    .sound-toggle{border:1px solid rgba(53,216,242,.55);background:rgba(17,24,42,.85);color:var(--text);border-radius:999px;padding:9px 13px;font:600 .88rem system-ui;cursor:pointer}
+    .sound-toggle:hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(53,216,242,.18)}
+    .top-actions{display:flex;align-items:center;gap:14px}
+</style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><span>VR</span> GAMES</div>
-    <a class="navlink" href="#games">Browse games ↓</a>
+    <div class="top-actions"><button class="sound-toggle" id="hubSoundToggle" type="button" aria-pressed="false">🔇 Hub sounds: Off</button><a class="navlink" href="#games">Browse games ↓</a></div>
   </header>
   <main>
     <section class="hero">
@@ -121,5 +125,43 @@
     </section>
   </main>
   <footer>VR Games · Pick a game and have fun.</footer>
+
+<script>
+(()=> {
+ let ctx=null,enabled=false,ambient=[],master=null;
+ function initAudio(){
+   if(ctx){if(ctx.state==='suspended')ctx.resume();return}
+   try{
+     ctx=new (window.AudioContext||window.webkitAudioContext)();
+     master=ctx.createGain();master.gain.value=0.16;master.connect(ctx.destination);
+   }catch(e){ctx=null}
+ }
+ function chirp(freq=620,duration=.055,volume=.035){
+   if(!enabled)return;initAudio();if(!ctx)return;
+   try{const o=ctx.createOscillator(),g=ctx.createGain(),t=ctx.currentTime;
+    o.type='sine';o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(Math.max(80,freq*.72),t+duration);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(volume,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+    o.connect(g);g.connect(master);o.start(t);o.stop(t+duration+.02);
+   }catch(e){}
+ }
+ function startAmbient(){
+   if(!ctx||ambient.length)return;
+   try{
+    [55,82.4].forEach((f,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=f;g.gain.value=i?.012:.018;o.connect(g);g.connect(master);o.start();ambient.push(o,g)});
+   }catch(e){}
+ }
+ function stopAmbient(){for(let i=0;i<ambient.length;i+=2){try{ambient[i].stop()}catch(e){}}ambient=[]}
+ const toggle=document.getElementById('hubSoundToggle');
+ toggle.addEventListener('click',()=>{
+   enabled=!enabled;
+   if(enabled){initAudio();if(ctx&&ctx.state==='suspended')ctx.resume();startAmbient();toggle.textContent='🔊 Hub sounds: On';toggle.setAttribute('aria-pressed','true');chirp(740,.12,.055)}
+   else{stopAmbient();toggle.textContent='🔇 Hub sounds: Off';toggle.setAttribute('aria-pressed','false')}
+ });
+ document.querySelectorAll('a,button:not(#hubSoundToggle)').forEach(el=>{
+   el.addEventListener('pointerenter',()=>chirp(520,.035,.018));
+   el.addEventListener('click',()=>chirp(680,.07,.04));
+ });
+})();
+</script>
 </body>
 </html>
