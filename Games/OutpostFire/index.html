@@ -419,4 +419,73 @@ const ae0=animEnv;animEnv=function(dt){ae0(dt);hitM=Math.max(0,hitM-dt);dmgT=Mat
   ot.needsUpdate=true}};
 let last=0;
 R.setAnimationLoop(t=>{const dt=Math.min((t-last)/1000,.05);last=t;update(dt);scopePass();R.render(scene,cam)});
+
+/* ---- respawns + expanded sound pass ---- */
+let playerRespawnT=-1,respawnSoundT=0,respawnNoticeT=0,wasPlantedSound=false,lastBombSecond=-1;
+function tone(freq,duration,volume,type='sine',slide=0){
+ if(!AC)return;
+ try{const o=AC.createOscillator(),g=AC.createGain(),now=AC.currentTime;
+ o.type=type;o.frequency.setValueAtTime(Math.max(30,freq),now);
+ if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,freq+slide),now+duration);
+ g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),now+.012);
+ g.gain.exponentialRampToValueAtTime(.0001,now+duration);
+ o.connect(g);g.connect(AC.destination);o.start(now);o.stop(now+duration+.03)}catch(e){}
+}
+function soundEvent(kind){
+ if(!AC)return;
+ if(kind==='respawn'){tone(420,.12,.12,'triangle',180);setTimeout(()=>tone(720,.18,.1,'triangle',120),90)}
+ else if(kind==='down'){tone(190,.28,.2,'sawtooth',-90);tone(90,.32,.16,'sine',-25)}
+ else if(kind==='plant'){tone(620,.1,.12,'square');setTimeout(()=>tone(880,.18,.14,'square'),130);sfx(1200,.12,.1)}
+ else if(kind==='defuse'){tone(950,.09,.08,'sine');setTimeout(()=>tone(1200,.12,.08,'sine'),100)}
+ else if(kind==='reload'){tone(280,.07,.09,'square');setTimeout(()=>tone(420,.06,.08,'square'),100);setTimeout(()=>tone(360,.1,.08,'square'),220)}
+ else if(kind==='hit'){tone(1150,.045,.07,'square',-220)}
+ else if(kind==='enemyDown'){tone(300,.1,.1,'triangle',-100);tone(650,.08,.06,'sine')}
+ else if(kind==='warning'){tone(740,.09,.09,'square');setTimeout(()=>tone(980,.09,.09,'square'),110)}
+ else if(kind==='win'){tone(520,.14,.1,'triangle');setTimeout(()=>tone(660,.14,.1,'triangle'),140);setTimeout(()=>tone(880,.25,.12,'triangle'),280)}
+}
+const previousHurt=hurt;
+hurt=function(n){
+ if(state!=='play'||expl>=0||playerRespawnT>=0)return;
+ hp-=n;vig.material.opacity=.7;buzz(.8,100);sfx(210,.16,.3);tone(150,.12,.1,'sawtooth',-50);dmgT=1;
+ if(hp<=0){hp=0;pd++;killed(lastAtk||{name:'?'},PL);playerRespawnT=4;respawnNoticeT=4;soundEvent('down');feed.push({t:performance.now()+4500,s:'You were eliminated — respawning'});}
+};
+const previousShoot=shoot;
+shoot=function(){const before=ammo;if(playerRespawnT>=0||expl>=0)return;previousShoot();if(ammo<before&&ammo>0&&Math.random()<.22)sfx(2200,.035,.045)};
+const previousStartGame=startGame;
+startGame=function(){playerRespawnT=-1;respawnNoticeT=0;wasPlantedSound=false;lastBombSecond=-1;previousStartGame()};
+const previousRoundUpdate=roundUpdate;
+roundUpdate=function(dt){
+ const oldExpl=expl,oldPlanted=planted,oldDef=defT;
+ previousRoundUpdate(dt);
+ if(!oldPlanted&&planted&&expl<0){soundEvent('plant');wasPlantedSound=true}
+ if(defT>oldDef&&defT>0&&Math.floor(defT*4)!==Math.floor(oldDef*4))soundEvent('defuse');
+ if(expl<0&&planted&&bombT>0&&bombT<=10){const sec=Math.ceil(bombT);if(sec!==lastBombSecond){lastBombSecond=sec;if(sec<=5)soundEvent('warning')}}
+ if(oldExpl<0&&expl>=0){playerRespawnT=-1;respawnNoticeT=0}
+};
+const previousEndRound=endRound;
+endRound=function(win,msg){if(state==='play'&&msg&&/won|defused|eliminated|ran out|exploded|plant/i.test(msg))soundEvent(win?'win':'down');playerRespawnT=-1;previousEndRound(win,msg)};
+const previousUpdate=update;
+update=function(dt){
+ previousUpdate(dt);
+ if(state!=='play')return;
+ if(expl>=0){playerRespawnT=-1;return}
+ if(playerRespawnT>=0){
+   playerRespawnT-=dt;respawnNoticeT=Math.max(0,respawnNoticeT-dt);
+   if(playerRespawnT<=0&&expl<0&&state==='play'){
+     hp=100;ammo=MAG;reloadT=0;dolly.position.set(myTeam==='T'?3:0,H(myTeam==='T'?3:0,myTeam==='T'?-24:13),myTeam==='T'?-24:13);
+     dolly.rotation.y=myTeam==='T'?Math.PI:0;yaw=myTeam==='T'?Math.PI:0;pitch=0;
+     if(!inVR)cam.rotation.set(0,yaw,0,'YXZ');
+     playerRespawnT=-1;respawnNoticeT=0;vig.material.opacity=0;dmgT=0;feed.push({t:performance.now()+3500,s:'You respawned'});soundEvent('respawn');
+   }
+ }
+ if(expl<0){
+   const target=MOB? (myTeam==='T'?2:3) : (myTeam==='T'?3:4);
+   for(const team of ['CT','T']){
+     const want=team===myTeam?target:(MOB?3:4);
+     const alive=enemies.filter(e=>!e.gone&&e.team===team).length;
+     if(alive<want){spawnBot(team);const e=enemies[enemies.length-1];if(e){e.name=team+' reinforcements';feed.push({t:performance.now()+2500,s:team+' reinforcement arrived'});soundEvent('respawn')}}
+   }
+ }
+};
+
 </script></body></html>
