@@ -488,4 +488,84 @@ update=function(dt){
  }
 };
 
+
+/* ---- voice lines + assigned combat roles ---- */
+(()=>{
+  const voiceBox=document.createElement('div');
+  Object.assign(voiceBox.style,{position:'fixed',left:'50%',bottom:'17%',transform:'translateX(-50%)',maxWidth:'88vw',padding:'10px 16px',borderRadius:'10px',background:'rgba(8,12,16,.82)',border:'1px solid rgba(255,210,100,.7)',color:'#fff1c7',font:'bold 17px system-ui,sans-serif',textAlign:'center',textShadow:'0 1px 2px #000',zIndex:'1000',pointerEvents:'none',display:'none'});
+  document.body.appendChild(voiceBox);
+  let voiceCooldown=0,voiceBoxT=0,role='shooter',healCooldown=0,healEdge=false,lowLinePlayed=new WeakSet(),runLineT=new WeakMap(),lastVoiceAt=0;
+  function sayLine(line,force=false){
+    const now=performance.now();
+    if(!force&&(now-lastVoiceAt<5200||Math.random()>.76))return false;
+    if(now-lastVoiceAt<1800)return false;
+    lastVoiceAt=now;voiceBox.textContent=line;voiceBox.style.display='block';voiceBoxT=2.7;
+    try{
+      if('speechSynthesis' in window && typeof SpeechSynthesisUtterance!=='undefined'){
+        window.speechSynthesis.cancel();
+        const u=new SpeechSynthesisUtterance(line);u.rate=.94;u.pitch=.82;u.volume=.9;
+        const vs=window.speechSynthesis.getVoices();const v=vs.find(x=>/en-US|en-GB/i.test(x.lang));if(v)u.voice=v;
+        window.speechSynthesis.speak(u);
+      }
+    }catch(_){}
+    return true;
+  }
+  function roleText(){return role==='healer'?'HEALER · rifle + medkit':'SHOOTER · rifle';}
+  function healAction(){
+    if(state!=='play'||role!=='healer'||healCooldown>0)return;
+    healCooldown=8;
+    let target=null,dist=8;
+    for(const e of enemies){
+      if(e.dead||e.gone||e.team!==myTeam||e.hp>=100)continue;
+      const d=e.g.position.distanceTo(dolly.position);
+      if(d<dist){dist=d;target=e}
+    }
+    if(target){target.hp=Math.min(100,target.hp+35);target.hurtT=.25;target.mats&&target.mats.forEach(m=>m.emissive.setRGB(0,.35,0));sayLine('Stay with me! I got you!',true);feed.push({t:performance.now()+3000,s:'Healed '+(target.name||'teammate')});}
+    else {const before=hp;hp=Math.min(100,hp+35);if(hp>before){sayLine('Patch yourself up!',true);feed.push({t:performance.now()+2500,s:'Medkit used: +'+(hp-before)+' HP'})}else{sayLine('Nobody needs healing right now.',true);healCooldown=2}}
+    sfx(680,.16,.16);beep(740,.12,.08);
+  }
+  const oldDrawHUD=drawHUD;
+  drawHUD=function(){oldDrawHUD();hg.textAlign='right';hg.font='bold 13px sans-serif';hg.fillStyle=role==='healer'?'#8cffb1':'#ffd060';hg.fillText(roleText(),248,91);ht.needsUpdate=true};
+  const oldStartGame=startGame;
+  startGame=function(){
+    oldStartGame();
+    role=Math.random()<.28?'healer':'shooter';
+    healCooldown=0;healEdge=false;lowLinePlayed=new WeakSet();runLineT=new WeakMap();
+    if(state==='play'){
+      feed.push({t:performance.now()+5000,s:'Assigned role: '+role.toUpperCase()});
+      sayLine(role==='healer'?'I have the medkit. Stay close!':'Rifle ready. Let’s move!',true);
+    }
+    if(!$('medkit')){const b=document.createElement('button');b.id='medkit';b.textContent='MEDKIT';Object.assign(b.style,{position:'absolute',right:'18px',bottom:'18px',minWidth:'88px',minHeight:'46px',background:'#237b4b',color:'#fff',border:'2px solid #a4ffc4',borderRadius:'10px',fontWeight:'bold',display:'none',zIndex:'30'});b.onclick=healAction;document.getElementById('tz').appendChild(b)}
+    const mb=$('medkit');mb.style.display=state==='play'&&role==='healer'&&TOUCH&&!inVR?'block':'none';
+  };
+  const oldSetState=setState;
+  setState=function(s){oldSetState(s);const mb=$('medkit');if(mb)mb.style.display=s==='play'&&role==='healer'&&TOUCH&&!inVR?'block':'none'};
+  const oldBotFire=botFire;
+  botFire=function(e){
+    if(e&&e.tgt&&Math.random()<.23)sayLine('I got them!');
+    oldBotFire(e);
+  };
+  const oldSpawnBot=spawnBot;
+  spawnBot=function(team){oldSpawnBot(team);const e=enemies[enemies.length-1];if(e){e.voiceLow=false;runLineT.set(e,5+Math.random()*12);}};
+  const oldUpdate=update;
+  update=function(dt){
+    oldUpdate(dt);
+    healCooldown=Math.max(0,healCooldown-dt);
+    voiceBoxT-=dt;if(voiceBoxT<=0)voiceBox.style.display='none';
+    if(state!=='play')return;
+    if(role==='healer'){
+      const h=!!keys.KeyH;
+      if(h&&!healEdge)healAction();
+      healEdge=h;
+      for(const c of ctl){const gp=c.userData.src&&c.userData.src.gamepad;if(!gp)continue;const pressed=!!(gp.buttons[5]&&gp.buttons[5].pressed);const key='healFace'+c.userData.src.handedness;if(!window.__outpostHealEdges)window.__outpostHealEdges={};if(pressed&&!window.__outpostHealEdges[key])healAction();window.__outpostHealEdges[key]=pressed}
+    }
+    for(const e of enemies){
+      if(!e||e.dead||e.gone)continue;
+      if(e.hp<=30&&!lowLinePlayed.has(e)){if(sayLine("I'm gonna die, help!"))lowLinePlayed.add(e)}
+      const t=(runLineT.get(e)||0)-dt;runLineT.set(e,t);
+      if(t<=0){runLineT.set(e,9+Math.random()*13);if(e.g.position.distanceTo(dolly.position)>4&&Math.random()<.35)sayLine('Move, move! Keep pushing!')}
+    }
+  };
+})();
+
 </script></body></html>
